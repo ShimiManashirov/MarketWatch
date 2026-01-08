@@ -58,6 +58,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun updateToolbarUsername(newName: String) {
+        val usernameTextView: TextView = findViewById(R.id.toolbar_username)
+        usernameTextView.text = newName
+    }
+
     private fun setupToolbar() {
         val usernameTextView: TextView = findViewById(R.id.toolbar_username)
         val logoutButton: Button = findViewById(R.id.toolbar_logout_button)
@@ -69,13 +74,13 @@ class MainActivity : AppCompatActivity() {
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
                     if (document != null) {
-                        usernameTextView.text = document.getString("name") ?: "User"
+                        updateToolbarUsername(document.getString("name") ?: "User")
                     } else {
-                        usernameTextView.text = "User"
+                        updateToolbarUsername("User")
                     }
                 }
                 .addOnFailureListener { 
-                    usernameTextView.text = "User"
+                    updateToolbarUsername("User")
                     Toast.makeText(this, "Failed to load username", Toast.LENGTH_SHORT).show()
                 }
         }

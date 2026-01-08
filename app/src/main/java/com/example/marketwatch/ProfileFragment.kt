@@ -1,14 +1,50 @@
 package com.example.marketwatch
 
+import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
+import com.google.firebase.auth.EmailAuthProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ProfileFragment : Fragment() {
+
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+
+    private lateinit var profileImageView: ImageView
+    private lateinit var nameTextView: TextView
+    private lateinit var emailTextView: TextView
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val selectedUri = result.data?.data
+            if (selectedUri != null) {
+                try {
+                    val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    requireActivity().contentResolver.takePersistableUriPermission(selectedUri, takeFlags)
+                    saveProfilePictureUri(selectedUri)
+                } catch (e: SecurityException) {
+                    e.printStackTrace()
+                    if(isAdded) Toast.makeText(context, "Failed to get permission for the image.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -16,13 +52,198 @@ class ProfileFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
 
-        val myPostsButton: Button = view.findViewById(R.id.myPostsButton)
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
-        myPostsButton.setOnClickListener {
-            val intent = Intent(activity, UserPostsActivity::class.java)
-            startActivity(intent)
+        profileImageView = view.findViewById(R.id.profileImageView)
+        nameTextView = view.findViewById(R.id.profileNameTextView)
+        emailTextView = view.findViewById(R.id.profileEmailTextView)
+        val changePictureButton: Button = view.findViewById(R.id.changePictureButton)
+        val changeNameButton: Button = view.findViewById(R.id.changeNameButton)
+        val changePasswordButton: Button = view.findViewById(R.id.changePasswordButton)
+        val deleteAccountButton: Button = view.findViewById(R.id.deleteAccountButton)
+
+        loadUserProfile()
+
+        changePictureButton.setOnClickListener { 
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { 
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*" 
+            }
+            pickImageLauncher.launch(intent)
         }
 
+        changeNameButton.setOnClickListener { showChangeNameDialog() }
+        changePasswordButton.setOnClickListener { sendPasswordResetEmail() }
+        deleteAccountButton.setOnClickListener { showDeleteAccountConfirmationDialog() }
+
         return view
+    }
+
+    private fun loadUserProfile() {
+        val user = auth.currentUser ?: return
+        val userId = user.uid
+        emailTextView.text = user.email
+
+        db.collection("users").document(userId).get().addOnSuccessListener { document ->
+            if (isAdded && document != null && document.exists()) {
+                nameTextView.text = document.getString("name") ?: "N/A"
+                val profilePictureUrl = document.getString("profilePictureUrl")
+                
+                try {
+                    val imageToLoad: Any = if (!profilePictureUrl.isNullOrEmpty()) {
+                        Uri.parse(profilePictureUrl)
+                    } else {
+                        R.drawable.ic_account_circle
+                    }
+                    Glide.with(this)
+                        .load(imageToLoad)
+                        .placeholder(R.drawable.ic_account_circle)
+                        .error(R.drawable.ic_account_circle) 
+                        .circleCrop()
+                        .into(profileImageView)
+                } catch (e: Exception) {
+                    if (isAdded) {
+                        Glide.with(this)
+                            .load(R.drawable.ic_account_circle)
+                            .circleCrop()
+                            .into(profileImageView)
+                    }
+                }
+            }
+        }.addOnFailureListener {
+             if (isAdded) {
+                nameTextView.text = "N/A"
+                Glide.with(this)
+                    .load(R.drawable.ic_account_circle)
+                    .circleCrop()
+                    .into(profileImageView)
+            }
+        }
+    }
+
+    private fun saveProfilePictureUri(uri: Uri) {
+        val userId = auth.currentUser?.uid ?: return
+        db.collection("users").document(userId)
+            .update("profilePictureUrl", uri.toString())
+            .addOnSuccessListener { 
+                if (isAdded) {
+                    Toast.makeText(context, "Profile picture updated", Toast.LENGTH_SHORT).show()
+                    Glide.with(this).load(uri).circleCrop().into(profileImageView)
+                }
+            }
+            .addOnFailureListener { 
+                if (isAdded) {
+                    Toast.makeText(context, "Failed to save image URI", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    private fun showChangeNameDialog() {
+        if(!isAdded) return
+        val editText = EditText(context).apply { hint = nameTextView.text }
+        AlertDialog.Builder(requireContext())
+            .setTitle("Change Name")
+            .setView(editText)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = editText.text.toString().trim()
+                if (newName.isNotEmpty()) {
+                    val userId = auth.currentUser?.uid ?: return@setPositiveButton
+                    db.collection("users").document(userId).update("name", newName)
+                        .addOnSuccessListener { 
+                            if (isAdded) {
+                                Toast.makeText(context, "Name updated", Toast.LENGTH_SHORT).show() 
+                                (activity as? MainActivity)?.updateToolbarUsername(newName)
+                                nameTextView.text = newName
+                            }
+                        }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun sendPasswordResetEmail() {
+        val email = auth.currentUser?.email ?: return
+        auth.sendPasswordResetEmail(email)
+            .addOnSuccessListener { 
+                if (isAdded) {
+                    Toast.makeText(context, "Password reset email sent to $email", Toast.LENGTH_LONG).show() 
+                }
+            }
+            .addOnFailureListener { 
+                if (isAdded) {
+                    Toast.makeText(context, "Failed to send reset email", Toast.LENGTH_SHORT).show() 
+                }
+            }
+    }
+
+    private fun showDeleteAccountConfirmationDialog() {
+        if(!isAdded) return
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Account")
+            .setMessage("This action is permanent and cannot be undone. Are you sure you want to delete your account?")
+            .setPositiveButton("Delete") { _, _ -> showReauthenticationDialog() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showReauthenticationDialog() {
+        if(!isAdded) return
+        val passwordEditText = EditText(context).apply {
+            hint = "Enter your password"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Re-authenticate to Delete Account")
+            .setView(passwordEditText)
+            .setPositiveButton("Confirm") { _, _ ->
+                val password = passwordEditText.text.toString()
+                if (password.isEmpty()) {
+                    if (isAdded) Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val user = auth.currentUser ?: return@setPositiveButton
+                val credential = EmailAuthProvider.getCredential(user.email!!, password)
+                
+                user.reauthenticate(credential).addOnCompleteListener { reauthTask ->
+                    if(isAdded) {
+                        if (reauthTask.isSuccessful) {
+                            deleteUserAccount()
+                        } else {
+                            Toast.makeText(context, "Authentication failed. Please try again.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteUserAccount() {
+        val user = auth.currentUser ?: return
+        val userId = user.uid
+
+        db.collection("users").document(userId).delete()
+            .addOnCompleteListener { firestoreTask ->
+                if (firestoreTask.isSuccessful) {
+                    user.delete().addOnCompleteListener { authTask ->
+                        if (isAdded) {
+                            if (authTask.isSuccessful) {
+                                Toast.makeText(context, "Account deleted successfully.", Toast.LENGTH_LONG).show()
+                                val intent = Intent(activity, LoginActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                startActivity(intent)
+                                activity?.finish()
+                            } else {
+                                Toast.makeText(context, "Could not finalize account deletion. Please contact support.", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                } else {
+                     if (isAdded) Toast.makeText(context, "Failed to delete account data. Please try again.", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 }
