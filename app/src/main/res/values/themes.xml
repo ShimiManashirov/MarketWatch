@@ -1,8 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Market_Watch" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Main colors -->
+        <item name="colorPrimary">#0D6EFD</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#D0E4FF</item>
+        <item name="colorOnPrimaryContainer">#001D47</item>
+        
+        <item name="colorSecondary">#6C757D</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        
+        <item name="android:windowBackground">#F8F9FA</item>
+        <item name="android:colorBackground">#F8F9FA</item>
     </style>
 
     <style name="Theme.Market_Watch" parent="Base.Theme.Market_Watch" />

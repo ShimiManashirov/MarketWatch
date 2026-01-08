@@ -1,7 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme for Dark Mode. -->
     <style name="Base.Theme.Market_Watch" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Main Dark Colors -->
+        <item name="colorPrimary">#3D8BFF</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#0047AB</item>
+        <item name="colorOnPrimaryContainer">#D0E4FF</item>
+
+        <item name="colorSecondary">#9BA3AF</item>
+        <item name="colorOnSecondary">#1A1C1E</item>
+
+        <!-- Surface and Background for a premium dark look -->
+        <item name="android:windowBackground">#121212</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">#E2E2E2</item>
+        <item name="colorSurfaceVariant">#2C2C2C</item>
+        <item name="colorOnSurfaceVariant">#A0A0A0</item>
+        
+        <item name="colorError">#FFB4AB</item>
     </style>
 </resources>
