@@ -7,17 +7,21 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
+        val usernameEditText: TextInputEditText = findViewById(R.id.usernameEditText)
         val emailEditText: TextInputEditText = findViewById(R.id.emailEditText)
         val passwordEditText: TextInputEditText = findViewById(R.id.passwordEditText)
         val confirmPasswordEditText: TextInputEditText = findViewById(R.id.confirmPasswordEditText)
@@ -25,11 +29,12 @@ class RegisterActivity : AppCompatActivity() {
         val loginLinkButton: Button = findViewById(R.id.loginLinkButton)
 
         registerButton.setOnClickListener {
+            val name = usernameEditText.text.toString().trim()
             val email = emailEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
             val confirmPassword = confirmPasswordEditText.text.toString().trim()
 
-            if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -42,13 +47,24 @@ class RegisterActivity : AppCompatActivity() {
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Toast.makeText(this, "Registration successful.", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                        val userId = auth.currentUser!!.uid
+                        val user = hashMapOf(
+                            "name" to name,
+                            "email" to email
+                        )
+
+                        db.collection("users").document(userId)
+                            .set(user)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Registration successful.", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(this, MainActivity::class.java)
+                                startActivity(intent)
+                                finish()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(this, "Error saving user data: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
                     } else {
-                        // If sign in fails, display a message to the user.
                         Toast.makeText(baseContext, "Authentication failed: ${task.exception?.message}",
                             Toast.LENGTH_SHORT).show()
                     }
