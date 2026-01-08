@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
@@ -74,16 +75,32 @@ class PostsActivity : AppCompatActivity() {
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
+                    Log.e("PostsActivity", "Listen failed.", e)
                     Toast.makeText(this, "Error loading posts", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
-                postsList.clear()
-                snapshots?.forEach { doc ->
-                    val post = doc.toObject(Post::class.java).copy(id = doc.id)
-                    postsList.add(post)
+                if (snapshots != null) {
+                    postsList.clear()
+                    Log.d("PostsActivity", "Found ${snapshots.size()} documents")
+                    for (doc in snapshots) {
+                        try {
+                            val post = Post(
+                                id = doc.id,
+                                userId = doc.getString("userId") ?: "",
+                                userName = doc.getString("userName") ?: "Unknown",
+                                userProfilePicture = doc.getString("userProfilePicture") ?: "",
+                                content = doc.getString("content") ?: "",
+                                imageUrl = doc.getString("imageUrl"),
+                                timestamp = doc.getTimestamp("timestamp")
+                            )
+                            postsList.add(post)
+                        } catch (ex: Exception) {
+                            Log.e("PostsActivity", "Error parsing post", ex)
+                        }
+                    }
+                    adapter.notifyDataSetChanged()
                 }
-                adapter.notifyDataSetChanged()
             }
     }
 

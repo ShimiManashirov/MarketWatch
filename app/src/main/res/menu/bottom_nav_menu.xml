@@ -12,6 +12,11 @@
         android:title="Search" />
 
     <item
+        android:id="@+id/navigation_wallet"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Wallet" />
+
+    <item
         android:id="@+id/navigation_portfolio"
         android:icon="@android:drawable/ic_menu_gallery"
         android:title="Portfolio" />

@@ -43,6 +43,9 @@
         <activity
             android:name=".UserPostsActivity"
             android:exported="false" />
+        <activity
+            android:name=".StockDetailsActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

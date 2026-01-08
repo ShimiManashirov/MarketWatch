@@ -29,6 +29,10 @@ class MainActivity : AppCompatActivity() {
                 loadFragment(SearchFragment())
                 return@OnNavigationItemSelectedListener true
             }
+            R.id.navigation_wallet -> {
+                loadFragment(WalletFragment())
+                return@OnNavigationItemSelectedListener true
+            }
             R.id.navigation_portfolio -> {
                 loadFragment(PortfolioFragment())
                 return@OnNavigationItemSelectedListener true
