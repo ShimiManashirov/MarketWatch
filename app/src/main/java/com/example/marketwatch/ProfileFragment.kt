@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.TimeZone
 
 class ProfileFragment : Fragment() {
 
@@ -30,6 +31,8 @@ class ProfileFragment : Fragment() {
     private lateinit var profileImageView: ImageView
     private lateinit var nameTextView: TextView
     private lateinit var emailTextView: TextView
+    private lateinit var currencyTextView: TextView
+    private lateinit var timezoneTextView: TextView
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -59,9 +62,14 @@ class ProfileFragment : Fragment() {
         profileImageView = view.findViewById(R.id.profileImageView)
         nameTextView = view.findViewById(R.id.profileNameTextView)
         emailTextView = view.findViewById(R.id.profileEmailTextView)
+        currencyTextView = view.findViewById(R.id.profileCurrencyTextView)
+        timezoneTextView = view.findViewById(R.id.profileTimezoneTextView)
+        
         val changePictureButton: Button = view.findViewById(R.id.changePictureButton)
         val changeNameButton: Button = view.findViewById(R.id.changeNameButton)
         val changePasswordButton: Button = view.findViewById(R.id.changePasswordButton)
+        val setCurrencyButton: Button = view.findViewById(R.id.setCurrencyButton)
+        val setTimezoneButton: Button = view.findViewById(R.id.setTimezoneButton)
         val deleteAccountButton: Button = view.findViewById(R.id.deleteAccountButton)
 
         loadUserProfile()
@@ -76,6 +84,8 @@ class ProfileFragment : Fragment() {
 
         changeNameButton.setOnClickListener { showChangeNameDialog() }
         changePasswordButton.setOnClickListener { showChangePasswordDialog() }
+        setCurrencyButton.setOnClickListener { showCurrencySelectionDialog() }
+        setTimezoneButton.setOnClickListener { showTimezoneSelectionDialog() }
         deleteAccountButton.setOnClickListener { showDeleteAccountConfirmationDialog() }
 
         return view
@@ -89,6 +99,13 @@ class ProfileFragment : Fragment() {
         db.collection("users").document(userId).get().addOnSuccessListener { document ->
             if (isAdded && document != null && document.exists()) {
                 nameTextView.text = document.getString("name") ?: "N/A"
+                
+                val currency = document.getString("currency") ?: "USD"
+                currencyTextView.text = "Currency: $currency"
+                
+                val timezone = document.getString("timezone") ?: TimeZone.getDefault().id
+                timezoneTextView.text = "Timezone: $timezone"
+                
                 val profilePictureUrl = document.getString("profilePictureUrl")
                 
                 try {
@@ -121,6 +138,80 @@ class ProfileFragment : Fragment() {
                     .into(profileImageView)
             }
         }
+    }
+
+    private fun showCurrencySelectionDialog() {
+        if (!isAdded) return
+        val currencies = arrayOf("USD ($)", "EUR (€)", "ILS (₪)", "GBP (£)", "JPY (¥)")
+        val currencyCodes = arrayOf("USD", "EUR", "ILS", "GBP", "JPY")
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Currency")
+            .setItems(currencies) { _, which ->
+                val selectedCode = currencyCodes[which]
+                saveCurrency(selectedCode)
+            }
+            .show()
+    }
+
+    private fun saveCurrency(currencyCode: String) {
+        val userId = auth.currentUser?.uid ?: return
+        db.collection("users").document(userId)
+            .update("currency", currencyCode)
+            .addOnSuccessListener {
+                if (isAdded) {
+                    currencyTextView.text = "Currency: $currencyCode"
+                    Toast.makeText(context, "Currency updated to $currencyCode", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                if (isAdded) Toast.makeText(context, "Failed to update currency", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun showTimezoneSelectionDialog() {
+        if (!isAdded) return
+        
+        // Common timezones for selection
+        val timezones = arrayOf(
+            "UTC",
+            "Israel (GMT+2/3)",
+            "London (GMT+0/1)",
+            "New York (EST/EDT)",
+            "Tokyo (JST)",
+            "Dubai (GST)"
+        )
+        val timezoneIds = arrayOf(
+            "UTC",
+            "Asia/Jerusalem",
+            "Europe/London",
+            "America/New_York",
+            "Asia/Tokyo",
+            "Asia/Dubai"
+        )
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Timezone")
+            .setItems(timezones) { _, which ->
+                val selectedId = timezoneIds[which]
+                saveTimezone(selectedId)
+            }
+            .show()
+    }
+
+    private fun saveTimezone(timezoneId: String) {
+        val userId = auth.currentUser?.uid ?: return
+        db.collection("users").document(userId)
+            .update("timezone", timezoneId)
+            .addOnSuccessListener {
+                if (isAdded) {
+                    timezoneTextView.text = "Timezone: $timezoneId"
+                    Toast.makeText(context, "Timezone updated to $timezoneId", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener {
+                if (isAdded) Toast.makeText(context, "Failed to update timezone", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun saveProfilePictureUri(uri: Uri) {
