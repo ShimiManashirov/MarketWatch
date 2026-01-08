@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -74,7 +75,7 @@ class ProfileFragment : Fragment() {
         }
 
         changeNameButton.setOnClickListener { showChangeNameDialog() }
-        changePasswordButton.setOnClickListener { sendPasswordResetEmail() }
+        changePasswordButton.setOnClickListener { showChangePasswordDialog() }
         deleteAccountButton.setOnClickListener { showDeleteAccountConfirmationDialog() }
 
         return view
@@ -141,7 +142,11 @@ class ProfileFragment : Fragment() {
 
     private fun showChangeNameDialog() {
         if(!isAdded) return
-        val editText = EditText(context).apply { hint = nameTextView.text }
+        val currentName = nameTextView.text.toString()
+        val editText = EditText(context).apply { 
+            setText(if (currentName != "N/A") currentName else "")
+            setSelection(text.length)
+        }
         AlertDialog.Builder(requireContext())
             .setTitle("Change Name")
             .setView(editText)
@@ -163,19 +168,80 @@ class ProfileFragment : Fragment() {
             .show()
     }
 
-    private fun sendPasswordResetEmail() {
-        val email = auth.currentUser?.email ?: return
-        auth.sendPasswordResetEmail(email)
-            .addOnSuccessListener { 
-                if (isAdded) {
-                    Toast.makeText(context, "Password reset email sent to $email", Toast.LENGTH_LONG).show() 
+    private fun showChangePasswordDialog() {
+        if (!isAdded) return
+        
+        val context = requireContext()
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 40, 50, 10)
+        }
+
+        val currentPasswordET = EditText(context).apply {
+            hint = "Current Password"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val newPasswordET = EditText(context).apply {
+            hint = "New Password"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+        val confirmPasswordET = EditText(context).apply {
+            hint = "Confirm New Password"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+        }
+
+        layout.addView(currentPasswordET)
+        layout.addView(newPasswordET)
+        layout.addView(confirmPasswordET)
+
+        AlertDialog.Builder(context)
+            .setTitle("Change Password")
+            .setView(layout)
+            .setPositiveButton("Update") { _, _ ->
+                val currentPwd = currentPasswordET.text.toString()
+                val newPwd = newPasswordET.text.toString()
+                val confirmPwd = confirmPasswordET.text.toString()
+
+                if (currentPwd.isEmpty() || newPwd.isEmpty() || confirmPwd.isEmpty()) {
+                    Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
                 }
-            }
-            .addOnFailureListener { 
-                if (isAdded) {
-                    Toast.makeText(context, "Failed to send reset email", Toast.LENGTH_SHORT).show() 
+
+                if (newPwd != confirmPwd) {
+                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
                 }
+
+                if (newPwd.length < 6) {
+                    Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                reauthenticateAndChangePassword(currentPwd, newPwd)
             }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun reauthenticateAndChangePassword(currentPwd: String, newPwd: String) {
+        val user = auth.currentUser ?: return
+        val credential = EmailAuthProvider.getCredential(user.email!!, currentPwd)
+
+        user.reauthenticate(credential).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                user.updatePassword(newPwd).addOnCompleteListener { updateTask ->
+                    if (isAdded) {
+                        if (updateTask.isSuccessful) {
+                            Toast.makeText(context, "Password updated successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Error: ${updateTask.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } else {
+                if (isAdded) Toast.makeText(context, "Current password incorrect", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showDeleteAccountConfirmationDialog() {
