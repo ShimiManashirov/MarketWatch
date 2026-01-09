@@ -17,7 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -61,7 +61,7 @@ class FeedFragment : Fragment() {
         )
         recyclerView.adapter = adapter
 
-        view.findViewById<FloatingActionButton>(R.id.fabAddPost).setOnClickListener {
+        view.findViewById<ExtendedFloatingActionButton>(R.id.fabAddPost).setOnClickListener {
             showCreatePostDialog()
         }
 
