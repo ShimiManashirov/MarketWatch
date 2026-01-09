@@ -2,17 +2,32 @@ package com.example.marketwatch
 
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.google.android.material.button.MaterialButton
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.*
 
 class StockDetailsActivity : AppCompatActivity() {
 
@@ -21,7 +36,13 @@ class StockDetailsActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var favoriteStarButton: ImageButton
+    private lateinit var tvOwnedShares: TextView
+    private lateinit var sellButton: MaterialButton
+    private lateinit var stockLogo: ImageView
+    private lateinit var newsRecyclerView: RecyclerView
     private var isFavorite = false
+    private var currentPrice: Double = 0.0
+    private var ownedQuantity: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +54,13 @@ class StockDetailsActivity : AppCompatActivity() {
         symbol = intent.getStringExtra("symbol") ?: ""
         description = intent.getStringExtra("description") ?: ""
 
-        favoriteStarButton = findViewById(R.id.favoriteStarButton)
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
+        favoriteStarButton = findViewById(R.id.favoriteStarButton)
+        tvOwnedShares = findViewById(R.id.tvOwnedShares)
+        sellButton = findViewById(R.id.sellStockButton)
+        stockLogo = findViewById(R.id.ivStockLogo)
+        newsRecyclerView = findViewById(R.id.rvStockNews)
+        val buyButton = findViewById<MaterialButton>(R.id.buyStockButton)
         
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
@@ -43,23 +69,24 @@ class StockDetailsActivity : AppCompatActivity() {
             title = symbol
         }
 
-        toolbar.setNavigationOnClickListener {
-            finish()
-        }
+        toolbar.setNavigationOnClickListener { finish() }
 
         findViewById<TextView>(R.id.detailsSymbol).text = symbol
         findViewById<TextView>(R.id.detailsDescription).text = description
 
-        checkIfInWatchlist()
+        newsRecyclerView.layoutManager = LinearLayoutManager(this)
+
+        checkWatchlistAndOwnership()
         fetchStockDetails()
+        fetchCompanyProfile()
+        fetchStockNews()
 
         favoriteStarButton.setOnClickListener {
-            if (!isFavorite) {
-                addToWatchlist()
-            } else {
-                removeFromWatchlist()
-            }
+            toggleFavorite()
         }
+
+        buyButton.setOnClickListener { showTradeDialog(true) }
+        sellButton.setOnClickListener { showTradeDialog(false) }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -67,29 +94,66 @@ class StockDetailsActivity : AppCompatActivity() {
         return true
     }
 
-    private fun checkIfInWatchlist() {
+    private fun checkWatchlistAndOwnership() {
         val user = auth.currentUser ?: return
-        val userId = user.uid
-        
-        db.collection("users").document(userId)
+        db.collection("users").document(user.uid)
             .collection("watchlist").document(symbol)
-            .get()
-            .addOnSuccessListener { document ->
-                setFavoriteState(document != null && document.exists())
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) return@addSnapshotListener
+                if (snapshot != null && snapshot.exists()) {
+                    isFavorite = snapshot.getBoolean("isFavorite") ?: false
+                    ownedQuantity = snapshot.getDouble("quantity") ?: 0.0
+                } else {
+                    isFavorite = false
+                    ownedQuantity = 0.0
+                }
+                setFavoriteState(isFavorite)
+                updateOwnershipUI()
             }
-            .addOnFailureListener { e ->
-                Log.e("StockDetails", "Error checking watchlist", e)
+    }
+
+    private fun updateOwnershipUI() {
+        runOnUiThread {
+            if (ownedQuantity > 0) {
+                tvOwnedShares.visibility = View.VISIBLE
+                tvOwnedShares.text = "You own: ${String.format("%.2f", ownedQuantity)} shares"
+                sellButton.visibility = View.VISIBLE
+            } else {
+                tvOwnedShares.visibility = View.GONE
+                sellButton.visibility = View.GONE
             }
+        }
     }
 
     private fun setFavoriteState(favorite: Boolean) {
         isFavorite = favorite
         runOnUiThread {
-            if (favorite) {
-                favoriteStarButton.setImageResource(android.R.drawable.star_big_on)
-            } else {
-                favoriteStarButton.setImageResource(android.R.drawable.star_big_off)
-            }
+            favoriteStarButton.setImageResource(
+                if (favorite) android.R.drawable.star_big_on else android.R.drawable.star_big_off
+            )
+        }
+    }
+
+    private fun toggleFavorite() {
+        val user = auth.currentUser ?: return
+        val newState = !isFavorite
+        
+        if (!newState && ownedQuantity <= 0) {
+            db.collection("users").document(user.uid)
+                .collection("watchlist").document(symbol)
+                .delete()
+                .addOnSuccessListener {
+                    setFavoriteState(false)
+                    Toast.makeText(this, "Removed from favorites", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            db.collection("users").document(user.uid)
+                .collection("watchlist").document(symbol)
+                .set(hashMapOf("isFavorite" to newState, "symbol" to symbol, "description" to description), SetOptions.merge())
+                .addOnSuccessListener {
+                    setFavoriteState(newState)
+                    Toast.makeText(this, if (newState) "Added to favorites" else "Removed from favorites", Toast.LENGTH_SHORT).show()
+                }
         }
     }
 
@@ -98,15 +162,54 @@ class StockDetailsActivity : AppCompatActivity() {
             .enqueue(object : Callback<StockQuote> {
                 override fun onResponse(call: Call<StockQuote>, response: Response<StockQuote>) {
                     if (response.isSuccessful) {
-                        val quote = response.body()
-                        if (quote != null) {
-                            updateUI(quote)
+                        response.body()?.let { 
+                            currentPrice = it.currentPrice
+                            updateUI(it) 
                         }
                     }
                 }
-
                 override fun onFailure(call: Call<StockQuote>, t: Throwable) {
-                    Toast.makeText(this@StockDetailsActivity, "Failed to load data", Toast.LENGTH_SHORT).show()
+                    Log.e("StockDetails", "API Error", t)
+                }
+            })
+    }
+
+    private fun fetchCompanyProfile() {
+        FinnhubApiClient.apiService.getCompanyProfile(symbol, FinnhubApiClient.API_KEY)
+            .enqueue(object : Callback<CompanyProfile> {
+                override fun onResponse(call: Call<CompanyProfile>, response: Response<CompanyProfile>) {
+                    if (response.isSuccessful) {
+                        response.body()?.let {
+                            runOnUiThread {
+                                Glide.with(this@StockDetailsActivity)
+                                    .load(it.logo)
+                                    .placeholder(android.R.drawable.ic_menu_gallery)
+                                    .into(stockLogo)
+                            }
+                        }
+                    }
+                }
+                override fun onFailure(call: Call<CompanyProfile>, t: Throwable) {}
+            })
+    }
+
+    private fun fetchStockNews() {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val to = sdf.format(Date())
+        val from = sdf.format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
+
+        FinnhubApiClient.apiService.getStockNews(symbol, from, to, FinnhubApiClient.API_KEY)
+            .enqueue(object : Callback<List<StockNews>> {
+                override fun onResponse(call: Call<List<StockNews>>, response: Response<List<StockNews>>) {
+                    if (response.isSuccessful) {
+                        val news = response.body() ?: emptyList()
+                        runOnUiThread {
+                            newsRecyclerView.adapter = NewsAdapter(news.take(5))
+                        }
+                    }
+                }
+                override fun onFailure(call: Call<List<StockNews>>, t: Throwable) {
+                    Log.e("StockDetails", "News fetch failed", t)
                 }
             })
     }
@@ -114,17 +217,9 @@ class StockDetailsActivity : AppCompatActivity() {
     private fun updateUI(quote: StockQuote) {
         runOnUiThread {
             findViewById<TextView>(R.id.detailsPrice).text = "$${String.format("%.2f", quote.currentPrice)}"
-            
-            val changeText = "${String.format("%.2f", quote.change)} (${String.format("%.2f", quote.percentChange)}%)"
             val changeView = findViewById<TextView>(R.id.detailsChange)
-            changeView.text = changeText
-            
-            if (quote.change >= 0) {
-                changeView.setTextColor(Color.parseColor("#4CAF50"))
-            } else {
-                changeView.setTextColor(Color.parseColor("#F44336"))
-            }
-
+            changeView.text = "${String.format("%.2f", quote.change)} (${String.format("%.2f", quote.percentChange)}%)"
+            changeView.setTextColor(if (quote.change >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
             findViewById<TextView>(R.id.detailsHigh).text = "$${quote.highPrice}"
             findViewById<TextView>(R.id.detailsLow).text = "$${quote.lowPrice}"
             findViewById<TextView>(R.id.detailsOpen).text = "$${quote.openPrice}"
@@ -132,41 +227,100 @@ class StockDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun addToWatchlist() {
-        val user = auth.currentUser ?: return
-        val userId = user.uid
+    private fun showTradeDialog(isBuy: Boolean) {
+        val userId = auth.currentUser?.uid ?: return
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_buy_stock, null)
         
-        val stockData = hashMapOf(
-            "symbol" to symbol,
-            "description" to description,
-            "addedAt" to com.google.firebase.Timestamp.now()
-        )
+        val tvTitle = dialogView.findViewById<TextView>(R.id.dialogBuySymbol)
+        val tvPrice = dialogView.findViewById<TextView>(R.id.dialogCurrentPrice)
+        val etQuantity = dialogView.findViewById<EditText>(R.id.etQuantity)
+        val tvTotal = dialogView.findViewById<TextView>(R.id.tvTotalCost)
+        val tvBalance = dialogView.findViewById<TextView>(R.id.tvWalletBalance)
 
-        db.collection("users").document(userId)
-            .collection("watchlist").document(symbol)
-            .set(stockData)
-            .addOnSuccessListener {
-                setFavoriteState(true)
-                Toast.makeText(this, "$symbol added to favorites", Toast.LENGTH_SHORT).show()
+        tvTitle.text = if (isBuy) "Buy $symbol" else "Sell $symbol"
+        tvPrice.text = "Market Price: $${String.format("%.2f", currentPrice)}"
+        
+        if (isBuy) {
+            db.collection("users").document(userId).get().addOnSuccessListener { doc ->
+                val balance = doc.getDouble("balance") ?: 0.0
+                tvBalance.text = "Wallet: $${String.format("%.2f", balance)}"
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        } else {
+            tvBalance.text = "Available: ${String.format("%.2f", ownedQuantity)} shares"
+        }
+
+        etQuantity.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val qty = s.toString().toDoubleOrNull() ?: 0.0
+                tvTotal.text = "$${String.format("%.2f", qty * currentPrice)}"
             }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        AlertDialog.Builder(this)
+            .setTitle(if (isBuy) "Confirm Trade" else "Confirm Sale")
+            .setView(dialogView)
+            .setPositiveButton(if (isBuy) "Buy" else "Sell") { _, _ ->
+                val qty = etQuantity.text.toString().toDoubleOrNull() ?: 0.0
+                if (qty > 0) {
+                    if (isBuy) executeTrade(qty, true) 
+                    else if (qty <= ownedQuantity) executeTrade(qty, false)
+                    else Toast.makeText(this, "Not enough shares", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
-    private fun removeFromWatchlist() {
-        val user = auth.currentUser ?: return
-        val userId = user.uid
-        
-        db.collection("users").document(userId)
-            .collection("watchlist").document(symbol)
-            .delete()
-            .addOnSuccessListener {
-                setFavoriteState(false)
-                Toast.makeText(this, "$symbol removed from favorites", Toast.LENGTH_SHORT).show()
+    private fun executeTrade(quantity: Double, isBuy: Boolean) {
+        val userId = auth.currentUser?.uid ?: return
+        val userRef = db.collection("users").document(userId)
+        val totalAmount = quantity * currentPrice
+
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            val currentBalance = snapshot.getDouble("balance") ?: 0.0
+            
+            val watchlistRef = userRef.collection("watchlist").document(symbol)
+            val currentStockDoc = transaction.get(watchlistRef)
+            val currentStockQty = currentStockDoc.getDouble("quantity") ?: 0.0
+
+            if (isBuy) {
+                if (currentBalance < totalAmount) throw Exception("Insufficient funds")
+                transaction.update(userRef, "balance", currentBalance - totalAmount)
+                transaction.set(watchlistRef, hashMapOf(
+                    "symbol" to symbol,
+                    "description" to description,
+                    "quantity" to currentStockQty + quantity,
+                    "isFavorite" to isFavorite,
+                    "lastTradeAt" to Timestamp.now()
+                ), SetOptions.merge())
+            } else {
+                if (currentStockQty < quantity) throw Exception("Insufficient shares")
+                transaction.update(userRef, "balance", currentBalance + totalAmount)
+                val newQty = currentStockQty - quantity
+                
+                if (newQty <= 0 && !isFavorite) {
+                    transaction.delete(watchlistRef)
+                } else {
+                    transaction.update(watchlistRef, "quantity", newQty)
+                }
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+
+            val transactionRef = userRef.collection("transactions").document()
+            transaction.set(transactionRef, hashMapOf(
+                "type" to if (isBuy) "BUY" else "SELL",
+                "symbol" to symbol,
+                "amount" to totalAmount,
+                "quantity" to quantity,
+                "timestamp" to Timestamp.now()
+            ))
+
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Trade successful!", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener { e ->
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 }

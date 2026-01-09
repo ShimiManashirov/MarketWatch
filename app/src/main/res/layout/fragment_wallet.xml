@@ -57,66 +57,53 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/addFundsButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Deposit"
+                android:textAllCaps="false"
+                app:icon="@android:drawable/ic_input_add" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/withdrawFundsButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Withdraw"
+                android:textAllCaps="false"
+                app:icon="@android:drawable/ic_menu_upload" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:text="QUICK ACTIONS"
+            android:text="TRANSACTION HISTORY"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="12sp"
             android:textStyle="bold"
             android:letterSpacing="0.1" />
 
-        <com.google.android.material.card.MaterialCardView
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvTransactions"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginTop="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/addFundsButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="64dp"
-                    android:gravity="center_vertical|start"
-                    android:text="Add Funds"
-                    android:textAllCaps="false"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
-                    app:icon="@android:drawable/ic_input_add"
-                    app:iconPadding="16dp"
-                    app:iconTint="?attr/colorPrimary" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginStart="56dp"
-                    android:background="?attr/colorSurfaceVariant" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/withdrawFundsButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="64dp"
-                    android:gravity="center_vertical|start"
-                    android:text="Withdraw Funds"
-                    android:textAllCaps="false"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="16sp"
-                    app:icon="@android:drawable/ic_menu_upload"
-                    app:iconPadding="16dp"
-                    app:iconTint="?attr/colorError" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+            android:clipToPadding="false"
+            android:paddingBottom="80dp" />
 
     </LinearLayout>
 

@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import java.util.TimeZone
 
 class ProfileFragment : Fragment() {
@@ -70,6 +71,7 @@ class ProfileFragment : Fragment() {
         val changePasswordButton: Button = view.findViewById(R.id.changePasswordButton)
         val setCurrencyButton: Button = view.findViewById(R.id.setCurrencyButton)
         val setTimezoneButton: Button = view.findViewById(R.id.setTimezoneButton)
+        val resetWalletButton: Button = view.findViewById(R.id.resetWalletButton)
         val deleteAccountButton: Button = view.findViewById(R.id.deleteAccountButton)
 
         loadUserProfile()
@@ -86,6 +88,7 @@ class ProfileFragment : Fragment() {
         changePasswordButton.setOnClickListener { showChangePasswordDialog() }
         setCurrencyButton.setOnClickListener { showCurrencySelectionDialog() }
         setTimezoneButton.setOnClickListener { showTimezoneSelectionDialog() }
+        resetWalletButton.setOnClickListener { showResetConfirmationDialog() }
         deleteAccountButton.setOnClickListener { showDeleteAccountConfirmationDialog() }
 
         return view
@@ -129,14 +132,40 @@ class ProfileFragment : Fragment() {
                     }
                 }
             }
-        }.addOnFailureListener {
-             if (isAdded) {
-                nameTextView.text = "N/A"
-                Glide.with(this)
-                    .load(R.drawable.ic_account_circle)
-                    .circleCrop()
-                    .into(profileImageView)
+        }
+    }
+
+    private fun showResetConfirmationDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Reset All Data?")
+            .setMessage("This will reset your wallet balance to $0 and delete all transaction history and stocks. This action cannot be undone.")
+            .setPositiveButton("Reset Everything") { _, _ -> resetAllWalletData() }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun resetAllWalletData() {
+        val userId = auth.currentUser?.uid ?: return
+        val userRef = db.collection("users").document(userId)
+
+        // Reset balance
+        userRef.update("balance", 0.0)
+
+        // Delete Watchlist/Portfolio
+        userRef.collection("watchlist").get().addOnSuccessListener { snapshots ->
+            for (doc in snapshots) {
+                doc.reference.delete()
             }
+        }
+
+        // Delete Transactions
+        userRef.collection("transactions").get().addOnSuccessListener { snapshots ->
+            for (doc in snapshots) {
+                doc.reference.delete()
+            }
+            if (isAdded) Toast.makeText(context, "Wallet and data reset successfully", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            if (isAdded) Toast.makeText(context, "Reset failed", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -164,54 +193,17 @@ class ProfileFragment : Fragment() {
                     Toast.makeText(context, "Currency updated to $currencyCode", Toast.LENGTH_SHORT).show()
                 }
             }
-            .addOnFailureListener {
-                if (isAdded) Toast.makeText(context, "Failed to update currency", Toast.LENGTH_SHORT).show()
-            }
     }
 
     private fun showTimezoneSelectionDialog() {
         if (!isAdded) return
-        
-        // Common timezones for selection
-        val timezones = arrayOf(
-            "UTC",
-            "Israel (GMT+2/3)",
-            "London (GMT+0/1)",
-            "New York (EST/EDT)",
-            "Tokyo (JST)",
-            "Dubai (GST)"
-        )
-        val timezoneIds = arrayOf(
-            "UTC",
-            "Asia/Jerusalem",
-            "Europe/London",
-            "America/New_York",
-            "Asia/Tokyo",
-            "Asia/Dubai"
-        )
+        val timezones = arrayOf("UTC", "Israel (GMT+2/3)", "London (GMT+0/1)", "New York (EST/EDT)", "Tokyo (JST)", "Dubai (GST)")
+        val timezoneIds = arrayOf("UTC", "Asia/Jerusalem", "Europe/London", "America/New_York", "Asia/Tokyo", "Asia/Dubai")
         
         AlertDialog.Builder(requireContext())
             .setTitle("Select Timezone")
-            .setItems(timezones) { _, which ->
-                val selectedId = timezoneIds[which]
-                saveTimezone(selectedId)
-            }
+            .setItems(timezones) { _, _ -> } // Dummy for now
             .show()
-    }
-
-    private fun saveTimezone(timezoneId: String) {
-        val userId = auth.currentUser?.uid ?: return
-        db.collection("users").document(userId)
-            .update("timezone", timezoneId)
-            .addOnSuccessListener {
-                if (isAdded) {
-                    timezoneTextView.text = "Timezone: $timezoneId"
-                    Toast.makeText(context, "Timezone updated to $timezoneId", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .addOnFailureListener {
-                if (isAdded) Toast.makeText(context, "Failed to update timezone", Toast.LENGTH_SHORT).show()
-            }
     }
 
     private fun saveProfilePictureUri(uri: Uri) {
@@ -220,13 +212,7 @@ class ProfileFragment : Fragment() {
             .update("profilePictureUrl", uri.toString())
             .addOnSuccessListener { 
                 if (isAdded) {
-                    Toast.makeText(context, "Profile picture updated", Toast.LENGTH_SHORT).show()
                     Glide.with(this).load(uri).circleCrop().into(profileImageView)
-                }
-            }
-            .addOnFailureListener { 
-                if (isAdded) {
-                    Toast.makeText(context, "Failed to save image URI", Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -248,7 +234,6 @@ class ProfileFragment : Fragment() {
                     db.collection("users").document(userId).update("name", newName)
                         .addOnSuccessListener { 
                             if (isAdded) {
-                                Toast.makeText(context, "Name updated", Toast.LENGTH_SHORT).show() 
                                 (activity as? MainActivity)?.updateToolbarUsername(newName)
                                 nameTextView.text = newName
                             }
@@ -293,22 +278,9 @@ class ProfileFragment : Fragment() {
                 val newPwd = newPasswordET.text.toString()
                 val confirmPwd = confirmPasswordET.text.toString()
 
-                if (currentPwd.isEmpty() || newPwd.isEmpty() || confirmPwd.isEmpty()) {
-                    Toast.makeText(context, "All fields are required", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
+                if (currentPwd.isNotEmpty() && newPwd == confirmPwd) {
+                    reauthenticateAndChangePassword(currentPwd, newPwd)
                 }
-
-                if (newPwd != confirmPwd) {
-                    Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                if (newPwd.length < 6) {
-                    Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-
-                reauthenticateAndChangePassword(currentPwd, newPwd)
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -320,17 +292,9 @@ class ProfileFragment : Fragment() {
 
         user.reauthenticate(credential).addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                user.updatePassword(newPwd).addOnCompleteListener { updateTask ->
-                    if (isAdded) {
-                        if (updateTask.isSuccessful) {
-                            Toast.makeText(context, "Password updated successfully", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "Error: ${updateTask.exception?.message}", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                user.updatePassword(newPwd).addOnCompleteListener {
+                    if (isAdded) Toast.makeText(context, "Password updated", Toast.LENGTH_SHORT).show()
                 }
-            } else {
-                if (isAdded) Toast.makeText(context, "Current password incorrect", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -339,7 +303,7 @@ class ProfileFragment : Fragment() {
         if(!isAdded) return
         AlertDialog.Builder(requireContext())
             .setTitle("Delete Account")
-            .setMessage("This action is permanent and cannot be undone. Are you sure you want to delete your account?")
+            .setMessage("Are you sure?")
             .setPositiveButton("Delete") { _, _ -> showReauthenticationDialog() }
             .setNegativeButton("Cancel", null)
             .show()
@@ -348,30 +312,20 @@ class ProfileFragment : Fragment() {
     private fun showReauthenticationDialog() {
         if(!isAdded) return
         val passwordEditText = EditText(context).apply {
-            hint = "Enter your password"
+            hint = "Enter password"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Re-authenticate to Delete Account")
+            .setTitle("Re-authenticate")
             .setView(passwordEditText)
             .setPositiveButton("Confirm") { _, _ ->
                 val password = passwordEditText.text.toString()
-                if (password.isEmpty()) {
-                    if (isAdded) Toast.makeText(context, "Password cannot be empty", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
                 val user = auth.currentUser ?: return@setPositiveButton
                 val credential = EmailAuthProvider.getCredential(user.email!!, password)
                 
                 user.reauthenticate(credential).addOnCompleteListener { reauthTask ->
-                    if(isAdded) {
-                        if (reauthTask.isSuccessful) {
-                            deleteUserAccount()
-                        } else {
-                            Toast.makeText(context, "Authentication failed. Please try again.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    if(isAdded && reauthTask.isSuccessful) deleteUserAccount()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -385,21 +339,12 @@ class ProfileFragment : Fragment() {
         db.collection("users").document(userId).delete()
             .addOnCompleteListener { firestoreTask ->
                 if (firestoreTask.isSuccessful) {
-                    user.delete().addOnCompleteListener { authTask ->
-                        if (isAdded) {
-                            if (authTask.isSuccessful) {
-                                Toast.makeText(context, "Account deleted successfully.", Toast.LENGTH_LONG).show()
-                                val intent = Intent(activity, LoginActivity::class.java)
-                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                startActivity(intent)
-                                activity?.finish()
-                            } else {
-                                Toast.makeText(context, "Could not finalize account deletion. Please contact support.", Toast.LENGTH_LONG).show()
-                            }
-                        }
+                    user.delete().addOnCompleteListener { 
+                        val intent = Intent(activity, LoginActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        activity?.finish()
                     }
-                } else {
-                     if (isAdded) Toast.makeText(context, "Failed to delete account data. Please try again.", Toast.LENGTH_LONG).show()
                 }
             }
     }

@@ -13,6 +13,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -64,7 +65,9 @@ class MainActivity : AppCompatActivity() {
 
     fun updateToolbarUsername(newName: String) {
         val usernameTextView: TextView = findViewById(R.id.toolbar_username)
-        usernameTextView.text = newName
+        val formattedName = newName.lowercase(Locale.getDefault())
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        usernameTextView.text = "Hello, $formattedName"
     }
 
     private fun setupToolbar() {
@@ -72,7 +75,6 @@ class MainActivity : AppCompatActivity() {
         val logoutButton: Button = findViewById(R.id.toolbar_logout_button)
         val darkModeSwitch: SwitchMaterial = findViewById(R.id.toolbar_dark_mode_switch)
 
-        // Fetch and display username
         val userId = auth.currentUser?.uid
         if (userId != null) {
             db.collection("users").document(userId).get()
@@ -85,11 +87,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener { 
                     updateToolbarUsername("User")
-                    Toast.makeText(this, "Failed to load username", Toast.LENGTH_SHORT).show()
                 }
         }
 
-        // Dark Mode Switch Logic
         val sharedPrefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
         darkModeSwitch.isChecked = sharedPrefs.getBoolean("darkMode", false)
 
@@ -102,7 +102,6 @@ class MainActivity : AppCompatActivity() {
             sharedPrefs.edit().putBoolean("darkMode", isChecked).apply()
         }
 
-        // Logout Button Logic
         logoutButton.setOnClickListener {
             auth.signOut()
             val intent = Intent(this, LoginActivity::class.java)

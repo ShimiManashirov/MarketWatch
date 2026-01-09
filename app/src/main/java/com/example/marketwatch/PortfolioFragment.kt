@@ -68,7 +68,6 @@ class PortfolioFragment : Fragment() {
                 snapshots?.forEach { doc ->
                     try {
                         val item = doc.toObject(PortfolioItem::class.java)
-                        // Filter out empty or corrupted items
                         if (item.symbol.isNotBlank()) {
                             portfolioList.add(item)
                         }
@@ -85,7 +84,7 @@ class PortfolioFragment : Fragment() {
     private fun showDeleteDialog(item: PortfolioItem) {
         AlertDialog.Builder(requireContext())
             .setTitle("Remove Stock")
-            .setMessage("Are you sure you want to remove ${item.symbol} from your watchlist?")
+            .setMessage("Are you sure you want to remove ${item.symbol} from your favorites?")
             .setPositiveButton("Remove") { _, _ ->
                 val userId = auth.currentUser?.uid ?: return@setPositiveButton
                 db.collection("users").document(userId)

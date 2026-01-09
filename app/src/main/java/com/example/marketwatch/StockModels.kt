@@ -23,3 +23,22 @@ data class StockQuote(
     @SerializedName("o") val openPrice: Double,
     @SerializedName("pc") val previousClose: Double
 )
+
+data class CompanyProfile(
+    @SerializedName("logo") val logo: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("ticker") val ticker: String,
+    @SerializedName("weburl") val weburl: String
+)
+
+data class StockNews(
+    @SerializedName("id") val id: Long,
+    @SerializedName("category") val category: String,
+    @SerializedName("datetime") val datetime: Long,
+    @SerializedName("headline") val headline: String,
+    @SerializedName("image") val image: String,
+    @SerializedName("related") val symbol: String,
+    @SerializedName("source") val source: String,
+    @SerializedName("summary") val summary: String,
+    @SerializedName("url") val url: String
+)

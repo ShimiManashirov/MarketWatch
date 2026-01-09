@@ -16,4 +16,18 @@ interface FinnhubApiService {
         @Query("symbol") symbol: String,
         @Query("token") apiKey: String
     ): Call<StockQuote>
+
+    @GET("stock/profile2")
+    fun getCompanyProfile(
+        @Query("symbol") symbol: String,
+        @Query("token") apiKey: String
+    ): Call<CompanyProfile>
+
+    @GET("company-news")
+    fun getStockNews(
+        @Query("symbol") symbol: String,
+        @Query("from") from: String, // YYYY-MM-DD
+        @Query("to") to: String,     // YYYY-MM-DD
+        @Query("token") apiKey: String
+    ): Call<List<StockNews>>
 }

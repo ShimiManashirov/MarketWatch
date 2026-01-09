@@ -107,6 +107,7 @@
                     android:textAllCaps="false"
                     android:textColor="?attr/colorOnSurface"
                     app:icon="@drawable/ic_account_circle"
+                    app:iconGravity="textStart"
                     app:iconPadding="16dp"
                     app:iconTint="?attr/colorOnSurfaceVariant" />
 
@@ -127,6 +128,7 @@
                     android:textAllCaps="false"
                     android:textColor="?attr/colorOnSurface"
                     app:icon="@android:drawable/ic_lock_lock"
+                    app:iconGravity="textStart"
                     app:iconPadding="16dp"
                     app:iconTint="?attr/colorOnSurfaceVariant" />
 
@@ -174,6 +176,7 @@
                         android:textAllCaps="false"
                         android:textColor="?attr/colorOnSurface"
                         app:icon="@android:drawable/ic_menu_today"
+                        app:iconGravity="textStart"
                         app:iconPadding="16dp"
                         app:iconTint="?attr/colorOnSurfaceVariant" />
                     
@@ -211,6 +214,7 @@
                         android:textAllCaps="false"
                         android:textColor="?attr/colorOnSurface"
                         app:icon="@android:drawable/ic_menu_recent_history"
+                        app:iconGravity="textStart"
                         app:iconPadding="16dp"
                         app:iconTint="?attr/colorOnSurfaceVariant" />
 
@@ -225,6 +229,27 @@
                         android:textColor="?attr/colorPrimary"
                         android:textSize="12sp" />
                 </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="56dp"
+                    android:background="?attr/colorSurfaceVariant" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/resetWalletButton"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:gravity="center_vertical|start"
+                    android:paddingStart="16dp"
+                    android:text="Reset Wallet &amp; Data"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorOnSurface"
+                    app:icon="@android:drawable/ic_menu_rotate"
+                    app:iconGravity="textStart"
+                    app:iconPadding="16dp"
+                    app:iconTint="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -259,6 +284,7 @@
                 android:textAllCaps="false"
                 android:textColor="?attr/colorError"
                 app:icon="@android:drawable/ic_menu_delete"
+                app:iconGravity="textStart"
                 app:iconPadding="16dp"
                 app:iconTint="?attr/colorError" />
         </com.google.android.material.card.MaterialCardView>

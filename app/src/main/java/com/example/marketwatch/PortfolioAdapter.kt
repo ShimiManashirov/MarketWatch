@@ -13,7 +13,9 @@ import retrofit2.Response
 
 data class PortfolioItem(
     val symbol: String = "",
-    val description: String = ""
+    val description: String = "",
+    val quantity: Double = 0.0,
+    val isFavorite: Boolean = false
 )
 
 class PortfolioAdapter(
@@ -36,16 +38,13 @@ class PortfolioAdapter(
     override fun onBindViewHolder(holder: PortfolioViewHolder, position: Int) {
         val item = items[position]
         
-        // Ensure symbol is valid
-        if (item.symbol.isBlank()) {
-            holder.itemView.visibility = View.GONE
-            return
-        } else {
-            holder.itemView.visibility = View.VISIBLE
-        }
-
         holder.symbol.text = item.symbol
-        holder.description.text = item.description
+        // Show quantity in description if owned
+        holder.description.text = if (item.quantity > 0) {
+            "${String.format("%.2f", item.quantity)} Shares • ${item.description}"
+        } else {
+            "Watching • ${item.description}"
+        }
         
         holder.itemView.setOnClickListener {
             val intent = Intent(holder.itemView.context, StockDetailsActivity::class.java)
@@ -59,7 +58,6 @@ class PortfolioAdapter(
             true
         }
 
-        // Fetch real-time price
         FinnhubApiClient.apiService.getQuote(item.symbol, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<StockQuote> {
                 override fun onResponse(call: Call<StockQuote>, response: Response<StockQuote>) {
