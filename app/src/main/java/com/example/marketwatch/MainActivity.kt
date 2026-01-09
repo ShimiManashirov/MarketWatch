@@ -5,10 +5,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
@@ -21,29 +21,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
 
     private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.navigation_feed -> {
-                loadFragment(FeedFragment())
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_search -> {
-                loadFragment(SearchFragment())
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_wallet -> {
-                loadFragment(WalletFragment())
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_portfolio -> {
-                loadFragment(PortfolioFragment())
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_profile -> {
-                loadFragment(ProfileFragment())
-                return@OnNavigationItemSelectedListener true
-            }
+        val selectedFragment: Fragment = when (item.itemId) {
+            R.id.navigation_feed -> FeedFragment()
+            R.id.navigation_search -> SearchFragment()
+            R.id.navigation_wallet -> WalletFragment()
+            R.id.navigation_portfolio -> PortfolioFragment()
+            R.id.navigation_profile -> ProfileFragment()
+            else -> return@OnNavigationItemSelectedListener false
         }
-        false
+        
+        loadFragment(selectedFragment)
+        true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
 
         if (savedInstanceState == null) {
-            loadFragment(FeedFragment())
+            loadFragment(FeedFragment(), false)
         }
     }
 
@@ -110,9 +98,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .commit()
+    private fun loadFragment(fragment: Fragment, animate: Boolean = true) {
+        val transaction = supportFragmentManager.beginTransaction()
+        
+        if (animate) {
+            transaction.setCustomAnimations(
+                android.R.anim.fade_in,
+                android.R.anim.fade_out,
+                android.R.anim.fade_in,
+                android.R.anim.fade_out
+            )
+        }
+        
+        transaction.replace(R.id.fragment_container, fragment)
+        transaction.commit()
     }
 }

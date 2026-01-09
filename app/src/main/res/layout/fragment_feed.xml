@@ -13,7 +13,8 @@
         android:layout_height="match_parent"
         android:paddingTop="8dp"
         android:paddingBottom="88dp"
-        android:clipToPadding="false"/>
+        android:clipToPadding="false"
+        android:layoutAnimation="@anim/layout_animation_fall_down" />
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabAddPost"
