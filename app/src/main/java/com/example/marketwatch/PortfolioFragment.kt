@@ -55,6 +55,7 @@ class PortfolioFragment : Fragment() {
 
         db.collection("users").document(userId)
             .collection("watchlist")
+            .whereEqualTo("isFavorite", true)
             .addSnapshotListener { snapshots, e ->
                 if (!isAdded) return@addSnapshotListener
                 progressBar.visibility = View.GONE
@@ -77,21 +78,25 @@ class PortfolioFragment : Fragment() {
                 }
 
                 adapter.updateData(portfolioList)
+                emptyText.text = "Your favorites list is empty"
                 emptyText.visibility = if (portfolioList.isEmpty()) View.VISIBLE else View.GONE
             }
     }
 
     private fun showDeleteDialog(item: PortfolioItem) {
         AlertDialog.Builder(requireContext())
-            .setTitle("Remove Stock")
-            .setMessage("Are you sure you want to remove ${item.symbol} from your favorites?")
+            .setTitle("Remove from Favorites")
+            .setMessage("Are you sure you want to remove ${item.symbol} from your favorites list?")
             .setPositiveButton("Remove") { _, _ ->
                 val userId = auth.currentUser?.uid ?: return@setPositiveButton
+                
+                // Instead of deleting the doc, just set isFavorite to false
+                // This keeps the quantity data if they own shares
                 db.collection("users").document(userId)
                     .collection("watchlist").document(item.symbol)
-                    .delete()
+                    .update("isFavorite", false)
                     .addOnSuccessListener {
-                        Toast.makeText(context, "Removed", Toast.LENGTH_SHORT).show()
+                        if (isAdded) Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
                     }
             }
             .setNegativeButton("Cancel", null)

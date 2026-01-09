@@ -65,21 +65,17 @@ class MainActivity : AppCompatActivity() {
 
     fun updateToolbarUsername(newName: String) {
         val usernameTextView: TextView = findViewById(R.id.toolbar_username)
-        val formattedName = newName.lowercase(Locale.getDefault())
+        val formattedName = newName.trim().lowercase(Locale.getDefault())
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
         usernameTextView.text = "Hello, $formattedName"
     }
 
     private fun setupToolbar() {
-        val usernameTextView: TextView = findViewById(R.id.toolbar_username)
-        val logoutButton: Button = findViewById(R.id.toolbar_logout_button)
-        val darkModeSwitch: SwitchMaterial = findViewById(R.id.toolbar_dark_mode_switch)
-
         val userId = auth.currentUser?.uid
         if (userId != null) {
             db.collection("users").document(userId).get()
                 .addOnSuccessListener { document ->
-                    if (document != null) {
+                    if (document != null && document.exists()) {
                         updateToolbarUsername(document.getString("name") ?: "User")
                     } else {
                         updateToolbarUsername("User")
@@ -89,6 +85,9 @@ class MainActivity : AppCompatActivity() {
                     updateToolbarUsername("User")
                 }
         }
+
+        val logoutButton: Button = findViewById(R.id.toolbar_logout_button)
+        val darkModeSwitch: SwitchMaterial = findViewById(R.id.toolbar_dark_mode_switch)
 
         val sharedPrefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
         darkModeSwitch.isChecked = sharedPrefs.getBoolean("darkMode", false)

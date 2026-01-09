@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Background Circle (The Watch Face) -->
+    <path
+        android:fillColor="#0D6EFD"
+        android:pathData="M50,50m-45,0a45,45 0,1 1,90 0a45,45 0,1 1,-90 0" />
+
+    <!-- Inner White Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,50m-38,0a38,38 0,1 1,76 0a38,38 0,1 1,-76 0" />
+
+    <!-- Stock Market Line Chart -->
+    <path
+        android:pathData="M25,65 L40,50 L55,60 L75,35"
+        android:strokeColor="#0D6EFD"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Arrow Head -->
+    <path
+        android:fillColor="#0D6EFD"
+        android:pathData="M70,35 L78,32 L78,42 Z" />
+
+    <!-- Watch Markers (Simple dots) -->
+    <path android:fillColor="#0D6EFD" android:pathData="M50,18 L50,22" />
+    <path android:fillColor="#0D6EFD" android:pathData="M50,78 L50,82" />
+    <path android:fillColor="#0D6EFD" android:pathData="M18,50 L22,50" />
+    <path android:fillColor="#0D6EFD" android:pathData="M78,50 L82,50" />
+
+</vector>

@@ -8,7 +8,6 @@ import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -18,10 +17,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import java.util.Locale
 import java.util.TimeZone
 
 class ProfileFragment : Fragment() {
@@ -66,13 +66,14 @@ class ProfileFragment : Fragment() {
         currencyTextView = view.findViewById(R.id.profileCurrencyTextView)
         timezoneTextView = view.findViewById(R.id.profileTimezoneTextView)
         
-        val changePictureButton: Button = view.findViewById(R.id.changePictureButton)
-        val changeNameButton: Button = view.findViewById(R.id.changeNameButton)
-        val changePasswordButton: Button = view.findViewById(R.id.changePasswordButton)
-        val setCurrencyButton: Button = view.findViewById(R.id.setCurrencyButton)
-        val setTimezoneButton: Button = view.findViewById(R.id.setTimezoneButton)
-        val resetWalletButton: Button = view.findViewById(R.id.resetWalletButton)
-        val deleteAccountButton: Button = view.findViewById(R.id.deleteAccountButton)
+        val changePictureButton: MaterialButton = view.findViewById(R.id.changePictureButton)
+        val changeNameButton: MaterialButton = view.findViewById(R.id.changeNameButton)
+        val changePasswordButton: MaterialButton = view.findViewById(R.id.changePasswordButton)
+        val myPostsButton: MaterialButton = view.findViewById(R.id.myPostsButton)
+        val setCurrencyButton: MaterialButton = view.findViewById(R.id.setCurrencyButton)
+        val setTimezoneButton: MaterialButton = view.findViewById(R.id.setTimezoneButton)
+        val resetWalletButton: MaterialButton = view.findViewById(R.id.resetWalletButton)
+        val deleteAccountButton: MaterialButton = view.findViewById(R.id.deleteAccountButton)
 
         loadUserProfile()
 
@@ -86,6 +87,9 @@ class ProfileFragment : Fragment() {
 
         changeNameButton.setOnClickListener { showChangeNameDialog() }
         changePasswordButton.setOnClickListener { showChangePasswordDialog() }
+        myPostsButton.setOnClickListener { 
+            startActivity(Intent(activity, UserPostsActivity::class.java))
+        }
         setCurrencyButton.setOnClickListener { showCurrencySelectionDialog() }
         setTimezoneButton.setOnClickListener { showTimezoneSelectionDialog() }
         resetWalletButton.setOnClickListener { showResetConfirmationDialog() }
@@ -101,13 +105,16 @@ class ProfileFragment : Fragment() {
 
         db.collection("users").document(userId).get().addOnSuccessListener { document ->
             if (isAdded && document != null && document.exists()) {
-                nameTextView.text = document.getString("name") ?: "N/A"
+                val rawName = document.getString("name") ?: "N/A"
+                val formattedName = rawName.trim().lowercase(Locale.getDefault())
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                nameTextView.text = formattedName
                 
                 val currency = document.getString("currency") ?: "USD"
-                currencyTextView.text = "Currency: $currency"
+                currencyTextView.text = currency
                 
                 val timezone = document.getString("timezone") ?: TimeZone.getDefault().id
-                timezoneTextView.text = "Timezone: $timezone"
+                timezoneTextView.text = timezone
                 
                 val profilePictureUrl = document.getString("profilePictureUrl")
                 
@@ -138,7 +145,7 @@ class ProfileFragment : Fragment() {
     private fun showResetConfirmationDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset All Data?")
-            .setMessage("This will reset your wallet balance to $0 and delete all transaction history and stocks. This action cannot be undone.")
+            .setMessage("This will reset your wallet balance to $0 and delete all transaction history and favorites. This action cannot be undone.")
             .setPositiveButton("Reset Everything") { _, _ -> resetAllWalletData() }
             .setNegativeButton("Cancel", null)
             .show()
@@ -148,24 +155,19 @@ class ProfileFragment : Fragment() {
         val userId = auth.currentUser?.uid ?: return
         val userRef = db.collection("users").document(userId)
 
-        // Reset balance
         userRef.update("balance", 0.0)
 
-        // Delete Watchlist/Portfolio
         userRef.collection("watchlist").get().addOnSuccessListener { snapshots ->
             for (doc in snapshots) {
                 doc.reference.delete()
             }
         }
 
-        // Delete Transactions
         userRef.collection("transactions").get().addOnSuccessListener { snapshots ->
             for (doc in snapshots) {
                 doc.reference.delete()
             }
             if (isAdded) Toast.makeText(context, "Wallet and data reset successfully", Toast.LENGTH_SHORT).show()
-        }.addOnFailureListener {
-            if (isAdded) Toast.makeText(context, "Reset failed", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -189,7 +191,7 @@ class ProfileFragment : Fragment() {
             .update("currency", currencyCode)
             .addOnSuccessListener {
                 if (isAdded) {
-                    currencyTextView.text = "Currency: $currencyCode"
+                    currencyTextView.text = currencyCode
                     Toast.makeText(context, "Currency updated to $currencyCode", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -198,12 +200,26 @@ class ProfileFragment : Fragment() {
     private fun showTimezoneSelectionDialog() {
         if (!isAdded) return
         val timezones = arrayOf("UTC", "Israel (GMT+2/3)", "London (GMT+0/1)", "New York (EST/EDT)", "Tokyo (JST)", "Dubai (GST)")
-        val timezoneIds = arrayOf("UTC", "Asia/Jerusalem", "Europe/London", "America/New_York", "Asia/Tokyo", "Asia/Dubai")
         
         AlertDialog.Builder(requireContext())
             .setTitle("Select Timezone")
-            .setItems(timezones) { _, _ -> } // Dummy for now
+            .setItems(timezones) { _, which ->
+                val tzIds = arrayOf("UTC", "Asia/Jerusalem", "Europe/London", "America/New_York", "Asia/Tokyo", "Asia/Dubai")
+                saveTimezone(tzIds[which])
+            }
             .show()
+    }
+
+    private fun saveTimezone(tzId: String) {
+        val userId = auth.currentUser?.uid ?: return
+        db.collection("users").document(userId)
+            .update("timezone", tzId)
+            .addOnSuccessListener {
+                if (isAdded) {
+                    timezoneTextView.text = tzId
+                    Toast.makeText(context, "Timezone updated", Toast.LENGTH_SHORT).show()
+                }
+            }
     }
 
     private fun saveProfilePictureUri(uri: Uri) {
@@ -221,7 +237,7 @@ class ProfileFragment : Fragment() {
         if(!isAdded) return
         val currentName = nameTextView.text.toString()
         val editText = EditText(context).apply { 
-            setText(if (currentName != "N/A") currentName else "")
+            setText(currentName)
             setSelection(text.length)
         }
         AlertDialog.Builder(requireContext())
@@ -235,7 +251,7 @@ class ProfileFragment : Fragment() {
                         .addOnSuccessListener { 
                             if (isAdded) {
                                 (activity as? MainActivity)?.updateToolbarUsername(newName)
-                                nameTextView.text = newName
+                                loadUserProfile()
                             }
                         }
                 }

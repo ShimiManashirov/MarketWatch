@@ -11,85 +11,81 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="16dp">
 
-        <!-- Profile Header Card -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Profile Header Section -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="0dp">
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingVertical="32dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="4dp"
+                app:strokeColor="?attr/colorPrimary"
+                app:strokeWidth="2dp">
+
+                <ImageView
+                    android:id="@+id/profileImageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_account_circle" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/profileNameTextView"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="24dp">
+                android:layout_marginTop="16dp"
+                android:text="User Name"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-                <androidx.cardview.widget.CardView
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    app:cardCornerRadius="50dp"
-                    app:cardElevation="4dp">
+            <TextView
+                android:id="@+id/profileEmailTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="user@example.com"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="14sp" />
 
-                    <ImageView
-                        android:id="@+id/profileImageView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:src="@drawable/ic_account_circle" />
-                </androidx.cardview.widget.CardView>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/changePictureButton"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Edit Photo"
+                android:textAllCaps="false"
+                app:icon="@android:drawable/ic_menu_camera" />
+        </LinearLayout>
 
-                <TextView
-                    android:id="@+id/profileNameTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="User Name"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/profileEmailTextView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="user@example.com"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="14sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/changePictureButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Edit Profile Photo"
-                    android:textAllCaps="false" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Account Settings Group -->
+        <!-- Account Section -->
         <TextView
+            style="@style/TextAppearance.Material3.LabelLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="12dp"
-            android:text="ACCOUNT SETTINGS"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1" />
+            android:layout_marginStart="4dp"
+            android:layout_marginBottom="8dp"
+            android:text="Account Settings"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -98,123 +94,136 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/changeNameButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="64dp"
                     android:gravity="center_vertical|start"
-                    android:paddingStart="16dp"
-                    android:text="Change Name"
+                    android:paddingHorizontal="16dp"
+                    android:text="Update Display Name"
                     android:textAllCaps="false"
                     android:textColor="?attr/colorOnSurface"
                     app:icon="@drawable/ic_account_circle"
-                    app:iconGravity="textStart"
                     app:iconPadding="16dp"
                     app:iconTint="?attr/colorOnSurfaceVariant" />
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginStart="56dp"
-                    android:background="?attr/colorSurfaceVariant" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="56dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/changePasswordButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="64dp"
                     android:gravity="center_vertical|start"
-                    android:paddingStart="16dp"
-                    android:text="Change Password"
+                    android:paddingHorizontal="16dp"
+                    android:text="Security &amp; Password"
                     android:textAllCaps="false"
                     android:textColor="?attr/colorOnSurface"
                     app:icon="@android:drawable/ic_lock_lock"
-                    app:iconGravity="textStart"
+                    app:iconPadding="16dp"
+                    app:iconTint="?attr/colorOnSurfaceVariant" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="56dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/myPostsButton"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:gravity="center_vertical|start"
+                    android:paddingHorizontal="16dp"
+                    android:text="My Community Posts"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorOnSurface"
+                    app:icon="@android:drawable/ic_menu_agenda"
                     app:iconPadding="16dp"
                     app:iconTint="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Preferences Group -->
+        <!-- Preferences Section -->
         <TextView
+            style="@style/TextAppearance.Material3.LabelLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="12dp"
-            android:text="PREFERENCES"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1" />
+            android:layout_marginStart="4dp"
+            android:layout_marginBottom="8dp"
+            android:text="App Preferences"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <LinearLayout
-                    android:id="@+id/setCurrencyButtonContainer"
+                <!-- Currency Row -->
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    
+                    android:layout_height="wrap_content">
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/setCurrencyButton"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
+                        android:layout_height="72dp"
                         android:gravity="center_vertical|start"
-                        android:paddingStart="16dp"
-                        android:text="Currency"
+                        android:paddingHorizontal="16dp"
+                        android:text="Preferred Currency"
                         android:textAllCaps="false"
                         android:textColor="?attr/colorOnSurface"
                         app:icon="@android:drawable/ic_menu_today"
-                        app:iconGravity="textStart"
                         app:iconPadding="16dp"
                         app:iconTint="?attr/colorOnSurfaceVariant" />
-                    
+
                     <TextView
                         android:id="@+id/profileCurrencyTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="56dp"
-                        android:layout_marginTop="-12dp"
-                        android:layout_marginBottom="12dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="24dp"
                         android:text="USD"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                        android:textStyle="bold" />
+                </RelativeLayout>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginStart="56dp"
-                    android:background="?attr/colorSurfaceVariant" />
-
-                <LinearLayout
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginStart="56dp" />
+
+                <!-- Timezone Row -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/setTimezoneButton"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
+                        android:layout_height="72dp"
                         android:gravity="center_vertical|start"
-                        android:paddingStart="16dp"
-                        android:text="Timezone"
+                        android:paddingHorizontal="16dp"
+                        android:text="Display Timezone"
                         android:textAllCaps="false"
                         android:textColor="?attr/colorOnSurface"
                         app:icon="@android:drawable/ic_menu_recent_history"
-                        app:iconGravity="textStart"
                         app:iconPadding="16dp"
                         app:iconTint="?attr/colorOnSurfaceVariant" />
 
@@ -222,69 +231,60 @@
                         android:id="@+id/profileTimezoneTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="56dp"
-                        android:layout_marginTop="-12dp"
-                        android:layout_marginBottom="12dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="24dp"
+                        android:ellipsize="end"
+                        android:maxWidth="120dp"
+                        android:singleLine="true"
                         android:text="UTC"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                        android:textStyle="bold" />
+                </RelativeLayout>
 
-                <View
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginStart="56dp"
-                    android:background="?attr/colorSurfaceVariant" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="56dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/resetWalletButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="64dp"
                     android:gravity="center_vertical|start"
-                    android:paddingStart="16dp"
-                    android:text="Reset Wallet &amp; Data"
+                    android:paddingHorizontal="16dp"
+                    android:text="Reset Wallet Data"
                     android:textAllCaps="false"
                     android:textColor="?attr/colorOnSurface"
                     app:icon="@android:drawable/ic_menu_rotate"
-                    app:iconGravity="textStart"
                     app:iconPadding="16dp"
                     app:iconTint="?attr/colorOnSurfaceVariant" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Danger Zone Group -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="12dp"
-            android:text="DANGER ZONE"
-            android:textColor="?attr/colorError"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1" />
-
+        <!-- Danger Zone -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="1dp"
-            app:strokeWidth="0dp">
+            android:layout_marginBottom="32dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorError"
+            app:strokeWidth="1dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deleteAccountButton"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:gravity="center_vertical|start"
-                android:paddingStart="16dp"
-                android:text="Delete Account"
+                android:paddingHorizontal="16dp"
+                android:text="Delete My Account"
                 android:textAllCaps="false"
                 android:textColor="?attr/colorError"
                 app:icon="@android:drawable/ic_menu_delete"
-                app:iconGravity="textStart"
                 app:iconPadding="16dp"
                 app:iconTint="?attr/colorError" />
         </com.google.android.material.card.MaterialCardView>
