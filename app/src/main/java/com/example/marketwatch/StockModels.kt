@@ -42,3 +42,13 @@ data class StockNews(
     @SerializedName("summary") val summary: String,
     @SerializedName("url") val url: String
 )
+
+data class StockCandles(
+    @SerializedName("c") val closePrices: List<Double>?,
+    @SerializedName("h") val highPrices: List<Double>?,
+    @SerializedName("l") val lowPrices: List<Double>?,
+    @SerializedName("o") val openPrices: List<Double>?,
+    @SerializedName("s") val status: String,
+    @SerializedName("t") val timestamps: List<Long>?,
+    @SerializedName("v") val volumes: List<Long>?
+)

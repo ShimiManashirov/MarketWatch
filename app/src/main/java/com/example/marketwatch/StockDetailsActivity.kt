@@ -15,9 +15,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -40,6 +45,8 @@ class StockDetailsActivity : AppCompatActivity() {
     private lateinit var sellButton: MaterialButton
     private lateinit var stockLogo: ImageView
     private lateinit var newsRecyclerView: RecyclerView
+    private lateinit var lineChart: LineChart
+    
     private var isFavorite = false
     private var currentPrice: Double = 0.0
     private var ownedQuantity: Double = 0.0
@@ -54,12 +61,19 @@ class StockDetailsActivity : AppCompatActivity() {
         symbol = intent.getStringExtra("symbol") ?: ""
         description = intent.getStringExtra("description") ?: ""
 
+        if (symbol.isEmpty()) {
+            Toast.makeText(this, "Error: Symbol not found", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
         favoriteStarButton = findViewById(R.id.favoriteStarButton)
         tvOwnedShares = findViewById(R.id.tvOwnedShares)
         sellButton = findViewById(R.id.sellStockButton)
         stockLogo = findViewById(R.id.ivStockLogo)
         newsRecyclerView = findViewById(R.id.rvStockNews)
+        lineChart = findViewById(R.id.stockChart)
         val buyButton = findViewById<MaterialButton>(R.id.buyStockButton)
         
         setSupportActionBar(toolbar)
@@ -76,10 +90,12 @@ class StockDetailsActivity : AppCompatActivity() {
 
         newsRecyclerView.layoutManager = LinearLayoutManager(this)
 
+        setupChart()
         checkWatchlistAndOwnership()
         fetchStockDetails()
         fetchCompanyProfile()
         fetchStockNews()
+        fetchChartData()
 
         favoriteStarButton.setOnClickListener {
             toggleFavorite()
@@ -87,6 +103,78 @@ class StockDetailsActivity : AppCompatActivity() {
 
         buyButton.setOnClickListener { showTradeDialog(true) }
         sellButton.setOnClickListener { showTradeDialog(false) }
+    }
+
+    private fun setupChart() {
+        lineChart.apply {
+            description.isEnabled = false
+            setNoDataText("Loading chart data...")
+            setNoDataTextColor(Color.GRAY)
+            setTouchEnabled(true)
+            isDragEnabled = true
+            setScaleEnabled(true)
+            setPinchZoom(true)
+            setDrawGridBackground(false)
+            
+            xAxis.isEnabled = false
+            axisRight.isEnabled = false
+            axisLeft.apply {
+                textColor = Color.GRAY
+                setDrawGridLines(true)
+                gridColor = Color.parseColor("#1A000000")
+            }
+            legend.isEnabled = false
+        }
+    }
+
+    private fun fetchChartData() {
+        AlphaVantageApiClient.apiService.getDailySeries(symbol = symbol, apiKey = "Q0P5O0X0V0Q0X0Q0") // השתמשתי במפתח זמני, כדאי להחליף לשלך
+            .enqueue(object : Callback<AlphaVantageResponse> {
+                override fun onResponse(call: Call<AlphaVantageResponse>, response: Response<AlphaVantageResponse>) {
+                    if (response.isSuccessful) {
+                        val timeSeries = response.body()?.timeSeries
+                        if (!timeSeries.isNullOrEmpty()) {
+                            val entries = mutableListOf<Entry>()
+                            // המרת המפה של הנתונים היומיים לרשימת Entries לגרף
+                            // הנתונים חוזרים מהחדש לישן, אז נהפוך אותם
+                            val sortedKeys = timeSeries.keys.sorted()
+                            sortedKeys.takeLast(30).forEachIndexed { index, date ->
+                                val price = timeSeries[date]?.close?.toFloat() ?: 0f
+                                entries.add(Entry(index.toFloat(), price))
+                            }
+                            runOnUiThread { displayChart(entries) }
+                        } else {
+                            runOnUiThread { 
+                                lineChart.setNoDataText("Chart data not available for this symbol")
+                                lineChart.invalidate()
+                            }
+                        }
+                    }
+                }
+                override fun onFailure(call: Call<AlphaVantageResponse>, t: Throwable) {
+                    runOnUiThread {
+                        lineChart.setNoDataText("Error loading chart")
+                        lineChart.invalidate()
+                    }
+                }
+            })
+    }
+
+    private fun displayChart(entries: List<Entry>) {
+        val dataSet = LineDataSet(entries, "Stock Price").apply {
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+            setDrawCircles(false)
+            setDrawFilled(true)
+            lineWidth = 3f
+            color = Color.parseColor("#0D6EFD")
+            fillColor = Color.parseColor("#0D6EFD")
+            fillAlpha = 40
+            setDrawValues(false)
+        }
+
+        lineChart.data = LineData(dataSet)
+        lineChart.animateX(1000)
+        lineChart.invalidate()
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -195,10 +283,10 @@ class StockDetailsActivity : AppCompatActivity() {
 
     private fun fetchStockNews() {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val to = sdf.format(Date())
-        val from = sdf.format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
+        val toDate = sdf.format(Date())
+        val fromDate = sdf.format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
 
-        FinnhubApiClient.apiService.getStockNews(symbol, from, to, FinnhubApiClient.API_KEY)
+        FinnhubApiClient.apiService.getStockNews(symbol, fromDate, toDate, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<List<StockNews>> {
                 override fun onResponse(call: Call<List<StockNews>>, response: Response<List<StockNews>>) {
                     if (response.isSuccessful) {
