@@ -3,6 +3,7 @@ package com.example.marketwatch
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
@@ -42,6 +43,7 @@ class StockDetailsActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var favoriteStarButton: ImageButton
+    private lateinit var priceAlertButton: ImageButton
     private lateinit var tvOwnedShares: TextView
     private lateinit var sellButton: MaterialButton
     private lateinit var stockLogo: ImageView
@@ -76,9 +78,10 @@ class StockDetailsActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize Views
+        // Initialize all Views from XML
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
         favoriteStarButton = findViewById(R.id.favoriteStarButton)
+        priceAlertButton = findViewById(R.id.priceAlertButton)
         tvOwnedShares = findViewById(R.id.tvOwnedShares)
         sellButton = findViewById(R.id.sellStockButton)
         stockLogo = findViewById(R.id.ivStockLogo)
@@ -114,12 +117,49 @@ class StockDetailsActivity : AppCompatActivity() {
         fetchStockNews()
         fetchChartDataFromAlphaVantage()
 
-        favoriteStarButton.setOnClickListener {
-            toggleFavorite()
-        }
-
+        favoriteStarButton.setOnClickListener { toggleFavorite() }
+        priceAlertButton.setOnClickListener { showPriceAlertDialog() }
         buyButton.setOnClickListener { showTradeDialog(true) }
         sellButton.setOnClickListener { showTradeDialog(false) }
+    }
+
+    private fun showPriceAlertDialog() {
+        val input = EditText(this).apply {
+            hint = "Enter target price"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(if (currentPrice > 0) String.format("%.2f", currentPrice) else "")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Set Price Alert for $symbol")
+            .setMessage("We will notify you when $symbol reaches this price.")
+            .setView(input)
+            .setPositiveButton("Set Alert") { _, _ ->
+                val targetPrice = input.text.toString().toDoubleOrNull() ?: 0.0
+                if (targetPrice > 0) {
+                    savePriceAlert(targetPrice)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun savePriceAlert(targetPrice: Double) {
+        val user = auth.currentUser ?: return
+        val data = hashMapOf(
+            "symbol" to symbol,
+            "description" to description,
+            "targetPrice" to targetPrice,
+            "isFavorite" to isFavorite 
+        )
+        
+        db.collection("users").document(user.uid)
+            .collection("watchlist").document(symbol)
+            .set(data, SetOptions.merge())
+            .addOnSuccessListener {
+                Toast.makeText(this, "Alert set for $$targetPrice", Toast.LENGTH_SHORT).show()
+                priceAlertButton.setColorFilter(Color.parseColor("#0D6EFD"))
+            }
     }
 
     private fun setupChart() {
@@ -207,6 +247,8 @@ class StockDetailsActivity : AppCompatActivity() {
                 if (snapshot != null && snapshot.exists()) {
                     isFavorite = snapshot.getBoolean("isFavorite") ?: false
                     ownedQuantity = snapshot.getDouble("quantity") ?: 0.0
+                    val hasAlert = (snapshot.getDouble("targetPrice") ?: 0.0) > 0
+                    priceAlertButton.setColorFilter(if (hasAlert) Color.parseColor("#0D6EFD") else Color.GRAY)
                 } else {
                     isFavorite = false
                     ownedQuantity = 0.0
@@ -290,7 +332,6 @@ class StockDetailsActivity : AppCompatActivity() {
                                     .placeholder(android.R.drawable.ic_menu_gallery)
                                     .into(stockLogo)
                                 
-                                // Update Advanced Stats from Profile
                                 if (!profile.industry.isNullOrEmpty()) {
                                     chipIndustry.text = profile.industry
                                     chipIndustry.visibility = View.VISIBLE
@@ -343,7 +384,6 @@ class StockDetailsActivity : AppCompatActivity() {
             changeView.text = "${String.format("%.2f", quote.change)} (${String.format("%.2f", quote.percentChange)}%)"
             changeView.setTextColor(if (quote.change >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
             
-            // Assign stats data to correct views
             tvHigh.text = "$${quote.highPrice}"
             tvLow.text = "$${quote.lowPrice}"
             tvPrevClose.text = "$${quote.previousClose}"

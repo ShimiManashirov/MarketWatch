@@ -8,12 +8,15 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
 
         setupToolbar()
+        setupPriceAlertWorker()
 
         val navView: BottomNavigationView = findViewById(R.id.bottom_navigation)
         navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
@@ -49,6 +53,18 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             loadFragment(FeedFragment(), false)
         }
+    }
+
+    private fun setupPriceAlertWorker() {
+        val alertRequest = PeriodicWorkRequestBuilder<PriceAlertWorker>(1, TimeUnit.HOURS)
+            .setInitialDelay(15, TimeUnit.MINUTES) // נחכה קצת אחרי הפתיחה הראשונה
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "PriceAlerts",
+            ExistingPeriodicWorkPolicy.KEEP, // אם כבר רץ, אל תפריע לו
+            alertRequest
+        )
     }
 
     fun updateToolbarUsername(newName: String) {
