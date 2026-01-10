@@ -14,20 +14,27 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.example.marketwatch.data.local.AppDatabase
+import com.example.marketwatch.data.local.PostEntity
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.squareup.picasso.Picasso
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FeedFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private lateinit var localDb: AppDatabase
     private lateinit var adapter: PostsAdapter
     private val postsList = mutableListOf<Post>()
     
@@ -42,7 +49,7 @@ class FeedFragment : Fragment() {
             selectedImageUri = result.data?.data
             dialogImageView?.let {
                 it.visibility = View.VISIBLE
-                it.setImageURI(selectedImageUri)
+                Picasso.get().load(selectedImageUri).into(it)
             }
         }
     }
@@ -55,6 +62,7 @@ class FeedFragment : Fragment() {
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
+        localDb = AppDatabase.getDatabase(requireContext())
 
         shimmerContainer = view.findViewById(R.id.shimmerViewContainer)
         recyclerView = view.findViewById(R.id.postsRecyclerView)
@@ -71,39 +79,56 @@ class FeedFragment : Fragment() {
             showCreatePostDialog()
         }
 
-        loadPosts()
+        observeLocalPosts()
+        loadPostsFromFirebase()
 
         return view
     }
 
-    private fun loadPosts() {
-        // Start shimmer
-        shimmerContainer.startShimmer()
-        shimmerContainer.visibility = View.VISIBLE
-        recyclerView.visibility = View.GONE
+    private fun observeLocalPosts() {
+        // Load from Room immediately
+        lifecycleScope.launch {
+            localDb.postDao().getAllPosts().collect { entities ->
+                if (postsList.isEmpty() && entities.isNotEmpty()) {
+                    postsList.clear()
+                    postsList.addAll(entities.map { it.toPost() })
+                    adapter.notifyDataSetChanged()
+                    shimmerContainer.stopShimmer()
+                    shimmerContainer.visibility = View.GONE
+                    recyclerView.visibility = View.VISIBLE
+                }
+            }
+        }
+    }
+
+    private fun loadPostsFromFirebase() {
+        if (postsList.isEmpty()) {
+            shimmerContainer.startShimmer()
+            shimmerContainer.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        }
 
         db.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (!isAdded) return@addSnapshotListener
                 
-                // Stop and hide shimmer
                 shimmerContainer.stopShimmer()
                 shimmerContainer.visibility = View.GONE
                 recyclerView.visibility = View.VISIBLE
 
                 if (e != null) {
-                    Log.e("FeedFragment", "Listen failed.", e)
+                    Log.e("FeedFragment", "Firebase Listen failed.", e)
                     return@addSnapshotListener
                 }
 
                 if (snapshots != null) {
-                    postsList.clear()
+                    val firebasePosts = mutableListOf<Post>()
+                    val localEntities = mutableListOf<PostEntity>()
+
                     for (doc in snapshots) {
                         try {
-                            // Manual extraction to ensure all fields (including likes) are loaded
                             val likesList = doc.get("likes") as? List<String> ?: emptyList()
-                            
                             val post = Post(
                                 id = doc.id,
                                 userId = doc.getString("userId") ?: "",
@@ -114,15 +139,48 @@ class FeedFragment : Fragment() {
                                 timestamp = doc.getTimestamp("timestamp"),
                                 likes = likesList
                             )
-                            postsList.add(post)
+                            firebasePosts.add(post)
+                            localEntities.add(post.toEntity())
                         } catch (ex: Exception) {
                             Log.e("FeedFragment", "Error parsing post", ex)
                         }
                     }
+                    
+                    postsList.clear()
+                    postsList.addAll(firebasePosts)
                     adapter.notifyDataSetChanged()
+
+                    // Update local cache
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        localDb.postDao().deleteAll()
+                        localDb.postDao().insertPosts(localEntities)
+                    }
                 }
             }
     }
+
+    // Helper extensions to convert between Post and PostEntity
+    private fun Post.toEntity() = PostEntity(
+        id = id,
+        userId = userId,
+        userName = userName,
+        userProfilePicture = userProfilePicture,
+        content = content,
+        imageUrl = imageUrl,
+        timestamp = timestamp?.seconds ?: 0L,
+        likesCount = likes.size
+    )
+
+    private fun PostEntity.toPost() = Post(
+        id = id,
+        userId = userId,
+        userName = userName,
+        userProfilePicture = userProfilePicture,
+        content = content,
+        imageUrl = imageUrl,
+        timestamp = Timestamp(timestamp, 0),
+        likes = emptyList() // Room doesn't store UIDs list easily, showing count is enough for cache
+    )
 
     private fun showCreatePostDialog() {
         if (!isAdded) return
@@ -160,12 +218,11 @@ class FeedFragment : Fragment() {
         val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
         dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
         
-        // Fill current data
         postEditText.setText(post.content)
         selectedImageUri = post.imageUrl?.let { Uri.parse(it) }
         if (selectedImageUri != null) {
             dialogImageView?.visibility = View.VISIBLE
-            Glide.with(this).load(selectedImageUri).into(dialogImageView!!)
+            Picasso.get().load(selectedImageUri).into(dialogImageView!!)
         }
 
         addImageBtn.setOnClickListener {

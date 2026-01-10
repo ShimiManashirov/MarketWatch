@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.squareup.picasso.Picasso
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -66,6 +66,7 @@ class UserPostsActivity : AppCompatActivity() {
                 userPostsList.clear()
                 snapshots?.forEach { doc ->
                     try {
+                        val likesList = doc.get("likes") as? List<String> ?: emptyList()
                         val post = Post(
                             id = doc.id,
                             userId = doc.getString("userId") ?: "",
@@ -73,7 +74,8 @@ class UserPostsActivity : AppCompatActivity() {
                             userProfilePicture = doc.getString("userProfilePicture") ?: "",
                             content = doc.getString("content") ?: "",
                             imageUrl = doc.getString("imageUrl"),
-                            timestamp = doc.getTimestamp("timestamp")
+                            timestamp = doc.getTimestamp("timestamp"),
+                            likes = likesList
                         )
                         userPostsList.add(post)
                     } catch (ex: Exception) {
@@ -94,7 +96,8 @@ class UserPostsActivity : AppCompatActivity() {
         postEditText.setText(post.content)
         if (!post.imageUrl.isNullOrEmpty()) {
             dialogImageView.visibility = View.VISIBLE
-            Glide.with(this).load(post.imageUrl).into(dialogImageView)
+            // Fixed: Replaced Glide with Picasso
+            Picasso.get().load(post.imageUrl).into(dialogImageView)
         }
 
         AlertDialog.Builder(this)

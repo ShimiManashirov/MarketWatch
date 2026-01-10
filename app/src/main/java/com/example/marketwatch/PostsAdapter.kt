@@ -1,7 +1,6 @@
 package com.example.marketwatch
 
 import android.graphics.Color
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +9,7 @@ import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.squareup.picasso.Picasso
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -52,7 +51,6 @@ class PostsAdapter(
         val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
         holder.timestamp.text = post.timestamp?.toDate()?.let { sdf.format(it) } ?: "Just now"
 
-        // Show menu button only for the post owner
         if (post.userId == currentUserId) {
             holder.menuButton.visibility = View.VISIBLE
             holder.menuButton.setOnClickListener { view ->
@@ -62,37 +60,40 @@ class PostsAdapter(
             holder.menuButton.visibility = View.GONE
         }
 
-        Glide.with(holder.itemView.context)
-            .load(if (post.userProfilePicture.isNotBlank()) post.userProfilePicture else R.drawable.ic_account_circle)
-            .circleCrop()
-            .placeholder(R.drawable.ic_account_circle)
-            .into(holder.userImage)
+        // Use Picasso for user image
+        val profilePic = if (post.userProfilePicture.isNotBlank()) post.userProfilePicture else null
+        if (profilePic != null) {
+            Picasso.get()
+                .load(profilePic)
+                .placeholder(R.drawable.ic_account_circle)
+                .transform(CircleTransform())
+                .into(holder.userImage)
+        } else {
+            holder.userImage.setImageResource(R.drawable.ic_account_circle)
+        }
 
+        // Use Picasso for post image
         if (!post.imageUrl.isNullOrEmpty()) {
             holder.postImageCard.visibility = View.VISIBLE
-            Glide.with(holder.itemView.context)
+            Picasso.get()
                 .load(post.imageUrl)
                 .into(holder.postImage)
         } else {
             holder.postImageCard.visibility = View.GONE
         }
 
-        // --- Like Logic ---
+        // Like Logic
         val isLiked = currentUserId != null && post.likes.contains(currentUserId)
         holder.btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
         holder.btnLike.setColorFilter(if (isLiked) Color.parseColor("#E91E63") else Color.GRAY)
-        
         holder.tvLikeCount.text = "${post.likes.size} likes"
 
         holder.btnLike.setOnClickListener {
             if (currentUserId == null) return@setOnClickListener
-            
             val postRef = db.collection("posts").document(post.id)
             if (isLiked) {
-                // Remove Like
                 postRef.update("likes", FieldValue.arrayRemove(currentUserId))
             } else {
-                // Add Like
                 postRef.update("likes", FieldValue.arrayUnion(currentUserId))
             }
         }
@@ -102,7 +103,6 @@ class PostsAdapter(
         val popup = PopupMenu(view.context, view)
         popup.menu.add("Edit")
         popup.menu.add("Delete")
-        
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
                 "Edit" -> onEditClick(post)

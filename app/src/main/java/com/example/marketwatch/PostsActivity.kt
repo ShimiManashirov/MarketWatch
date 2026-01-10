@@ -15,7 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.squareup.picasso.Picasso
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.Timestamp
@@ -85,6 +85,7 @@ class PostsActivity : AppCompatActivity() {
                     Log.d("PostsActivity", "Found ${snapshots.size()} documents")
                     for (doc in snapshots) {
                         try {
+                            val likesList = doc.get("likes") as? List<String> ?: emptyList()
                             val post = Post(
                                 id = doc.id,
                                 userId = doc.getString("userId") ?: "",
@@ -92,7 +93,8 @@ class PostsActivity : AppCompatActivity() {
                                 userProfilePicture = doc.getString("userProfilePicture") ?: "",
                                 content = doc.getString("content") ?: "",
                                 imageUrl = doc.getString("imageUrl"),
-                                timestamp = doc.getTimestamp("timestamp")
+                                timestamp = doc.getTimestamp("timestamp"),
+                                likes = likesList
                             )
                             postsList.add(post)
                         } catch (ex: Exception) {
@@ -143,7 +145,8 @@ class PostsActivity : AppCompatActivity() {
         
         if (selectedImageUri != null) {
             dialogImageView?.visibility = View.VISIBLE
-            Glide.with(this).load(selectedImageUri).into(dialogImageView!!)
+            // Replaced Glide with Picasso
+            Picasso.get().load(selectedImageUri).into(dialogImageView!!)
         }
 
         addImageBtn.setOnClickListener {
@@ -207,7 +210,8 @@ class PostsActivity : AppCompatActivity() {
                 "userProfilePicture" to profilePic,
                 "content" to content,
                 "imageUrl" to imageUri?.toString(), 
-                "timestamp" to Timestamp.now()
+                "timestamp" to Timestamp.now(),
+                "likes" to emptyList<String>()
             )
 
             db.collection("posts").add(postData)

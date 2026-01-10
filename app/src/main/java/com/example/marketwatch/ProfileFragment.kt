@@ -16,11 +16,11 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.squareup.picasso.Picasso
 import java.util.Locale
 import java.util.TimeZone
 
@@ -118,25 +118,15 @@ class ProfileFragment : Fragment() {
                 
                 val profilePictureUrl = document.getString("profilePictureUrl")
                 
-                try {
-                    val imageToLoad: Any = if (!profilePictureUrl.isNullOrEmpty()) {
-                        Uri.parse(profilePictureUrl)
-                    } else {
-                        R.drawable.ic_account_circle
-                    }
-                    Glide.with(this)
-                        .load(imageToLoad)
+                if (!profilePictureUrl.isNullOrEmpty()) {
+                    Picasso.get()
+                        .load(profilePictureUrl)
                         .placeholder(R.drawable.ic_account_circle)
-                        .error(R.drawable.ic_account_circle) 
-                        .circleCrop()
+                        .error(R.drawable.ic_account_circle)
+                        .transform(CircleTransform())
                         .into(profileImageView)
-                } catch (e: Exception) {
-                    if (isAdded) {
-                        Glide.with(this)
-                            .load(R.drawable.ic_account_circle)
-                            .circleCrop()
-                            .into(profileImageView)
-                    }
+                } else {
+                    profileImageView.setImageResource(R.drawable.ic_account_circle)
                 }
             }
         }
@@ -228,7 +218,10 @@ class ProfileFragment : Fragment() {
             .update("profilePictureUrl", uri.toString())
             .addOnSuccessListener { 
                 if (isAdded) {
-                    Glide.with(this).load(uri).circleCrop().into(profileImageView)
+                    Picasso.get()
+                        .load(uri)
+                        .transform(CircleTransform())
+                        .into(profileImageView)
                 }
             }
     }
@@ -329,7 +322,7 @@ class ProfileFragment : Fragment() {
         if(!isAdded) return
         val passwordEditText = EditText(context).apply {
             hint = "Enter password"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         }
 
         AlertDialog.Builder(requireContext())

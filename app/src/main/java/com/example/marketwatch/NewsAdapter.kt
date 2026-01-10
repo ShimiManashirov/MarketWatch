@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,10 +34,14 @@ class NewsAdapter(private val newsList: List<StockNews>) : RecyclerView.Adapter<
         val sdf = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
         holder.date.text = sdf.format(Date(news.datetime * 1000))
 
-        Glide.with(holder.itemView.context)
-            .load(news.image)
-            .placeholder(android.R.drawable.ic_menu_report_image)
-            .into(holder.image)
+        if (!news.image.isNullOrEmpty()) {
+            Picasso.get()
+                .load(news.image)
+                .placeholder(android.R.drawable.ic_menu_report_image)
+                .into(holder.image)
+        } else {
+            holder.image.setImageResource(android.R.drawable.ic_menu_report_image)
+        }
 
         holder.itemView.setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(news.url))

@@ -19,7 +19,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.squareup.picasso.Picasso
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -169,7 +169,7 @@ class StockDetailsActivity : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            // Ignore keep-alive or malformed messages
+            // Ignore malformed messages
         }
     }
 
@@ -397,10 +397,13 @@ class StockDetailsActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         response.body()?.let { profile ->
                             runOnUiThread {
-                                Glide.with(this@StockDetailsActivity)
-                                    .load(profile.logo)
-                                    .placeholder(android.R.drawable.ic_menu_gallery)
-                                    .into(stockLogo)
+                                // Use Picasso instead of Glide
+                                if (!profile.logo.isNullOrEmpty()) {
+                                    Picasso.get()
+                                        .load(profile.logo)
+                                        .placeholder(android.R.drawable.ic_menu_gallery)
+                                        .into(stockLogo)
+                                }
                                 
                                 if (!profile.industry.isNullOrEmpty()) {
                                     chipIndustry.text = profile.industry

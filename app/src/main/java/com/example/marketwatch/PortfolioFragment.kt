@@ -12,8 +12,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.marketwatch.data.local.AppDatabase
+import com.example.marketwatch.data.local.StockEntity
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
@@ -22,11 +25,15 @@ import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class PortfolioFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+    private lateinit var localDb: AppDatabase
+    
     private lateinit var holdingsAdapter: PortfolioAdapter
     private lateinit var watchlistAdapter: PortfolioAdapter
     
@@ -46,6 +53,7 @@ class PortfolioFragment : Fragment() {
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
+        localDb = AppDatabase.getDatabase(requireContext())
 
         progressBar = view.findViewById(R.id.portfolioProgressBar)
         emptyTextContainer = view.findViewById(R.id.emptyPortfolioText)
@@ -55,18 +63,17 @@ class PortfolioFragment : Fragment() {
         val rvHoldings = view.findViewById<RecyclerView>(R.id.portfolioRecyclerView)
         val rvWatchlist = view.findViewById<RecyclerView>(R.id.watchlistRecyclerView)
 
-        // Setup Holdings List
         rvHoldings.layoutManager = LinearLayoutManager(context)
         holdingsAdapter = PortfolioAdapter(ownedList) { item -> showRemoveDialog(item, true) }
         rvHoldings.adapter = holdingsAdapter
 
-        // Setup Watchlist List
         rvWatchlist.layoutManager = LinearLayoutManager(context)
         watchlistAdapter = PortfolioAdapter(watchlistItems) { item -> showRemoveDialog(item, false) }
         rvWatchlist.adapter = watchlistAdapter
 
         setupPieChart()
-        loadPortfolioData()
+        observeLocalStocks()
+        loadPortfolioFromFirebase()
 
         return view
     }
@@ -84,10 +91,46 @@ class PortfolioFragment : Fragment() {
         }
     }
 
-    private fun loadPortfolioData() {
-        val userId = auth.currentUser?.uid ?: return
-        progressBar.visibility = View.VISIBLE
+    private fun observeLocalStocks() {
+        // Load from Room immediately for offline support
+        lifecycleScope.launch {
+            localDb.stockDao().getAllStocks().collect { entities ->
+                if (ownedList.isEmpty() && watchlistItems.isEmpty() && entities.isNotEmpty()) {
+                    updateListsFromEntities(entities)
+                }
+            }
+        }
+    }
 
+    private fun updateListsFromEntities(entities: List<StockEntity>) {
+        ownedList.clear()
+        watchlistItems.clear()
+        val pieEntries = mutableListOf<PieEntry>()
+
+        entities.forEach { entity ->
+            val item = PortfolioItem(
+                symbol = entity.symbol,
+                description = entity.description,
+                quantity = entity.quantity,
+                isFavorite = entity.isFavorite
+            )
+            if (entity.quantity > 0) {
+                ownedList.add(item)
+                pieEntries.add(PieEntry(entity.quantity.toFloat(), entity.symbol))
+            } else if (entity.isFavorite) {
+                watchlistItems.add(item)
+            }
+        }
+
+        holdingsAdapter.updateData(ownedList)
+        watchlistAdapter.updateData(watchlistItems)
+        updatePieChart(pieEntries)
+        updateVisibility()
+    }
+
+    private fun loadPortfolioFromFirebase() {
+        val userId = auth.currentUser?.uid ?: return
+        
         db.collection("users").document(userId)
             .collection("watchlist")
             .addSnapshotListener { snapshots, e ->
@@ -99,39 +142,62 @@ class PortfolioFragment : Fragment() {
                     return@addSnapshotListener
                 }
 
-                ownedList.clear()
-                watchlistItems.clear()
-                val pieEntries = mutableListOf<PieEntry>()
+                if (snapshots != null) {
+                    val firebaseItems = mutableListOf<PortfolioItem>()
+                    val localEntities = mutableListOf<StockEntity>()
 
-                snapshots?.forEach { doc ->
-                    try {
-                        val item = doc.toObject(PortfolioItem::class.java)
-                        if (item.symbol.isNotBlank()) {
-                            // Split into two lists
-                            if (item.quantity > 0) {
-                                ownedList.add(item)
-                                pieEntries.add(PieEntry(item.quantity.toFloat(), item.symbol))
-                            } else if (item.isFavorite) {
-                                watchlistItems.add(item)
+                    snapshots.forEach { doc ->
+                        try {
+                            val item = doc.toObject(PortfolioItem::class.java)
+                            if (item.symbol.isNotBlank()) {
+                                firebaseItems.add(item)
+                                localEntities.add(StockEntity(
+                                    symbol = item.symbol,
+                                    description = item.description,
+                                    quantity = item.quantity,
+                                    isFavorite = item.isFavorite
+                                ))
                             }
+                        } catch (ex: Exception) {
+                            Log.e("PortfolioFragment", "Error parsing item", ex)
                         }
-                    } catch (ex: Exception) {
-                        Log.e("PortfolioFragment", "Error parsing item", ex)
+                    }
+
+                    // Refresh lists and pie chart
+                    ownedList.clear()
+                    watchlistItems.clear()
+                    val pieEntries = mutableListOf<PieEntry>()
+                    
+                    firebaseItems.forEach { item ->
+                        if (item.quantity > 0) {
+                            ownedList.add(item)
+                            pieEntries.add(PieEntry(item.quantity.toFloat(), item.symbol))
+                        } else if (item.isFavorite) {
+                            watchlistItems.add(item)
+                        }
+                    }
+
+                    holdingsAdapter.updateData(ownedList)
+                    watchlistAdapter.updateData(watchlistItems)
+                    updatePieChart(pieEntries)
+                    updateVisibility()
+
+                    // Sync Room with Firebase data
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        localDb.stockDao().deleteAll()
+                        localDb.stockDao().insertStocks(localEntities)
                     }
                 }
-
-                holdingsAdapter.updateData(ownedList)
-                watchlistAdapter.updateData(watchlistItems)
-                updatePieChart(pieEntries)
-
-                // Manage Visibility
-                val totalEmpty = ownedList.isEmpty() && watchlistItems.isEmpty()
-                emptyTextContainer.visibility = if (totalEmpty) View.VISIBLE else View.GONE
-                chartCard.visibility = if (ownedList.isEmpty()) View.GONE else View.VISIBLE
-                
-                view?.findViewById<TextView>(R.id.titleHoldings)?.visibility = if (ownedList.isEmpty()) View.GONE else View.VISIBLE
-                view?.findViewById<TextView>(R.id.titleWatchlist)?.visibility = if (watchlistItems.isEmpty()) View.GONE else View.VISIBLE
             }
+    }
+
+    private fun updateVisibility() {
+        val totalEmpty = ownedList.isEmpty() && watchlistItems.isEmpty()
+        emptyTextContainer.visibility = if (totalEmpty) View.VISIBLE else View.GONE
+        chartCard.visibility = if (ownedList.isEmpty()) View.GONE else View.VISIBLE
+        
+        view?.findViewById<TextView>(R.id.titleHoldings)?.visibility = if (ownedList.isEmpty()) View.GONE else View.VISIBLE
+        view?.findViewById<TextView>(R.id.titleWatchlist)?.visibility = if (watchlistItems.isEmpty()) View.GONE else View.VISIBLE
     }
 
     private fun updatePieChart(entries: List<PieEntry>) {
@@ -162,7 +228,6 @@ class PortfolioFragment : Fragment() {
                     .update("isFavorite", false)
             }
         }
-        
         builder.setNegativeButton("Close", null).show()
     }
 }
