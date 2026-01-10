@@ -30,9 +30,10 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import okhttp3.*
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
-import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -49,6 +50,7 @@ class StockDetailsActivity : AppCompatActivity() {
     private lateinit var stockLogo: ImageView
     private lateinit var newsRecyclerView: RecyclerView
     private lateinit var lineChart: LineChart
+    private lateinit var priceTextView: TextView
     
     // UI components for advanced stats
     private lateinit var chipIndustry: Chip
@@ -61,6 +63,10 @@ class StockDetailsActivity : AppCompatActivity() {
     private var isFavorite = false
     private var currentPrice: Double = 0.0
     private var ownedQuantity: Double = 0.0
+
+    // WebSocket components
+    private val client = OkHttpClient()
+    private var webSocket: WebSocket? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +84,7 @@ class StockDetailsActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize all Views from XML
+        // Initialize Views
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
         favoriteStarButton = findViewById(R.id.favoriteStarButton)
         priceAlertButton = findViewById(R.id.priceAlertButton)
@@ -87,6 +93,7 @@ class StockDetailsActivity : AppCompatActivity() {
         stockLogo = findViewById(R.id.ivStockLogo)
         newsRecyclerView = findViewById(R.id.rvStockNews)
         lineChart = findViewById(R.id.stockChart)
+        priceTextView = findViewById(R.id.detailsPrice)
         val buyButton = findViewById<MaterialButton>(R.id.buyStockButton)
         
         chipIndustry = findViewById(R.id.chipIndustry)
@@ -116,11 +123,74 @@ class StockDetailsActivity : AppCompatActivity() {
         fetchCompanyProfile()
         fetchStockNews()
         fetchChartDataFromAlphaVantage()
+        startWebSocket()
 
         favoriteStarButton.setOnClickListener { toggleFavorite() }
         priceAlertButton.setOnClickListener { showPriceAlertDialog() }
         buyButton.setOnClickListener { showTradeDialog(true) }
         sellButton.setOnClickListener { showTradeDialog(false) }
+    }
+
+    private fun startWebSocket() {
+        val request = Request.Builder()
+            .url("wss://ws.finnhub.io?token=${FinnhubApiClient.API_KEY}")
+            .build()
+
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) {
+                val subscribeMsg = JSONObject().apply {
+                    put("type", "subscribe")
+                    put("symbol", symbol)
+                }
+                webSocket.send(subscribeMsg.toString())
+                Log.d("WebSocket", "Subscribed to $symbol")
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                handleWebSocketMessage(text)
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: okhttp3.Response?) {
+                Log.e("WebSocket", "Connection failure", t)
+            }
+        })
+    }
+
+    private fun handleWebSocketMessage(text: String) {
+        try {
+            val json = JSONObject(text)
+            if (json.getString("type") == "trade") {
+                val data = json.getJSONArray("data")
+                val lastTrade = data.getJSONObject(data.length() - 1)
+                val newPrice = lastTrade.getDouble("p")
+                
+                runOnUiThread {
+                    updatePriceWithAnimation(newPrice)
+                }
+            }
+        } catch (e: Exception) {
+            // Ignore keep-alive or malformed messages
+        }
+    }
+
+    private fun updatePriceWithAnimation(newPrice: Double) {
+        if (newPrice == currentPrice) return
+
+        val oldPrice = currentPrice
+        currentPrice = newPrice
+        
+        priceTextView.text = "$${String.format("%.2f", newPrice)}"
+        
+        if (newPrice > oldPrice && oldPrice != 0.0) {
+            priceTextView.setTextColor(Color.parseColor("#4CAF50"))
+        } else if (newPrice < oldPrice && oldPrice != 0.0) {
+            priceTextView.setTextColor(Color.parseColor("#F44336"))
+        }
+
+        priceTextView.postDelayed({
+            if (isFinishing) return@postDelayed
+            priceTextView.setTextColor(Color.parseColor("#1A1C1E"))
+        }, 600)
     }
 
     private fun showPriceAlertDialog() {
@@ -187,7 +257,7 @@ class StockDetailsActivity : AppCompatActivity() {
     private fun fetchChartDataFromAlphaVantage() {
         AlphaVantageApiClient.apiService.getDailySeries(symbol = symbol, apiKey = AlphaVantageApiClient.API_KEY)
             .enqueue(object : Callback<AlphaVantageResponse> {
-                override fun onResponse(call: Call<AlphaVantageResponse>, response: Response<AlphaVantageResponse>) {
+                override fun onResponse(call: Call<AlphaVantageResponse>, response: retrofit2.Response<AlphaVantageResponse>) {
                     if (response.isSuccessful) {
                         val body = response.body()
                         val timeSeries = body?.timeSeries
@@ -306,7 +376,7 @@ class StockDetailsActivity : AppCompatActivity() {
     private fun fetchStockDetails() {
         FinnhubApiClient.apiService.getQuote(symbol, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<StockQuote> {
-                override fun onResponse(call: Call<StockQuote>, response: Response<StockQuote>) {
+                override fun onResponse(call: Call<StockQuote>, response: retrofit2.Response<StockQuote>) {
                     if (response.isSuccessful) {
                         response.body()?.let { 
                             currentPrice = it.currentPrice
@@ -323,7 +393,7 @@ class StockDetailsActivity : AppCompatActivity() {
     private fun fetchCompanyProfile() {
         FinnhubApiClient.apiService.getCompanyProfile(symbol, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<CompanyProfile> {
-                override fun onResponse(call: Call<CompanyProfile>, response: Response<CompanyProfile>) {
+                override fun onResponse(call: Call<CompanyProfile>, response: retrofit2.Response<CompanyProfile>) {
                     if (response.isSuccessful) {
                         response.body()?.let { profile ->
                             runOnUiThread {
@@ -363,7 +433,7 @@ class StockDetailsActivity : AppCompatActivity() {
 
         FinnhubApiClient.apiService.getStockNews(symbol, fromDate, toDate, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<List<StockNews>> {
-                override fun onResponse(call: Call<List<StockNews>>, response: Response<List<StockNews>>) {
+                override fun onResponse(call: Call<List<StockNews>>, response: retrofit2.Response<List<StockNews>>) {
                     if (response.isSuccessful) {
                         val news = response.body() ?: emptyList()
                         runOnUiThread {
@@ -485,5 +555,10 @@ class StockDetailsActivity : AppCompatActivity() {
         }.addOnFailureListener { e ->
             Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        webSocket?.close(1000, "Activity destroyed")
     }
 }
