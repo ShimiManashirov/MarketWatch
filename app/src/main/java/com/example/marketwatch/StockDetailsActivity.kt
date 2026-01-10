@@ -76,7 +76,7 @@ class StockDetailsActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize all Views
+        // Initialize Views
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
         favoriteStarButton = findViewById(R.id.favoriteStarButton)
         tvOwnedShares = findViewById(R.id.tvOwnedShares)
