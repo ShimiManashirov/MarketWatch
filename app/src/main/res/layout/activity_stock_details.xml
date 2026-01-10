@@ -81,21 +81,38 @@
                         android:text="AAPL"
                         android:textColor="?attr/colorOnSurface"
                         android:textStyle="bold" />
-                    <TextView
-                        android:id="@+id/detailsDescription"
-                        style="@style/TextAppearance.Material3.BodyLarge"
+                    
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipIndustry"
+                        style="@style/Widget.Material3.Chip.Assist"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Apple Inc."
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:layout_marginTop="4dp"
+                        android:text="Technology"
+                        android:visibility="gone"
+                        app:chipMinHeight="32dp"
+                        app:chipStartPadding="8dp"
+                        app:chipEndPadding="8dp"
+                        app:chipStrokeWidth="0dp"
+                        app:chipBackgroundColor="?attr/colorPrimaryContainer"
+                        android:textColor="?attr/colorOnPrimaryContainer" />
                 </LinearLayout>
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/detailsDescription"
+                style="@style/TextAppearance.Material3.BodyLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Apple Inc."
+                android:textColor="?attr/colorOnSurfaceVariant" />
 
             <!-- Price Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 android:orientation="vertical">
                 
                 <TextView
@@ -130,7 +147,7 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <!-- Chart Card (Placeholder for MPAndroidChart) -->
+            <!-- Chart Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
@@ -140,26 +157,11 @@
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
                 
-                <LinearLayout
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/stockChart"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="vertical">
-                    
-                    <com.github.mikephil.charting.charts.LineChart
-                        android:id="@+id/stockChart"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_margin="12dp" />
-                    
-                    <TextView
-                        android:id="@+id/chartPlaceholderText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Chart data loading..."
-                        android:textColor="?attr/colorOnSurfaceVariant"
-                        android:visibility="gone" />
-                </LinearLayout>
+                    android:layout_margin="12dp" />
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Quick Action Buttons -->
@@ -198,7 +200,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
-                android:text="MARKET STATISTICS"
+                android:text="KEY STATISTICS"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:letterSpacing="0.1" />
 
@@ -216,6 +218,50 @@
                     android:layout_height="wrap_content"
                     android:columnCount="2"
                     android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Market Cap"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/detailsMarketCap"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="---"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Exchange"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/detailsExchange"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NASDAQ"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -253,50 +299,6 @@
                             android:textSize="12sp" />
                         <TextView
                             android:id="@+id/detailsLow"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0.00"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Open"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="12sp" />
-                        <TextView
-                            android:id="@+id/detailsOpen"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0.00"
-                            android:textColor="?attr/colorOnSurface"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_columnWeight="1"
-                        android:orientation="vertical"
-                        android:padding="12dp">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Prev. Close"
-                            android:textColor="?attr/colorOnSurfaceVariant"
-                            android:textSize="12sp" />
-                        <TextView
-                            android:id="@+id/detailsPrevClose"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0.00"

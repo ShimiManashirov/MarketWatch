@@ -15,7 +15,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -24,6 +23,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -47,6 +47,13 @@ class StockDetailsActivity : AppCompatActivity() {
     private lateinit var newsRecyclerView: RecyclerView
     private lateinit var lineChart: LineChart
     
+    // Advanced Stats Views
+    private lateinit var chipIndustry: Chip
+    private lateinit var tvMarketCap: TextView
+    private lateinit var tvExchange: TextView
+    private lateinit var tvHigh: TextView
+    private lateinit var tvLow: TextView
+    
     private var isFavorite = false
     private var currentPrice: Double = 0.0
     private var ownedQuantity: Double = 0.0
@@ -67,6 +74,7 @@ class StockDetailsActivity : AppCompatActivity() {
             return
         }
 
+        // Initialize Views
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
         favoriteStarButton = findViewById(R.id.favoriteStarButton)
         tvOwnedShares = findViewById(R.id.tvOwnedShares)
@@ -75,6 +83,12 @@ class StockDetailsActivity : AppCompatActivity() {
         newsRecyclerView = findViewById(R.id.rvStockNews)
         lineChart = findViewById(R.id.stockChart)
         val buyButton = findViewById<MaterialButton>(R.id.buyStockButton)
+        
+        chipIndustry = findViewById(R.id.chipIndustry)
+        tvMarketCap = findViewById(R.id.detailsMarketCap)
+        tvExchange = findViewById(R.id.detailsExchange)
+        tvHigh = findViewById(R.id.detailsHigh)
+        tvLow = findViewById(R.id.detailsLow)
         
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
@@ -95,7 +109,7 @@ class StockDetailsActivity : AppCompatActivity() {
         fetchStockDetails()
         fetchCompanyProfile()
         fetchStockNews()
-        fetchChartData()
+        fetchChartDataFromAlphaVantage()
 
         favoriteStarButton.setOnClickListener {
             toggleFavorite()
@@ -108,7 +122,7 @@ class StockDetailsActivity : AppCompatActivity() {
     private fun setupChart() {
         lineChart.apply {
             description.isEnabled = false
-            setNoDataText("Loading chart data...")
+            setNoDataText("Loading chart...")
             setNoDataTextColor(Color.GRAY)
             setTouchEnabled(true)
             isDragEnabled = true
@@ -127,41 +141,40 @@ class StockDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun fetchChartData() {
-        AlphaVantageApiClient.apiService.getDailySeries(symbol = symbol, apiKey = "Q0P5O0X0V0Q0X0Q0") // השתמשתי במפתח זמני, כדאי להחליף לשלך
+    private fun fetchChartDataFromAlphaVantage() {
+        AlphaVantageApiClient.apiService.getDailySeries(symbol = symbol, apiKey = AlphaVantageApiClient.API_KEY)
             .enqueue(object : Callback<AlphaVantageResponse> {
                 override fun onResponse(call: Call<AlphaVantageResponse>, response: Response<AlphaVantageResponse>) {
                     if (response.isSuccessful) {
-                        val timeSeries = response.body()?.timeSeries
+                        val body = response.body()
+                        val timeSeries = body?.timeSeries
+                        
                         if (!timeSeries.isNullOrEmpty()) {
                             val entries = mutableListOf<Entry>()
-                            // המרת המפה של הנתונים היומיים לרשימת Entries לגרף
-                            // הנתונים חוזרים מהחדש לישן, אז נהפוך אותם
-                            val sortedKeys = timeSeries.keys.sorted()
-                            sortedKeys.takeLast(30).forEachIndexed { index, date ->
-                                val price = timeSeries[date]?.close?.toFloat() ?: 0f
-                                entries.add(Entry(index.toFloat(), price))
+                            val sortedDates = timeSeries.keys.sorted()
+                            
+                            sortedDates.takeLast(30).forEachIndexed { index, date ->
+                                val closePrice = timeSeries[date]?.close?.toFloat() ?: 0f
+                                entries.add(Entry(index.toFloat(), closePrice))
                             }
+                            
                             runOnUiThread { displayChart(entries) }
                         } else {
-                            runOnUiThread { 
-                                lineChart.setNoDataText("Chart data not available for this symbol")
+                            runOnUiThread {
+                                lineChart.setNoDataText("Historical data currently unavailable")
                                 lineChart.invalidate()
                             }
                         }
                     }
                 }
                 override fun onFailure(call: Call<AlphaVantageResponse>, t: Throwable) {
-                    runOnUiThread {
-                        lineChart.setNoDataText("Error loading chart")
-                        lineChart.invalidate()
-                    }
+                    Log.e("StockDetails", "Network Error", t)
                 }
             })
     }
 
     private fun displayChart(entries: List<Entry>) {
-        val dataSet = LineDataSet(entries, "Stock Price").apply {
+        val dataSet = LineDataSet(entries, "Price").apply {
             mode = LineDataSet.Mode.CUBIC_BEZIER
             setDrawCircles(false)
             setDrawFilled(true)
@@ -173,7 +186,7 @@ class StockDetailsActivity : AppCompatActivity() {
         }
 
         lineChart.data = LineData(dataSet)
-        lineChart.animateX(1000)
+        lineChart.animateX(800)
         lineChart.invalidate()
     }
 
@@ -267,18 +280,36 @@ class StockDetailsActivity : AppCompatActivity() {
             .enqueue(object : Callback<CompanyProfile> {
                 override fun onResponse(call: Call<CompanyProfile>, response: Response<CompanyProfile>) {
                     if (response.isSuccessful) {
-                        response.body()?.let {
+                        response.body()?.let { profile ->
                             runOnUiThread {
                                 Glide.with(this@StockDetailsActivity)
-                                    .load(it.logo)
+                                    .load(profile.logo)
                                     .placeholder(android.R.drawable.ic_menu_gallery)
                                     .into(stockLogo)
+                                
+                                // Update Advanced Stats
+                                if (!profile.industry.isNullOrEmpty()) {
+                                    chipIndustry.text = profile.industry
+                                    chipIndustry.visibility = View.VISIBLE
+                                }
+                                
+                                profile.marketCap?.let {
+                                    tvMarketCap.text = formatMarketCap(it)
+                                }
                             }
                         }
                     }
                 }
                 override fun onFailure(call: Call<CompanyProfile>, t: Throwable) {}
             })
+    }
+
+    private fun formatMarketCap(cap: Double): String {
+        return when {
+            cap >= 1000000 -> String.format("%.2fT", cap / 1000000.0)
+            cap >= 1000 -> String.format("%.2fB", cap / 1000.0)
+            else -> String.format("%.2fM", cap)
+        }
     }
 
     private fun fetchStockNews() {
@@ -308,10 +339,8 @@ class StockDetailsActivity : AppCompatActivity() {
             val changeView = findViewById<TextView>(R.id.detailsChange)
             changeView.text = "${String.format("%.2f", quote.change)} (${String.format("%.2f", quote.percentChange)}%)"
             changeView.setTextColor(if (quote.change >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
-            findViewById<TextView>(R.id.detailsHigh).text = "$${quote.highPrice}"
-            findViewById<TextView>(R.id.detailsLow).text = "$${quote.lowPrice}"
-            findViewById<TextView>(R.id.detailsOpen).text = "$${quote.openPrice}"
-            findViewById<TextView>(R.id.detailsPrevClose).text = "$${quote.previousClose}"
+            tvHigh.text = "$${quote.highPrice}"
+            tvLow.text = "$${quote.lowPrice}"
         }
     }
 

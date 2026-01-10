@@ -28,7 +28,11 @@ data class CompanyProfile(
     @SerializedName("logo") val logo: String,
     @SerializedName("name") val name: String,
     @SerializedName("ticker") val ticker: String,
-    @SerializedName("weburl") val weburl: String
+    @SerializedName("weburl") val weburl: String,
+    @SerializedName("finnhubIndustry") val industry: String?,
+    @SerializedName("marketCapitalization") val marketCap: Double?,
+    @SerializedName("shareOutstanding") val sharesOutstanding: Double?,
+    @SerializedName("currency") val currency: String?
 )
 
 data class StockNews(

@@ -52,6 +52,26 @@
                 android:layout_gravity="center"
                 android:visibility="gone" />
 
+            <!-- Shimmer Loading State -->
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/searchShimmerContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                app:shimmer_auto_start="false">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <include layout="@layout/item_stock_search_shimmer" />
+                    <include layout="@layout/item_stock_search_shimmer" />
+                    <include layout="@layout/item_stock_search_shimmer" />
+                    <include layout="@layout/item_stock_search_shimmer" />
+                    <include layout="@layout/item_stock_search_shimmer" />
+                </LinearLayout>
+            </com.facebook.shimmer.ShimmerFrameLayout>
+
             <!-- Empty/Suggestions State -->
             <LinearLayout
                 android:id="@+id/emptySearchContainer"

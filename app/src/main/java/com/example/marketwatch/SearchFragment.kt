@@ -3,16 +3,17 @@ package com.example.marketwatch
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import retrofit2.Call
@@ -22,7 +23,7 @@ import retrofit2.Response
 class SearchFragment : Fragment() {
 
     private lateinit var adapter: SearchAdapter
-    private lateinit var progressBar: ProgressBar
+    private lateinit var shimmerContainer: ShimmerFrameLayout
     private lateinit var emptySearchContainer: LinearLayout
     private lateinit var searchRecyclerView: RecyclerView
     private lateinit var searchView: SearchView
@@ -36,7 +37,7 @@ class SearchFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_search, container, false)
 
-        progressBar = view.findViewById(R.id.searchProgressBar)
+        shimmerContainer = view.findViewById(R.id.searchShimmerContainer)
         emptySearchContainer = view.findViewById(R.id.emptySearchContainer)
         searchRecyclerView = view.findViewById(R.id.searchRecyclerView)
         searchView = view.findViewById(R.id.stockSearchView)
@@ -57,23 +58,26 @@ class SearchFragment : Fragment() {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                query?.let { performSearch(it) }
+                query?.let { 
+                    handler.removeCallbacksAndMessages(null)
+                    performSearch(it) 
+                }
                 return true
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (newText.isNullOrEmpty()) {
                     showEmptyState()
-                    searchRunnable?.let { handler.removeCallbacks(it) }
+                    handler.removeCallbacksAndMessages(null)
                     return true
                 }
 
                 // Debouncing: wait for user to stop typing
-                searchRunnable?.let { handler.removeCallbacks(it) }
+                handler.removeCallbacksAndMessages(null)
                 searchRunnable = Runnable {
                     if (newText.length >= 1) performSearch(newText)
                 }
-                handler.postDelayed(searchRunnable!!, 500)
+                handler.postDelayed(searchRunnable!!, 400)
                 return true
             }
         })
@@ -84,42 +88,58 @@ class SearchFragment : Fragment() {
     private fun showEmptyState() {
         emptySearchContainer.visibility = View.VISIBLE
         searchRecyclerView.visibility = View.GONE
-        progressBar.visibility = View.GONE
+        shimmerContainer.stopShimmer()
+        shimmerContainer.visibility = View.GONE
+    }
+
+    private fun showLoadingState() {
+        emptySearchContainer.visibility = View.GONE
+        searchRecyclerView.visibility = View.GONE
+        shimmerContainer.visibility = View.VISIBLE
+        shimmerContainer.startShimmer()
     }
 
     private fun showResultsState() {
         emptySearchContainer.visibility = View.GONE
+        shimmerContainer.stopShimmer()
+        shimmerContainer.visibility = View.GONE
         searchRecyclerView.visibility = View.VISIBLE
-        progressBar.visibility = View.GONE
     }
 
     private fun performSearch(query: String) {
-        progressBar.visibility = View.VISIBLE
+        showLoadingState()
+        
+        // Log query for debugging
+        Log.d("SearchFragment", "Searching for: $query")
+
         FinnhubApiClient.apiService.searchStock(query, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<StockLookupResponse> {
                 override fun onResponse(call: Call<StockLookupResponse>, response: Response<StockLookupResponse>) {
                     if (!isAdded) return
-                    progressBar.visibility = View.GONE
                     
                     if (response.isSuccessful) {
                         val stocks = response.body()?.result ?: emptyList()
+                        Log.d("SearchFragment", "Results found: ${stocks.size}")
+                        
                         if (stocks.isNotEmpty()) {
                             adapter.updateData(stocks)
                             showResultsState()
                         } else {
-                            // Optionally show a "No results found" state
                             adapter.updateData(emptyList())
                             showEmptyState()
                         }
                     } else {
-                        Toast.makeText(context, "Search failed", Toast.LENGTH_SHORT).show()
+                        Log.e("SearchFragment", "Search failed: ${response.code()}")
+                        showEmptyState()
+                        Toast.makeText(context, "Search failed. Check your API limits.", Toast.LENGTH_SHORT).show()
                     }
                 }
 
                 override fun onFailure(call: Call<StockLookupResponse>, t: Throwable) {
                     if (!isAdded) return
-                    progressBar.visibility = View.GONE
-                    Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                    Log.e("SearchFragment", "Network error", t)
+                    showEmptyState()
+                    Toast.makeText(context, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
             })
     }

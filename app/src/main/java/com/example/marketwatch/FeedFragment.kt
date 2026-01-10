@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -29,6 +30,9 @@ class FeedFragment : Fragment() {
     private lateinit var db: FirebaseFirestore
     private lateinit var adapter: PostsAdapter
     private val postsList = mutableListOf<Post>()
+    
+    private lateinit var shimmerContainer: ShimmerFrameLayout
+    private lateinit var recyclerView: RecyclerView
     
     private var selectedImageUri: Uri? = null
     private var dialogImageView: ImageView? = null
@@ -52,7 +56,9 @@ class FeedFragment : Fragment() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        val recyclerView = view.findViewById<RecyclerView>(R.id.postsRecyclerView)
+        shimmerContainer = view.findViewById(R.id.shimmerViewContainer)
+        recyclerView = view.findViewById(R.id.postsRecyclerView)
+        
         recyclerView.layoutManager = LinearLayoutManager(context)
         
         adapter = PostsAdapter(postsList, 
@@ -71,10 +77,21 @@ class FeedFragment : Fragment() {
     }
 
     private fun loadPosts() {
+        // Start shimmer
+        shimmerContainer.startShimmer()
+        shimmerContainer.visibility = View.VISIBLE
+        recyclerView.visibility = View.GONE
+
         db.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, e ->
                 if (!isAdded) return@addSnapshotListener
+                
+                // Stop and hide shimmer
+                shimmerContainer.stopShimmer()
+                shimmerContainer.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+
                 if (e != null) {
                     Log.e("FeedFragment", "Listen failed.", e)
                     return@addSnapshotListener

@@ -52,6 +52,12 @@ dependencies {
     // Charts library
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     
+    // Shimmer effect
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
+
+    // WorkManager for background tasks
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

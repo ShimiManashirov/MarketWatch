@@ -5,7 +5,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object AlphaVantageApiClient {
     private const val BASE_URL = "https://www.alphavantage.co/"
-    const val API_KEY = "YOUR_ALPHA_VANTAGE_KEY" // אתה יכול להוציא מפתח חינמי ב-alphavantage.co
+    const val API_KEY = "ZIEEZYBWK0IJNBRW"
 
     val apiService: AlphaVantageApiService by lazy {
         Retrofit.Builder()
