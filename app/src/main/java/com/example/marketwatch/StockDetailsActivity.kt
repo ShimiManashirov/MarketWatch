@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -47,12 +48,13 @@ class StockDetailsActivity : AppCompatActivity() {
     private lateinit var newsRecyclerView: RecyclerView
     private lateinit var lineChart: LineChart
     
-    // Advanced Stats Views
+    // UI components for advanced stats
     private lateinit var chipIndustry: Chip
     private lateinit var tvMarketCap: TextView
     private lateinit var tvExchange: TextView
     private lateinit var tvHigh: TextView
     private lateinit var tvLow: TextView
+    private lateinit var tvPrevClose: TextView
     
     private var isFavorite = false
     private var currentPrice: Double = 0.0
@@ -74,7 +76,7 @@ class StockDetailsActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize Views
+        // Initialize all Views
         val toolbar = findViewById<Toolbar>(R.id.stockDetailsToolbar)
         favoriteStarButton = findViewById(R.id.favoriteStarButton)
         tvOwnedShares = findViewById(R.id.tvOwnedShares)
@@ -89,6 +91,7 @@ class StockDetailsActivity : AppCompatActivity() {
         tvExchange = findViewById(R.id.detailsExchange)
         tvHigh = findViewById(R.id.detailsHigh)
         tvLow = findViewById(R.id.detailsLow)
+        tvPrevClose = findViewById(R.id.detailsPrevClose)
         
         setSupportActionBar(toolbar)
         supportActionBar?.apply {
@@ -287,7 +290,7 @@ class StockDetailsActivity : AppCompatActivity() {
                                     .placeholder(android.R.drawable.ic_menu_gallery)
                                     .into(stockLogo)
                                 
-                                // Update Advanced Stats
+                                // Update Advanced Stats from Profile
                                 if (!profile.industry.isNullOrEmpty()) {
                                     chipIndustry.text = profile.industry
                                     chipIndustry.visibility = View.VISIBLE
@@ -339,8 +342,11 @@ class StockDetailsActivity : AppCompatActivity() {
             val changeView = findViewById<TextView>(R.id.detailsChange)
             changeView.text = "${String.format("%.2f", quote.change)} (${String.format("%.2f", quote.percentChange)}%)"
             changeView.setTextColor(if (quote.change >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
+            
+            // Assign stats data to correct views
             tvHigh.text = "$${quote.highPrice}"
             tvLow.text = "$${quote.lowPrice}"
+            tvPrevClose.text = "$${quote.previousClose}"
         }
     }
 

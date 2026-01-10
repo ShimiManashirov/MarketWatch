@@ -101,6 +101,9 @@ class FeedFragment : Fragment() {
                     postsList.clear()
                     for (doc in snapshots) {
                         try {
+                            // Manual extraction to ensure all fields (including likes) are loaded
+                            val likesList = doc.get("likes") as? List<String> ?: emptyList()
+                            
                             val post = Post(
                                 id = doc.id,
                                 userId = doc.getString("userId") ?: "",
@@ -108,7 +111,8 @@ class FeedFragment : Fragment() {
                                 userProfilePicture = doc.getString("userProfilePicture") ?: "",
                                 content = doc.getString("content") ?: "",
                                 imageUrl = doc.getString("imageUrl"),
-                                timestamp = doc.getTimestamp("timestamp")
+                                timestamp = doc.getTimestamp("timestamp"),
+                                likes = likesList
                             )
                             postsList.add(post)
                         } catch (ex: Exception) {
@@ -226,7 +230,8 @@ class FeedFragment : Fragment() {
                 "userProfilePicture" to profilePic,
                 "content" to content,
                 "imageUrl" to imageUri?.toString(), 
-                "timestamp" to Timestamp.now()
+                "timestamp" to Timestamp.now(),
+                "likes" to emptyList<String>()
             )
 
             db.collection("posts").add(postData)

@@ -1,5 +1,6 @@
 package com.example.marketwatch
 
+import android.graphics.Color
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +12,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -21,6 +24,7 @@ class PostsAdapter(
 ) : RecyclerView.Adapter<PostsAdapter.PostViewHolder>() {
 
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+    private val db = FirebaseFirestore.getInstance()
 
     class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val userImage: ImageView = view.findViewById(R.id.postUserProfileImage)
@@ -30,6 +34,8 @@ class PostsAdapter(
         val postImageCard: View = view.findViewById(R.id.postImageCard)
         val postImage: ImageView = view.findViewById(R.id.postImage)
         val menuButton: ImageButton = view.findViewById(R.id.postMenuButton)
+        val btnLike: ImageButton = view.findViewById(R.id.btnLike)
+        val tvLikeCount: TextView = view.findViewById(R.id.tvLikeCount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -69,6 +75,26 @@ class PostsAdapter(
                 .into(holder.postImage)
         } else {
             holder.postImageCard.visibility = View.GONE
+        }
+
+        // --- Like Logic ---
+        val isLiked = currentUserId != null && post.likes.contains(currentUserId)
+        holder.btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
+        holder.btnLike.setColorFilter(if (isLiked) Color.parseColor("#E91E63") else Color.GRAY)
+        
+        holder.tvLikeCount.text = "${post.likes.size} likes"
+
+        holder.btnLike.setOnClickListener {
+            if (currentUserId == null) return@setOnClickListener
+            
+            val postRef = db.collection("posts").document(post.id)
+            if (isLiked) {
+                // Remove Like
+                postRef.update("likes", FieldValue.arrayRemove(currentUserId))
+            } else {
+                // Add Like
+                postRef.update("likes", FieldValue.arrayUnion(currentUserId))
+            }
         }
     }
 

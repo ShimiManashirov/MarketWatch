@@ -22,7 +22,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="My Portfolio"
+                android:text="My Investment Portfolio"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
 
@@ -58,13 +58,15 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Section 1: Owned Stocks -->
             <TextView
+                android:id="@+id/titleHoldings"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
                 android:layout_marginStart="4dp"
-                android:text="Active Holdings"
+                android:text="My Holdings"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
 
@@ -74,8 +76,31 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:nestedScrollingEnabled="false"
-                android:paddingBottom="32dp"
                 android:layoutAnimation="@anim/layout_animation_fall_down" />
+
+            <!-- Section 2: Watchlist (Favorites) -->
+            <TextView
+                android:id="@+id/titleWatchlist"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:layout_marginStart="4dp"
+                android:text="My Watchlist"
+                android:textColor="?attr/colorOnSurface"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/watchlistRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:nestedScrollingEnabled="false"
+                android:layoutAnimation="@anim/layout_animation_fall_down" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="100dp"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

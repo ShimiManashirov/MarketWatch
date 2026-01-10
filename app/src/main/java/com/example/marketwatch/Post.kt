@@ -9,5 +9,6 @@ data class Post(
     val userProfilePicture: String = "",
     val content: String = "",
     val imageUrl: String? = null,
-    val timestamp: Timestamp? = null
+    val timestamp: Timestamp? = null,
+    val likes: List<String> = emptyList() // רשימה של UIDs של משתמשים שעשו לייק
 )
