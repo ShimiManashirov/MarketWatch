@@ -15,7 +15,6 @@ class PortfolioRepository(private val localDb: AppDatabase) {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    // קבלת נתונים מ-Firebase בזמן אמת
     fun getPortfolioUpdates(): Flow<List<PortfolioItem>> = callbackFlow {
         val userId = auth.currentUser?.uid
         if (userId == null) {
@@ -34,13 +33,23 @@ class PortfolioRepository(private val localDb: AppDatabase) {
 
                 val items = snapshots?.mapNotNull { doc ->
                     try {
-                        PortfolioItem(
-                            symbol = doc.getString("symbol") ?: "",
-                            description = doc.getString("description") ?: "",
-                            quantity = doc.getDouble("quantity") ?: 0.0,
-                            isFavorite = doc.getBoolean("isFavorite") ?: false
-                        )
+                        // שיפור הקריאה: תמיכה גם ב-Long וגם ב-Double מה-Firestore
+                        val symbol = doc.getString("symbol") ?: ""
+                        val description = doc.getString("description") ?: ""
+                        val isFavorite = doc.getBoolean("isFavorite") ?: false
+                        
+                        // קבלת הכמות בצורה בטוחה (מספרים ב-Firestore יכולים להיות מסוגים שונים)
+                        val quantityRaw = doc.get("quantity")
+                        val quantity = when (quantityRaw) {
+                            is Number -> quantityRaw.toDouble()
+                            else -> 0.0
+                        }
+
+                        if (symbol.isNotBlank()) {
+                            PortfolioItem(symbol, description, quantity, isFavorite)
+                        } else null
                     } catch (ex: Exception) {
+                        Log.e("PortfolioRepo", "Error parsing doc ${doc.id}", ex)
                         null
                     }
                 } ?: emptyList()
@@ -51,7 +60,6 @@ class PortfolioRepository(private val localDb: AppDatabase) {
         awaitClose { registration.remove() }
     }
 
-    // סנכרון ל-Room
     suspend fun syncLocalDatabase(items: List<PortfolioItem>) {
         val entities = items.map {
             StockEntity(

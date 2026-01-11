@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingTop="8dp"
-        android:paddingBottom="88dp"
+        android:paddingBottom="100dp"
         android:clipToPadding="false"
         android:visibility="gone"
         android:layoutAnimation="@anim/layout_animation_fall_down" />
@@ -43,7 +43,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="84dp"
+        android:layout_marginBottom="100dp"
         android:text="Post"
         android:textColor="?attr/colorOnPrimary"
         app:icon="@android:drawable/ic_input_add"

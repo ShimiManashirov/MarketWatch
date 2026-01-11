@@ -7,18 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.firestore.PropertyName
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-
-data class PortfolioItem(
-    @get:PropertyName("symbol") @set:PropertyName("symbol") var symbol: String = "",
-    @get:PropertyName("description") @set:PropertyName("description") var description: String = "",
-    @get:PropertyName("quantity") @set:PropertyName("quantity") var quantity: Double = 0.0,
-    @get:PropertyName("isFavorite") @set:PropertyName("isFavorite") var isFavorite: Boolean = false
-)
 
 class PortfolioAdapter(
     private var items: List<PortfolioItem>,
@@ -43,14 +36,9 @@ class PortfolioAdapter(
         val item = items[position]
         
         holder.symbol.text = item.symbol
-        
-        // הצגת תג "OWNED" אם המניה בבעלות
         holder.holdingBadge.visibility = if (item.quantity > 0) View.VISIBLE else View.GONE
-        
-        // הצגת כוכב אם המניה במועדפים
         holder.favoriteIndicator.visibility = if (item.isFavorite) View.VISIBLE else View.GONE
 
-        // עדכון התיאור
         holder.description.text = when {
             item.quantity > 0 -> "${String.format("%.2f", item.quantity)} Shares • ${item.description}"
             item.isFavorite -> "In Watchlist • ${item.description}"
@@ -69,16 +57,20 @@ class PortfolioAdapter(
             true
         }
 
-        // טעינת מחיר עדכני
-        FinnhubApiClient.apiService.getQuote(item.symbol, FinnhubApiClient.API_KEY)
+        // טעינת מחיר - מומלץ בעתיד להעביר ל-ViewModel לביצועים אופטימליים
+        fetchPrice(item.symbol, holder)
+    }
+
+    private fun fetchPrice(symbol: String, holder: PortfolioViewHolder) {
+        FinnhubApiClient.apiService.getQuote(symbol, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<StockQuote> {
                 override fun onResponse(call: Call<StockQuote>, response: Response<StockQuote>) {
                     if (response.isSuccessful) {
-                        val quote = response.body()
-                        if (quote != null) {
+                        response.body()?.let { quote ->
                             holder.price.text = "$${String.format("%.2f", quote.currentPrice)}"
                             holder.change.text = "${String.format("%.2f", quote.percentChange)}%"
-                            holder.change.setTextColor(if (quote.percentChange >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
+                            val color = if (quote.percentChange >= 0) "#4CAF50" else "#F44336"
+                            holder.change.setTextColor(Color.parseColor(color))
                         }
                     }
                 }
@@ -91,7 +83,19 @@ class PortfolioAdapter(
     override fun getItemCount() = items.size
 
     fun updateData(newItems: List<PortfolioItem>) {
-        items = ArrayList(newItems) // יצירת עותק חדש כדי להבטיח עדכון
-        notifyDataSetChanged()
+        val diffCallback = PortfolioDiffCallback(items, newItems)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        items = newItems
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    class PortfolioDiffCallback(
+        private val oldList: List<PortfolioItem>,
+        private val newList: List<PortfolioItem>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize() = oldList.size
+        override fun getNewListSize() = newList.size
+        override fun areItemsTheSame(oldPos: Int, newPos: Int) = oldList[oldPos].symbol == newList[newPos].symbol
+        override fun areContentsTheSame(oldPos: Int, newPos: Int) = oldList[oldPos] == newList[newPos]
     }
 }

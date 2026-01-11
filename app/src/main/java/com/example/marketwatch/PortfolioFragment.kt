@@ -33,6 +33,9 @@ class PortfolioFragment : Fragment() {
     private lateinit var emptyTextContainer: LinearLayout
     private lateinit var pieChart: PieChart
     private lateinit var chartCard: MaterialCardView
+    private lateinit var holdingsSection: View
+    private lateinit var watchlistSection: View
+    private lateinit var sectionDivider: View
     
     private val ownedList = mutableListOf<PortfolioItem>()
     private val watchlistItems = mutableListOf<PortfolioItem>()
@@ -41,14 +44,16 @@ class PortfolioFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_portfolio, container, false)
+        return inflater.inflate(R.layout.fragment_portfolio, container, false)
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        
         initViews(view)
-        setupRecyclerViews()
+        setupRecyclerViews(view)
         setupPieChart()
         observeViewModel()
-
-        return view
     }
 
     private fun initViews(view: View) {
@@ -56,19 +61,22 @@ class PortfolioFragment : Fragment() {
         emptyTextContainer = view.findViewById(R.id.emptyPortfolioText)
         pieChart = view.findViewById(R.id.portfolioPieChart)
         chartCard = view.findViewById(R.id.portfolioChartCard)
+        holdingsSection = view.findViewById(R.id.holdingsSection)
+        watchlistSection = view.findViewById(R.id.watchlistSection)
+        sectionDivider = view.findViewById(R.id.sectionDivider)
     }
 
-    private fun setupRecyclerViews() {
-        val rvHoldings = view?.findViewById<RecyclerView>(R.id.portfolioRecyclerView)
-        val rvWatchlist = view?.findViewById<RecyclerView>(R.id.watchlistRecyclerView)
+    private fun setupRecyclerViews(view: View) {
+        val rvHoldings = view.findViewById<RecyclerView>(R.id.portfolioRecyclerView)
+        val rvWatchlist = view.findViewById<RecyclerView>(R.id.watchlistRecyclerView)
 
         holdingsAdapter = PortfolioAdapter(ownedList) { item -> showRemoveDialog(item, true) }
-        rvHoldings?.layoutManager = LinearLayoutManager(context)
-        rvHoldings?.adapter = holdingsAdapter
+        rvHoldings.layoutManager = LinearLayoutManager(context)
+        rvHoldings.adapter = holdingsAdapter
 
         watchlistAdapter = PortfolioAdapter(watchlistItems) { item -> showRemoveDialog(item, false) }
-        rvWatchlist?.layoutManager = LinearLayoutManager(context)
-        rvWatchlist?.adapter = watchlistAdapter
+        rvWatchlist.layoutManager = LinearLayoutManager(context)
+        rvWatchlist.adapter = watchlistAdapter
     }
 
     private fun setupPieChart() {
@@ -85,7 +93,9 @@ class PortfolioFragment : Fragment() {
 
     private fun observeViewModel() {
         viewModel.portfolioItems.observe(viewLifecycleOwner) { items ->
-            updateUI(items)
+            if (items != null) {
+                updateUI(items)
+            }
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
@@ -115,13 +125,14 @@ class PortfolioFragment : Fragment() {
     }
 
     private fun updateVisibility() {
-        val totalEmpty = ownedList.isEmpty() && watchlistItems.isEmpty()
-        emptyTextContainer.visibility = if (totalEmpty) View.VISIBLE else View.GONE
-        chartCard.visibility = if (ownedList.isEmpty()) View.GONE else View.VISIBLE
+        val hasHoldings = ownedList.isNotEmpty()
+        val hasWatchlist = watchlistItems.isNotEmpty()
         
-        view?.findViewById<View>(R.id.holdingsSection)?.visibility = if (ownedList.isEmpty()) View.GONE else View.VISIBLE
-        view?.findViewById<View>(R.id.watchlistSection)?.visibility = if (watchlistItems.isEmpty()) View.GONE else View.VISIBLE
-        view?.findViewById<View>(R.id.sectionDivider)?.visibility = if (ownedList.isNotEmpty() && watchlistItems.isNotEmpty()) View.VISIBLE else View.GONE
+        emptyTextContainer.visibility = if (!hasHoldings && !hasWatchlist) View.VISIBLE else View.GONE
+        chartCard.visibility = if (hasHoldings) View.VISIBLE else View.GONE
+        holdingsSection.visibility = if (hasHoldings) View.VISIBLE else View.GONE
+        watchlistSection.visibility = if (hasWatchlist) View.VISIBLE else View.GONE
+        sectionDivider.visibility = if (hasHoldings && hasWatchlist) View.VISIBLE else View.GONE
     }
 
     private fun updatePieChart(entries: List<PieEntry>) {
@@ -134,6 +145,7 @@ class PortfolioFragment : Fragment() {
             colors = ColorTemplate.MATERIAL_COLORS.toList()
             sliceSpace = 2f
             valueTextColor = Color.WHITE
+            valueTextSize = 12f
         }
         pieChart.data = PieData(dataSet)
         pieChart.invalidate()
