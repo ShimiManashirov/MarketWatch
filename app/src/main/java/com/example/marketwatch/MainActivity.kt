@@ -7,7 +7,8 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -23,20 +24,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
 
-    private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        val selectedFragment: Fragment = when (item.itemId) {
-            R.id.navigation_feed -> FeedFragment()
-            R.id.navigation_search -> SearchFragment()
-            R.id.navigation_wallet -> WalletFragment()
-            R.id.navigation_portfolio -> PortfolioFragment()
-            R.id.navigation_profile -> ProfileFragment()
-            else -> return@OnNavigationItemSelectedListener false
-        }
-        
-        loadFragment(selectedFragment)
-        true
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -44,25 +31,30 @@ class MainActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        setupNavigation()
         setupToolbar()
         setupPriceAlertWorker()
+    }
 
+    private fun setupNavigation() {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
         val navView: BottomNavigationView = findViewById(R.id.bottom_navigation)
-        navView.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener)
-
-        if (savedInstanceState == null) {
-            loadFragment(FeedFragment(), false)
-        }
+        
+        // This connects the BottomNavigationView with the NavController
+        // IDs in bottom_nav_menu.xml must match IDs in nav_graph.xml
+        navView.setupWithNavController(navController)
     }
 
     private fun setupPriceAlertWorker() {
         val alertRequest = PeriodicWorkRequestBuilder<PriceAlertWorker>(1, TimeUnit.HOURS)
-            .setInitialDelay(15, TimeUnit.MINUTES) // נחכה קצת אחרי הפתיחה הראשונה
+            .setInitialDelay(15, TimeUnit.MINUTES)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "PriceAlerts",
-            ExistingPeriodicWorkPolicy.KEEP, // אם כבר רץ, אל תפריע לו
+            ExistingPeriodicWorkPolicy.KEEP,
             alertRequest
         )
     }
@@ -85,9 +77,6 @@ class MainActivity : AppCompatActivity() {
                         updateToolbarUsername("User")
                     }
                 }
-                .addOnFailureListener { 
-                    updateToolbarUsername("User")
-                }
         }
 
         val logoutButton: Button = findViewById(R.id.toolbar_logout_button)
@@ -97,11 +86,9 @@ class MainActivity : AppCompatActivity() {
         darkModeSwitch.isChecked = sharedPrefs.getBoolean("darkMode", false)
 
         darkModeSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            }
+            AppCompatDelegate.setDefaultNightMode(
+                if (isChecked) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+            )
             sharedPrefs.edit().putBoolean("darkMode", isChecked).apply()
         }
 
@@ -112,21 +99,5 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-    }
-
-    private fun loadFragment(fragment: Fragment, animate: Boolean = true) {
-        val transaction = supportFragmentManager.beginTransaction()
-        
-        if (animate) {
-            transaction.setCustomAnimations(
-                android.R.anim.fade_in,
-                android.R.anim.fade_out,
-                android.R.anim.fade_in,
-                android.R.anim.fade_out
-            )
-        }
-        
-        transaction.replace(R.id.fragment_container, fragment)
-        transaction.commit()
     }
 }

@@ -6,31 +6,28 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- 1. App Bar Layout to handle the toolbar and system status bar -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true">
-
         <include layout="@layout/toolbar_main" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- 2. Main content area for Fragments -->
-    <FrameLayout
-        android:id="@+id/fragment_container"
+    <!-- Navigation Host Fragment -->
+    <fragment
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="?attr/actionBarSize"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        app:defaultNavHost="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:navGraph="@navigation/nav_graph" />
 
-    <!-- 3. Bottom Navigation View -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        app:itemBackground="?attr/selectableItemBackground"
         app:menu="@menu/bottom_nav_menu" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
