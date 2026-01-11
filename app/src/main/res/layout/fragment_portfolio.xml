@@ -22,7 +22,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="My Investment Portfolio"
+                android:text="Investment Portfolio"
                 android:textColor="?attr/colorOnSurface"
                 android:textStyle="bold" />
 
@@ -47,7 +47,7 @@
                         style="@style/TextAppearance.Material3.TitleSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Asset Allocation"
+                        android:text="Asset Distribution"
                         android:textColor="?attr/colorOnSurfaceVariant" />
 
                     <com.github.mikephil.charting.charts.PieChart
@@ -58,45 +58,79 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Section 1: Owned Stocks -->
-            <TextView
-                android:id="@+id/titleHoldings"
-                style="@style/TextAppearance.Material3.TitleMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:layout_marginStart="4dp"
-                android:text="My Holdings"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/portfolioRecyclerView"
+            <!-- Section 1: My Holdings (Owned) -->
+            <LinearLayout
+                android:id="@+id/holdingsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:nestedScrollingEnabled="false"
-                android:layoutAnimation="@anim/layout_animation_fall_down" />
+                android:orientation="vertical"
+                android:layout_marginTop="32dp">
+
+                <TextView
+                    android:id="@+id/titleHoldings"
+                    style="@style/TextAppearance.Material3.TitleLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="My Portfolio Holdings"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold" />
+                
+                <TextView
+                    style="@style/TextAppearance.Material3.BodySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Stocks you currently own"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/portfolioRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/sectionDivider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="24dp"
+                android:background="?attr/colorOutlineVariant" />
 
             <!-- Section 2: Watchlist (Favorites) -->
-            <TextView
-                android:id="@+id/titleWatchlist"
-                style="@style/TextAppearance.Material3.TitleMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:layout_marginStart="4dp"
-                android:text="My Watchlist"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/watchlistRecyclerView"
+            <LinearLayout
+                android:id="@+id/watchlistSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:nestedScrollingEnabled="false"
-                android:layoutAnimation="@anim/layout_animation_fall_down" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/titleWatchlist"
+                    style="@style/TextAppearance.Material3.TitleLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="My Watchlist"
+                    android:textColor="?attr/colorSecondary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    style="@style/TextAppearance.Material3.BodySmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Stocks you are following"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/watchlistRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
@@ -138,14 +172,6 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             android:textStyle="bold" />
 
-        <TextView
-            style="@style/TextAppearance.Material3.BodyMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Search and add stocks to get started!"
-            android:textAlignment="center"
-            android:textColor="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
