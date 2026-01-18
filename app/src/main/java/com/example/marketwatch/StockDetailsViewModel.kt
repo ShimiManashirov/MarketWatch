@@ -26,6 +26,12 @@ class StockDetailsViewModel : ViewModel() {
     private val _tradeStatus = MutableLiveData<String>()
     val tradeStatus: LiveData<String> = _tradeStatus
 
+    private val _exchangeRate = MutableLiveData<Double>(3.7)
+    val exchangeRate: LiveData<Double> = _exchangeRate
+
+    private val _candles = MutableLiveData<StockCandles?>()
+    val candles: LiveData<StockCandles?> = _candles
+
     fun observeStockStatus(symbol: String) {
         viewModelScope.launch {
             repository.getStockStatus(symbol).collect { status ->
@@ -45,6 +51,12 @@ class StockDetailsViewModel : ViewModel() {
 
                 val newsResponse = repository.getNews(symbol)
                 if (newsResponse.isSuccessful) _news.postValue(newsResponse.body())
+                
+                val candlesResponse = repository.getCandles(symbol)
+                if (candlesResponse.isSuccessful) _candles.postValue(candlesResponse.body())
+                
+                val rate = repository.getUsdToIlsRate()
+                _exchangeRate.postValue(rate)
             } catch (e: Exception) {
                 // Log error
             }
@@ -53,13 +65,19 @@ class StockDetailsViewModel : ViewModel() {
 
     fun toggleFavorite(symbol: String, description: String) {
         val current = _stockStatus.value
+        val isAdding = !(current?.isFavorite ?: false)
         viewModelScope.launch {
-            repository.toggleFavorite(
-                symbol, 
-                description, 
-                current?.isFavorite ?: false, 
-                current?.quantity ?: 0.0
-            )
+            try {
+                repository.toggleFavorite(
+                    symbol, 
+                    description, 
+                    current?.isFavorite ?: false, 
+                    current?.quantity ?: 0.0
+                )
+                _tradeStatus.value = if (isAdding) "ADDED_TO_FAVORITES" else "REMOVED_FROM_FAVORITES"
+            } catch (e: Exception) {
+                _tradeStatus.value = "Error updating favorites"
+            }
         }
     }
 
@@ -73,6 +91,17 @@ class StockDetailsViewModel : ViewModel() {
                 _tradeStatus.value = "SUCCESS"
             } catch (e: Exception) {
                 _tradeStatus.value = e.message ?: "Trade failed"
+            }
+        }
+    }
+
+    fun setPriceAlert(symbol: String, description: String, targetPrice: Double) {
+        viewModelScope.launch {
+            try {
+                repository.setPriceAlert(symbol, description, targetPrice)
+                _tradeStatus.value = "ALERT_SET"
+            } catch (e: Exception) {
+                _tradeStatus.value = "Failed to set alert"
             }
         }
     }

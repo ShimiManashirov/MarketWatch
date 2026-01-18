@@ -57,20 +57,30 @@ class PortfolioAdapter(
             true
         }
 
-        // טעינת מחיר - מומלץ בעתיד להעביר ל-ViewModel לביצועים אופטימליים
-        fetchPrice(item.symbol, holder)
+        fetchPriceAndCalculatePNL(item, holder)
     }
 
-    private fun fetchPrice(symbol: String, holder: PortfolioViewHolder) {
-        FinnhubApiClient.apiService.getQuote(symbol, FinnhubApiClient.API_KEY)
+    private fun fetchPriceAndCalculatePNL(item: PortfolioItem, holder: PortfolioViewHolder) {
+        FinnhubApiClient.apiService.getQuote(item.symbol, FinnhubApiClient.API_KEY)
             .enqueue(object : Callback<StockQuote> {
                 override fun onResponse(call: Call<StockQuote>, response: Response<StockQuote>) {
                     if (response.isSuccessful) {
                         response.body()?.let { quote ->
                             holder.price.text = "$${String.format("%.2f", quote.currentPrice)}"
-                            holder.change.text = "${String.format("%.2f", quote.percentChange)}%"
-                            val color = if (quote.percentChange >= 0) "#4CAF50" else "#F44336"
-                            holder.change.setTextColor(Color.parseColor(color))
+                            
+                            if (item.quantity > 0 && item.totalCost > 0) {
+                                val currentVal = item.quantity * quote.currentPrice
+                                val profit = currentVal - item.totalCost
+                                val profitPercent = (profit / item.totalCost) * 100
+                                
+                                val sign = if (profit >= 0) "+" else ""
+                                holder.change.text = "$sign$${String.format("%.2f", profit)} (${String.format("%.2f", profitPercent)}%)"
+                                holder.change.setTextColor(if (profit >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
+                            } else {
+                                holder.change.text = "${String.format("%.2f", quote.percentChange)}%"
+                                val color = if (quote.percentChange >= 0) "#4CAF50" else "#F44336"
+                                holder.change.setTextColor(Color.parseColor(color))
+                            }
                         }
                     }
                 }

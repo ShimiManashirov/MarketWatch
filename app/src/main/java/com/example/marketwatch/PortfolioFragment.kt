@@ -21,6 +21,9 @@ import com.github.mikephil.charting.utils.ColorTemplate
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class PortfolioFragment : Fragment() {
 
@@ -36,6 +39,11 @@ class PortfolioFragment : Fragment() {
     private lateinit var holdingsSection: View
     private lateinit var watchlistSection: View
     private lateinit var sectionDivider: View
+    
+    private lateinit var tvTotalBalance: TextView
+    private lateinit var tvTotalBalanceIls: TextView
+    private lateinit var tvCashBalance: TextView
+    private lateinit var tvTotalProfit: TextView
     
     private val ownedList = mutableListOf<PortfolioItem>()
     private val watchlistItems = mutableListOf<PortfolioItem>()
@@ -64,6 +72,11 @@ class PortfolioFragment : Fragment() {
         holdingsSection = view.findViewById(R.id.holdingsSection)
         watchlistSection = view.findViewById(R.id.watchlistSection)
         sectionDivider = view.findViewById(R.id.sectionDivider)
+        
+        tvTotalBalance = view.findViewById(R.id.tvTotalBalance)
+        tvTotalBalanceIls = view.findViewById(R.id.tvTotalBalanceIls)
+        tvCashBalance = view.findViewById(R.id.tvCashBalance)
+        tvTotalProfit = view.findViewById(R.id.tvTotalProfit)
     }
 
     private fun setupRecyclerViews(view: View) {
@@ -85,7 +98,7 @@ class PortfolioFragment : Fragment() {
             description.isEnabled = false
             isDrawHoleEnabled = true
             setHoleColor(Color.TRANSPARENT)
-            centerText = "Holdings"
+            centerText = "Assets"
             setCenterTextSize(16f)
             legend.isEnabled = false
         }
@@ -96,6 +109,10 @@ class PortfolioFragment : Fragment() {
             if (items != null) {
                 updateUI(items)
             }
+        }
+
+        viewModel.userBalance.observe(viewLifecycleOwner) { balance ->
+            updateSummary()
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
@@ -122,6 +139,56 @@ class PortfolioFragment : Fragment() {
         watchlistAdapter.updateData(watchlistItems)
         updatePieChart(pieEntries)
         updateVisibility()
+        updateSummary()
+    }
+
+    private fun updateSummary() {
+        val cash = viewModel.userBalance.value ?: 0.0
+        tvCashBalance.text = "$${String.format("%.2f", cash)}"
+        
+        var totalStockValue = 0.0
+        var totalCost = 0.0
+        var loadedCount = 0
+
+        if (ownedList.isEmpty()) {
+            displaySummary(cash, 0.0, 0.0)
+            return
+        }
+
+        ownedList.forEach { item ->
+            FinnhubApiClient.apiService.getQuote(item.symbol, FinnhubApiClient.API_KEY)
+                .enqueue(object : Callback<StockQuote> {
+                    override fun onResponse(call: Call<StockQuote>, response: Response<StockQuote>) {
+                        if (response.isSuccessful) {
+                            response.body()?.let { quote ->
+                                totalStockValue += (item.quantity * quote.currentPrice)
+                                totalCost += item.totalCost
+                            }
+                        }
+                        loadedCount++
+                        if (loadedCount == ownedList.size) {
+                            displaySummary(cash, totalStockValue, totalCost)
+                        }
+                    }
+                    override fun onFailure(call: Call<StockQuote>, t: Throwable) {
+                        loadedCount++
+                        if (loadedCount == ownedList.size) displaySummary(cash, totalStockValue, totalCost)
+                    }
+                })
+        }
+    }
+
+    private fun displaySummary(cash: Double, stockValue: Double, cost: Double) {
+        val totalBalance = cash + stockValue
+        val totalProfit = stockValue - cost
+        val rate = viewModel.exchangeRate.value ?: 3.7
+        
+        tvTotalBalance.text = "$${String.format("%.2f", totalBalance)}"
+        tvTotalBalanceIls.text = "≈ ₪${String.format("%.2f", totalBalance * rate)}"
+        
+        val profitSign = if (totalProfit >= 0) "+" else ""
+        tvTotalProfit.text = "$profitSign$${String.format("%.2f", totalProfit)}"
+        tvTotalProfit.setTextColor(if (totalProfit >= 0) Color.GREEN else Color.RED)
     }
 
     private fun updateVisibility() {

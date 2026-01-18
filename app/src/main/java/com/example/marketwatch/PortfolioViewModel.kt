@@ -7,8 +7,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.marketwatch.data.PortfolioRepository
 import com.example.marketwatch.data.local.AppDatabase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class PortfolioViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -20,10 +23,18 @@ class PortfolioViewModel(application: Application) : AndroidViewModel(applicatio
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
+    private val _userBalance = MutableLiveData<Double>(0.0)
+    val userBalance: LiveData<Double> = _userBalance
+
+    private val _exchangeRate = MutableLiveData<Double>(3.7)
+    val exchangeRate: LiveData<Double> = _exchangeRate
+
     init {
         val db = AppDatabase.getDatabase(application)
         repository = PortfolioRepository(db)
         loadPortfolio()
+        observeUserBalance()
+        fetchExchangeRate()
     }
 
     private fun loadPortfolio() {
@@ -33,11 +44,31 @@ class PortfolioViewModel(application: Application) : AndroidViewModel(applicatio
                 _portfolioItems.value = items
                 _isLoading.value = false
                 
-                // סנכרון מקומי ברקע
                 launch(Dispatchers.IO) {
                     repository.syncLocalDatabase(items)
                 }
             }
+        }
+    }
+
+    private fun observeUserBalance() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null && snapshot.exists()) {
+                    _userBalance.value = snapshot.getDouble("balance") ?: 0.0
+                }
+            }
+    }
+
+    private fun fetchExchangeRate() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = FrankfurterApiClient.apiService.getLatestRates("USD").execute()
+                if (response.isSuccessful) {
+                    _exchangeRate.postValue(response.body()?.rates?.get("ILS") ?: 3.7)
+                }
+            } catch (e: Exception) {}
         }
     }
 }

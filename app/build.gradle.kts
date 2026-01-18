@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
     id("kotlin-kapt")
-    // הסרנו את androidx.navigation.safeargs.kotlin כי הוא דורש הגדרות נוספות ב-root build.gradle
 }
 
 android {
