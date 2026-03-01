@@ -1,12 +1,12 @@
 package com.example.marketwatch
 
-import android.content.Intent
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
@@ -46,10 +46,8 @@ class PortfolioAdapter(
         }
         
         holder.itemView.setOnClickListener {
-            val intent = Intent(holder.itemView.context, StockDetailsActivity::class.java)
-            intent.putExtra("symbol", item.symbol)
-            intent.putExtra("description", item.description)
-            holder.itemView.context.startActivity(intent)
+            val action = PortfolioFragmentDirections.actionPortfolioToStockDetails(item.symbol, item.description)
+            holder.itemView.findNavController().navigate(action)
         }
 
         holder.itemView.setOnLongClickListener {

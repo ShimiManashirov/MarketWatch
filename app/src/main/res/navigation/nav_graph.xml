@@ -31,7 +31,11 @@
         android:id="@+id/navigation_portfolio"
         android:name="com.example.marketwatch.PortfolioFragment"
         android:label="Portfolio"
-        tools:layout="@layout/fragment_portfolio" />
+        tools:layout="@layout/fragment_portfolio">
+        <action
+            android:id="@+id/action_portfolio_to_stockDetails"
+            app:destination="@id/navigation_stock_details" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_profile"
