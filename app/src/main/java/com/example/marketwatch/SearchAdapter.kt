@@ -1,10 +1,10 @@
 package com.example.marketwatch
 
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.navigation.findNavController
 import androidx.recyclerview.widget.RecyclerView
 
 class SearchAdapter(private var stocks: List<StockSymbol>) : RecyclerView.Adapter<SearchAdapter.SearchViewHolder>() {
@@ -26,15 +26,12 @@ class SearchAdapter(private var stocks: List<StockSymbol>) : RecyclerView.Adapte
         holder.symbol.text = stock.displaySymbol
         holder.description.text = stock.description
         
-        // נסתיר את המחיר והשינוי ברשימת החיפוש כדי לשמור על מהירות ומגבלות API
         holder.price.visibility = View.GONE
         holder.change.visibility = View.GONE
         
         holder.itemView.setOnClickListener {
-            val intent = Intent(holder.itemView.context, StockDetailsActivity::class.java)
-            intent.putExtra("symbol", stock.symbol)
-            intent.putExtra("description", stock.description)
-            holder.itemView.context.startActivity(intent)
+            val action = SearchFragmentDirections.actionSearchToStockDetails(stock.symbol, stock.description)
+            holder.itemView.findNavController().navigate(action)
         }
     }
 
