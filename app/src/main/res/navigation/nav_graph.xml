@@ -15,7 +15,11 @@
         android:id="@+id/navigation_search"
         android:name="com.example.marketwatch.SearchFragment"
         android:label="Search"
-        tools:layout="@layout/fragment_search" />
+        tools:layout="@layout/fragment_search">
+        <action
+            android:id="@+id/action_search_to_stockDetails"
+            app:destination="@id/navigation_stock_details" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_wallet"
@@ -44,5 +48,18 @@
         android:name="com.example.marketwatch.UserPostsFragment"
         android:label="My Activity"
         tools:layout="@layout/activity_user_posts" />
+
+    <fragment
+        android:id="@+id/navigation_stock_details"
+        android:name="com.example.marketwatch.StockDetailsFragment"
+        android:label="{symbol}"
+        tools:layout="@layout/activity_stock_details">
+        <argument
+            android:name="symbol"
+            app:argType="string" />
+        <argument
+            android:name="description"
+            app:argType="string" />
+    </fragment>
 
 </navigation>
