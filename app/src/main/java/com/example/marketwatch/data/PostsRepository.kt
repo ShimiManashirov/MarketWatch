@@ -73,8 +73,8 @@ class PostsRepository(
         awaitClose { listener.remove() }
     }
 
-    suspend fun createPost(content: String, imageUri: Uri?) {
-        val user = auth.currentUser ?: return
+    suspend fun createPost(content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext
         val userId = user.uid
         
         val userDoc = db.collection("users").document(userId).get().await()
@@ -94,7 +94,7 @@ class PostsRepository(
         db.collection("posts").add(postData).await()
     }
 
-    suspend fun updatePost(postId: String, content: String, imageUri: Uri?) {
+    suspend fun updatePost(postId: String, content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
         val updates = hashMapOf<String, Any>(
             "content" to content,
             "imageUrl" to (imageUri?.toString() ?: "")
@@ -102,12 +102,12 @@ class PostsRepository(
         db.collection("posts").document(postId).update(updates).await()
     }
 
-    suspend fun deletePost(postId: String) {
+    suspend fun deletePost(postId: String) = withContext(Dispatchers.IO) {
         db.collection("posts").document(postId).delete().await()
     }
 
-    suspend fun toggleLike(post: Post) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun toggleLike(post: Post) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         val postRef = db.collection("posts").document(post.id)
         val isLiked = post.likes.contains(userId)
         
@@ -137,6 +137,6 @@ class PostsRepository(
         content = content,
         imageUrl = imageUrl,
         timestamp = Timestamp(timestamp, 0),
-        likes = emptyList() // Simplified for cache
+        likes = emptyList()
     )
 }

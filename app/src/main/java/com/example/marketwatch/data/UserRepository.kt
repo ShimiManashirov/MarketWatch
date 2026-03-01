@@ -5,10 +5,12 @@ import com.example.marketwatch.User
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class UserRepository(
     private val db: FirebaseFirestore,
@@ -47,28 +49,28 @@ class UserRepository(
         awaitClose { listener.remove() }
     }
 
-    suspend fun updateName(newName: String) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun updateName(newName: String) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("name", newName).await()
     }
 
-    suspend fun updateProfilePicture(uri: Uri) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun updateProfilePicture(uri: Uri) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("profilePictureUrl", uri.toString()).await()
     }
 
-    suspend fun updateCurrency(currencyCode: String) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun updateCurrency(currencyCode: String) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("currency", currencyCode).await()
     }
 
-    suspend fun updateTimezone(timezoneId: String) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun updateTimezone(timezoneId: String) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("timezone", timezoneId).await()
     }
 
-    suspend fun resetWalletData() {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun resetWalletData() = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         val userRef = db.collection("users").document(userId)
 
         userRef.update("balance", 0.0).await()
@@ -84,8 +86,8 @@ class UserRepository(
         }
     }
 
-    suspend fun deleteAccount(password: String) {
-        val user = auth.currentUser ?: return
+    suspend fun deleteAccount(password: String) = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext
         val credential = EmailAuthProvider.getCredential(user.email!!, password)
         
         user.reauthenticate(credential).await()
@@ -95,8 +97,8 @@ class UserRepository(
         user.delete().await()
     }
 
-    suspend fun updatePassword(currentPwd: String, newPwd: String) {
-        val user = auth.currentUser ?: return
+    suspend fun updatePassword(currentPwd: String, newPwd: String) = withContext(Dispatchers.IO) {
+        val user = auth.currentUser ?: return@withContext
         val credential = EmailAuthProvider.getCredential(user.email!!, currentPwd)
         
         user.reauthenticate(credential).await()
