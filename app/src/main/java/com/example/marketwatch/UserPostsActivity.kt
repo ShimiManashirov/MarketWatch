@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
@@ -43,12 +44,26 @@ class UserPostsActivity : AppCompatActivity() {
 
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = PostsAdapter(userPostsList,
+            auth.currentUser?.uid,
             onEditClick = { post -> showEditPostDialog(post) },
-            onDeleteClick = { post -> showDeleteConfirmationDialog(post) }
+            onDeleteClick = { post -> showDeleteConfirmationDialog(post) },
+            onLikeClick = { post -> toggleLike(post) }
         )
         recyclerView.adapter = adapter
 
         loadUserPosts()
+    }
+
+    private fun toggleLike(post: Post) {
+        val userId = auth.currentUser?.uid ?: return
+        val postRef = db.collection("posts").document(post.id)
+        val isLiked = post.likes.contains(userId)
+        
+        if (isLiked) {
+            postRef.update("likes", FieldValue.arrayRemove(userId))
+        } else {
+            postRef.update("likes", FieldValue.arrayUnion(userId))
+        }
     }
 
     private fun loadUserPosts() {
