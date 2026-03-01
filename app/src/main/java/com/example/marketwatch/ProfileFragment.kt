@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.example.marketwatch.data.UserRepository
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
@@ -93,7 +94,7 @@ class ProfileFragment : Fragment() {
         changeNameButton.setOnClickListener { showChangeNameDialog() }
         changePasswordButton.setOnClickListener { showChangePasswordDialog() }
         myPostsButton.setOnClickListener { 
-            startActivity(Intent(activity, UserPostsActivity::class.java))
+            findNavController().navigate(R.id.action_profile_to_userPosts)
         }
         setCurrencyButton.setOnClickListener { showCurrencySelectionDialog() }
         setTimezoneButton.setOnClickListener { showTimezoneSelectionDialog() }
