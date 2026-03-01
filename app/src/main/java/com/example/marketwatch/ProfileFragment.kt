@@ -140,9 +140,10 @@ class ProfileFragment : Fragment() {
             }
         }
 
-        viewModel.operationSuccess.observe(viewLifecycleOwner) { success ->
-            if (success) {
-                viewModel.resetOperationSuccess()
+        viewModel.successMessage.observe(viewLifecycleOwner) { message ->
+            message?.let {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                viewModel.clearSuccessMessage()
             }
         }
     }
