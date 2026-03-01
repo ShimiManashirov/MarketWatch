@@ -10,20 +10,16 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
 class PostsAdapter(
     private val posts: List<Post>,
+    private val currentUserId: String?,
     private val onEditClick: (Post) -> Unit,
-    private val onDeleteClick: (Post) -> Unit
+    private val onDeleteClick: (Post) -> Unit,
+    private val onLikeClick: (Post) -> Unit
 ) : RecyclerView.Adapter<PostsAdapter.PostViewHolder>() {
-
-    private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-    private val db = FirebaseFirestore.getInstance()
 
     class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val userImage: ImageView = view.findViewById(R.id.postUserProfileImage)
@@ -89,13 +85,7 @@ class PostsAdapter(
         holder.tvLikeCount.text = "${post.likes.size} likes"
 
         holder.btnLike.setOnClickListener {
-            if (currentUserId == null) return@setOnClickListener
-            val postRef = db.collection("posts").document(post.id)
-            if (isLiked) {
-                postRef.update("likes", FieldValue.arrayRemove(currentUserId))
-            } else {
-                postRef.update("likes", FieldValue.arrayUnion(currentUserId))
-            }
+            onLikeClick(post)
         }
     }
 
