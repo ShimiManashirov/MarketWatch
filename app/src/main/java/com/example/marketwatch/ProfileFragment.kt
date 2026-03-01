@@ -16,18 +16,17 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.example.marketwatch.data.UserRepository
 import com.google.android.material.button.MaterialButton
-import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.picasso.Picasso
 import java.util.Locale
-import java.util.TimeZone
 
 class ProfileFragment : Fragment() {
 
-    private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
+    private lateinit var viewModel: ProfileViewModel
 
     private lateinit var profileImageView: ImageView
     private lateinit var nameTextView: TextView
@@ -42,7 +41,7 @@ class ProfileFragment : Fragment() {
                 try {
                     val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
                     requireActivity().contentResolver.takePersistableUriPermission(selectedUri, takeFlags)
-                    saveProfilePictureUri(selectedUri)
+                    viewModel.updateProfilePicture(selectedUri)
                 } catch (e: SecurityException) {
                     e.printStackTrace()
                     if(isAdded) Toast.makeText(context, "Failed to get permission for the image.", Toast.LENGTH_LONG).show()
@@ -57,8 +56,14 @@ class ProfileFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
 
-        auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
+        val repository = UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance())
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return ProfileViewModel(repository) as T
+            }
+        }
+        viewModel = ViewModelProvider(this, factory).get(ProfileViewModel::class.java)
 
         profileImageView = view.findViewById(R.id.profileImageView)
         nameTextView = view.findViewById(R.id.profileNameTextView)
@@ -75,7 +80,7 @@ class ProfileFragment : Fragment() {
         val resetWalletButton: MaterialButton = view.findViewById(R.id.resetWalletButton)
         val deleteAccountButton: MaterialButton = view.findViewById(R.id.deleteAccountButton)
 
-        loadUserProfile()
+        observeViewModel()
 
         changePictureButton.setOnClickListener { 
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { 
@@ -98,29 +103,19 @@ class ProfileFragment : Fragment() {
         return view
     }
 
-    private fun loadUserProfile() {
-        val user = auth.currentUser ?: return
-        val userId = user.uid
-        emailTextView.text = user.email
-
-        db.collection("users").document(userId).get().addOnSuccessListener { document ->
-            if (isAdded && document != null && document.exists()) {
-                val rawName = document.getString("name") ?: "N/A"
-                val formattedName = rawName.trim().lowercase(Locale.getDefault())
+    private fun observeViewModel() {
+        viewModel.userProfile.observe(viewLifecycleOwner) { user ->
+            user?.let {
+                emailTextView.text = it.email
+                val formattedName = it.name.trim().lowercase(Locale.getDefault())
                     .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
                 nameTextView.text = formattedName
+                currencyTextView.text = it.currency
+                timezoneTextView.text = it.timezone
                 
-                val currency = document.getString("currency") ?: "USD"
-                currencyTextView.text = currency
-                
-                val timezone = document.getString("timezone") ?: TimeZone.getDefault().id
-                timezoneTextView.text = timezone
-                
-                val profilePictureUrl = document.getString("profilePictureUrl")
-                
-                if (!profilePictureUrl.isNullOrEmpty()) {
+                if (!it.profilePictureUrl.isNullOrEmpty()) {
                     Picasso.get()
-                        .load(profilePictureUrl)
+                        .load(it.profilePictureUrl)
                         .placeholder(R.drawable.ic_account_circle)
                         .error(R.drawable.ic_account_circle)
                         .transform(CircleTransform())
@@ -128,6 +123,26 @@ class ProfileFragment : Fragment() {
                 } else {
                     profileImageView.setImageResource(R.drawable.ic_account_circle)
                 }
+
+                // Sync name with toolbar if needed
+                (activity as? MainActivity)?.updateToolbarUsername(it.name)
+            }
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            // In the future, you could show a ProgressBar here
+        }
+
+        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            message?.let {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
+        }
+
+        viewModel.operationSuccess.observe(viewLifecycleOwner) { success ->
+            if (success) {
+                viewModel.resetOperationSuccess()
             }
         }
     }
@@ -136,29 +151,9 @@ class ProfileFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle("Reset All Data?")
             .setMessage("This will reset your wallet balance to $0 and delete all transaction history and favorites. This action cannot be undone.")
-            .setPositiveButton("Reset Everything") { _, _ -> resetAllWalletData() }
+            .setPositiveButton("Reset Everything") { _, _ -> viewModel.resetWalletData() }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun resetAllWalletData() {
-        val userId = auth.currentUser?.uid ?: return
-        val userRef = db.collection("users").document(userId)
-
-        userRef.update("balance", 0.0)
-
-        userRef.collection("watchlist").get().addOnSuccessListener { snapshots ->
-            for (doc in snapshots) {
-                doc.reference.delete()
-            }
-        }
-
-        userRef.collection("transactions").get().addOnSuccessListener { snapshots ->
-            for (doc in snapshots) {
-                doc.reference.delete()
-            }
-            if (isAdded) Toast.makeText(context, "Wallet and data reset successfully", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun showCurrencySelectionDialog() {
@@ -169,61 +164,22 @@ class ProfileFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle("Select Currency")
             .setItems(currencies) { _, which ->
-                val selectedCode = currencyCodes[which]
-                saveCurrency(selectedCode)
+                viewModel.updateCurrency(currencyCodes[which])
             }
             .show()
-    }
-
-    private fun saveCurrency(currencyCode: String) {
-        val userId = auth.currentUser?.uid ?: return
-        db.collection("users").document(userId)
-            .update("currency", currencyCode)
-            .addOnSuccessListener {
-                if (isAdded) {
-                    currencyTextView.text = currencyCode
-                    Toast.makeText(context, "Currency updated to $currencyCode", Toast.LENGTH_SHORT).show()
-                }
-            }
     }
 
     private fun showTimezoneSelectionDialog() {
         if (!isAdded) return
         val timezones = arrayOf("UTC", "Israel (GMT+2/3)", "London (GMT+0/1)", "New York (EST/EDT)", "Tokyo (JST)", "Dubai (GST)")
+        val tzIds = arrayOf("UTC", "Asia/Jerusalem", "Europe/London", "America/New_York", "Asia/Tokyo", "Asia/Dubai")
         
         AlertDialog.Builder(requireContext())
             .setTitle("Select Timezone")
             .setItems(timezones) { _, which ->
-                val tzIds = arrayOf("UTC", "Asia/Jerusalem", "Europe/London", "America/New_York", "Asia/Tokyo", "Asia/Dubai")
-                saveTimezone(tzIds[which])
+                viewModel.updateTimezone(tzIds[which])
             }
             .show()
-    }
-
-    private fun saveTimezone(tzId: String) {
-        val userId = auth.currentUser?.uid ?: return
-        db.collection("users").document(userId)
-            .update("timezone", tzId)
-            .addOnSuccessListener {
-                if (isAdded) {
-                    timezoneTextView.text = tzId
-                    Toast.makeText(context, "Timezone updated", Toast.LENGTH_SHORT).show()
-                }
-            }
-    }
-
-    private fun saveProfilePictureUri(uri: Uri) {
-        val userId = auth.currentUser?.uid ?: return
-        db.collection("users").document(userId)
-            .update("profilePictureUrl", uri.toString())
-            .addOnSuccessListener { 
-                if (isAdded) {
-                    Picasso.get()
-                        .load(uri)
-                        .transform(CircleTransform())
-                        .into(profileImageView)
-                }
-            }
     }
 
     private fun showChangeNameDialog() {
@@ -239,14 +195,7 @@ class ProfileFragment : Fragment() {
             .setPositiveButton("Save") { _, _ ->
                 val newName = editText.text.toString().trim()
                 if (newName.isNotEmpty()) {
-                    val userId = auth.currentUser?.uid ?: return@setPositiveButton
-                    db.collection("users").document(userId).update("name", newName)
-                        .addOnSuccessListener { 
-                            if (isAdded) {
-                                (activity as? MainActivity)?.updateToolbarUsername(newName)
-                                loadUserProfile()
-                            }
-                        }
+                    viewModel.updateName(newName)
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -288,24 +237,11 @@ class ProfileFragment : Fragment() {
                 val confirmPwd = confirmPasswordET.text.toString()
 
                 if (currentPwd.isNotEmpty() && newPwd == confirmPwd) {
-                    reauthenticateAndChangePassword(currentPwd, newPwd)
+                    viewModel.updatePassword(currentPwd, newPwd)
                 }
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun reauthenticateAndChangePassword(currentPwd: String, newPwd: String) {
-        val user = auth.currentUser ?: return
-        val credential = EmailAuthProvider.getCredential(user.email!!, currentPwd)
-
-        user.reauthenticate(credential).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                user.updatePassword(newPwd).addOnCompleteListener {
-                    if (isAdded) Toast.makeText(context, "Password updated", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
     }
 
     private fun showDeleteAccountConfirmationDialog() {
@@ -322,7 +258,7 @@ class ProfileFragment : Fragment() {
         if(!isAdded) return
         val passwordEditText = EditText(context).apply {
             hint = "Enter password"
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
 
         AlertDialog.Builder(requireContext())
@@ -330,31 +266,11 @@ class ProfileFragment : Fragment() {
             .setView(passwordEditText)
             .setPositiveButton("Confirm") { _, _ ->
                 val password = passwordEditText.text.toString()
-                val user = auth.currentUser ?: return@setPositiveButton
-                val credential = EmailAuthProvider.getCredential(user.email!!, password)
-                
-                user.reauthenticate(credential).addOnCompleteListener { reauthTask ->
-                    if(isAdded && reauthTask.isSuccessful) deleteUserAccount()
+                if (password.isNotEmpty()) {
+                    viewModel.deleteAccount(password)
                 }
             }
             .setNegativeButton("Cancel", null)
             .show()
-    }
-
-    private fun deleteUserAccount() {
-        val user = auth.currentUser ?: return
-        val userId = user.uid
-
-        db.collection("users").document(userId).delete()
-            .addOnCompleteListener { firestoreTask ->
-                if (firestoreTask.isSuccessful) {
-                    user.delete().addOnCompleteListener { 
-                        val intent = Intent(activity, LoginActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
-                        activity?.finish()
-                    }
-                }
-            }
     }
 }
