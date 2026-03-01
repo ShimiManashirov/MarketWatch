@@ -33,6 +33,16 @@
         android:id="@+id/navigation_profile"
         android:name="com.example.marketwatch.ProfileFragment"
         android:label="Profile"
-        tools:layout="@layout/fragment_profile" />
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profile_to_userPosts"
+            app:destination="@id/navigation_user_posts" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_user_posts"
+        android:name="com.example.marketwatch.UserPostsFragment"
+        android:label="My Activity"
+        tools:layout="@layout/activity_user_posts" />
 
 </navigation>
