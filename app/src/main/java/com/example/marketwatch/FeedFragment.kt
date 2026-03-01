@@ -52,7 +52,6 @@ class FeedFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_feed, container, false)
 
-        // Manual injection for now as per plan
         val repository = PostsRepository(
             FirebaseFirestore.getInstance(),
             AppDatabase.getDatabase(requireContext()),
@@ -88,15 +87,29 @@ class FeedFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        shimmerContainer.startShimmer()
         viewModel.posts.observe(viewLifecycleOwner) { posts ->
-            shimmerContainer.stopShimmer()
-            shimmerContainer.visibility = View.GONE
-            recyclerView.visibility = View.VISIBLE
-            
             postsList.clear()
             postsList.addAll(posts)
             adapter.notifyDataSetChanged()
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (isLoading) {
+                shimmerContainer.startShimmer()
+                shimmerContainer.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+            } else {
+                shimmerContainer.stopShimmer()
+                shimmerContainer.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+            }
+        }
+
+        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            message?.let {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                viewModel.clearError()
+            }
         }
     }
 
