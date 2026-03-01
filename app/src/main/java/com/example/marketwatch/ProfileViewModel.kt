@@ -19,15 +19,15 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> = _errorMessage
 
-    private val _operationSuccess = MutableLiveData<Boolean>()
-    val operationSuccess: LiveData<Boolean> = _operationSuccess
+    private val _successMessage = MutableLiveData<String?>()
+    val successMessage: LiveData<String?> = _successMessage
 
     fun updateName(newName: String) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
                 repository.updateName(newName)
-                _operationSuccess.value = true
+                _successMessage.value = "Name updated successfully"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update name"
             } finally {
@@ -41,7 +41,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
             try {
                 _isLoading.value = true
                 repository.updateProfilePicture(uri)
-                _operationSuccess.value = true
+                _successMessage.value = "Profile picture updated"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update profile picture"
             } finally {
@@ -55,7 +55,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
             try {
                 _isLoading.value = true
                 repository.updateCurrency(currencyCode)
-                _operationSuccess.value = true
+                _successMessage.value = "Currency updated to $currencyCode"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update currency"
             } finally {
@@ -69,7 +69,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
             try {
                 _isLoading.value = true
                 repository.updateTimezone(timezoneId)
-                _operationSuccess.value = true
+                _successMessage.value = "Timezone updated"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update timezone"
             } finally {
@@ -83,7 +83,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
             try {
                 _isLoading.value = true
                 repository.resetWalletData()
-                _operationSuccess.value = true
+                _successMessage.value = "Wallet data reset successfully"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to reset wallet data"
             } finally {
@@ -97,7 +97,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
             try {
                 _isLoading.value = true
                 repository.deleteAccount(password)
-                _operationSuccess.value = true
+                _successMessage.value = "Account deleted"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to delete account. Check password."
             } finally {
@@ -111,7 +111,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
             try {
                 _isLoading.value = true
                 repository.updatePassword(currentPwd, newPwd)
-                _operationSuccess.value = true
+                _successMessage.value = "Password updated successfully"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update password. Check current password."
             } finally {
@@ -124,7 +124,7 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
         _errorMessage.value = null
     }
 
-    fun resetOperationSuccess() {
-        _operationSuccess.value = false
+    fun clearSuccessMessage() {
+        _successMessage.value = null
     }
 }
