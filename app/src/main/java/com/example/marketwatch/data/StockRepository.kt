@@ -5,10 +5,12 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,8 +41,8 @@ class StockRepository {
     }
 
     // Firebase: Toggle Favorite
-    suspend fun toggleFavorite(symbol: String, description: String, currentState: Boolean, ownedQty: Double) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun toggleFavorite(symbol: String, description: String, currentState: Boolean, ownedQty: Double) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         val newState = !currentState
         val docRef = db.collection("users").document(userId).collection("watchlist").document(symbol)
 
@@ -64,8 +66,8 @@ class StockRepository {
     }
 
     // Firebase: Execute Trade
-    suspend fun executeTrade(symbol: String, description: String, quantity: Double, price: Double, isBuy: Boolean, isFavorite: Boolean) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun executeTrade(symbol: String, description: String, quantity: Double, price: Double, isBuy: Boolean, isFavorite: Boolean) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         val userRef = db.collection("users").document(userId)
         val tradeAmount = quantity * price
 
@@ -102,7 +104,6 @@ class StockRepository {
                         transaction.update(watchlistRef, "totalCost", 0.0)
                     }
                 } else {
-                    // Update avg cost by reducing proportional cost
                     val costPerShare = currentTotalCost / currentQty
                     val newTotalCost = currentTotalCost - (quantity * costPerShare)
                     transaction.update(watchlistRef, "quantity", newQty)
@@ -110,7 +111,6 @@ class StockRepository {
                 }
             }
 
-            // Log transaction
             val transRef = userRef.collection("transactions").document()
             transaction.set(transRef, hashMapOf(
                 "type" to if (isBuy) "BUY" else "SELL",
@@ -123,8 +123,8 @@ class StockRepository {
     }
 
     // Firebase: Set Price Alert
-    suspend fun setPriceAlert(symbol: String, description: String, targetPrice: Double) {
-        val userId = auth.currentUser?.uid ?: return
+    suspend fun setPriceAlert(symbol: String, description: String, targetPrice: Double) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
         val docRef = db.collection("users").document(userId).collection("watchlist").document(symbol)
         
         val data = hashMapOf(
@@ -136,11 +136,11 @@ class StockRepository {
     }
 
     // Currency Conversion
-    suspend fun getUsdToIlsRate(): Double {
-        return try {
+    suspend fun getUsdToIlsRate(): Double = withContext(Dispatchers.IO) {
+        try {
             val response = FrankfurterApiClient.apiService.getLatestRates("USD").execute()
             if (response.isSuccessful) {
-                response.body()?.rates?.get("ILS") ?: 3.7 // Fallback
+                response.body()?.rates?.get("ILS") ?: 3.7
             } else 3.7
         } catch (e: Exception) {
             3.7
@@ -148,22 +148,24 @@ class StockRepository {
     }
 
     // Finnhub API Calls
-    suspend fun getQuote(symbol: String): Response<StockQuote> = 
+    suspend fun getQuote(symbol: String): Response<StockQuote> = withContext(Dispatchers.IO) {
         FinnhubApiClient.apiService.getQuote(symbol, FinnhubApiClient.API_KEY).execute()
+    }
 
-    suspend fun getCompanyProfile(symbol: String): Response<CompanyProfile> =
+    suspend fun getCompanyProfile(symbol: String): Response<CompanyProfile> = withContext(Dispatchers.IO) {
         FinnhubApiClient.apiService.getCompanyProfile(symbol, FinnhubApiClient.API_KEY).execute()
+    }
 
-    suspend fun getNews(symbol: String): Response<List<StockNews>> {
+    suspend fun getNews(symbol: String): Response<List<StockNews>> = withContext(Dispatchers.IO) {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val to = sdf.format(Date())
         val from = sdf.format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
-        return FinnhubApiClient.apiService.getStockNews(symbol, from, to, FinnhubApiClient.API_KEY).execute()
+        FinnhubApiClient.apiService.getStockNews(symbol, from, to, FinnhubApiClient.API_KEY).execute()
     }
 
-    suspend fun getCandles(symbol: String): Response<StockCandles> {
+    suspend fun getCandles(symbol: String): Response<StockCandles> = withContext(Dispatchers.IO) {
         val to = System.currentTimeMillis() / 1000
-        val from = to - (30 * 24 * 60 * 60) // Last 30 days
-        return FinnhubApiClient.apiService.getStockCandles(symbol, "D", from, to, FinnhubApiClient.API_KEY).execute()
+        val from = to - (30 * 24 * 60 * 60)
+        FinnhubApiClient.apiService.getStockCandles(symbol, "D", from, to, FinnhubApiClient.API_KEY).execute()
     }
 }
