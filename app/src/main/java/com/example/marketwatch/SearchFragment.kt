@@ -4,12 +4,11 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -82,6 +81,10 @@ class SearchFragment : Fragment() {
             }
         })
 
+        view.findViewById<TextView>(R.id.clearHistoryText)?.setOnClickListener {
+            clearSearchHistory()
+        }
+
         return view
     }
 
@@ -97,12 +100,19 @@ class SearchFragment : Fragment() {
             mutableListOf()
         }
 
-        // Add to start, remove duplicates, limit to 5
-        recentList.remove(query.uppercase())
-        recentList.add(0, query.uppercase())
-        val limitedList = recentList.take(5)
+        val formattedQuery = query.trim().uppercase()
+        if (formattedQuery.isNotBlank()) {
+            recentList.remove(formattedQuery)
+            recentList.add(0, formattedQuery)
+            val limitedList = recentList.take(5)
+            prefs.edit().putString(KEY_RECENT_SEARCHES, gson.toJson(limitedList)).apply()
+        }
+    }
 
-        prefs.edit().putString(KEY_RECENT_SEARCHES, gson.toJson(limitedList)).apply()
+    private fun clearSearchHistory() {
+        val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(KEY_RECENT_SEARCHES).apply()
+        updateRecentSearchChips()
     }
 
     private fun updateRecentSearchChips() {
@@ -112,18 +122,27 @@ class SearchFragment : Fragment() {
         val listToDisplay = if (recentJson != null) {
             Gson().fromJson<List<String>>(recentJson, object : TypeToken<List<String>>() {}.type)
         } else {
-            listOf("AAPL", "TSLA", "BTC", "NVDA") // Defaults
+            emptyList()
         }
 
         chipGroup.removeAllViews()
-        for (symbol in listToDisplay) {
-            val chip = Chip(requireContext(), null, com.google.android.material.R.style.Widget_Material3_Chip_Suggestion)
-            chip.text = symbol
-            chip.setOnClickListener {
-                searchView.setQuery(symbol, true)
-            }
-            chipGroup.addView(chip)
+        
+        if (listToDisplay.isEmpty()) {
+            // Show default suggestions if history is empty
+            val defaults = listOf("AAPL", "TSLA", "BTC", "NVDA", "GOOGL")
+            defaults.forEach { symbol -> addChip(symbol) }
+        } else {
+            listToDisplay.forEach { symbol -> addChip(symbol) }
         }
+    }
+
+    private fun addChip(symbol: String) {
+        val chip = Chip(requireContext(), null, com.google.android.material.R.style.Widget_Material3_Chip_Suggestion)
+        chip.text = symbol
+        chip.setOnClickListener {
+            searchView.setQuery(symbol, true)
+        }
+        chipGroup.addView(chip)
     }
 
     private fun showEmptyState() {
