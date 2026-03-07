@@ -5,10 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [StockEntity::class, PostEntity::class], version = 2)
+@Database(entities = [StockEntity::class, PostEntity::class, UserEntity::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun stockDao(): StockDao
     abstract fun postDao(): PostDao
+    abstract fun userDao(): UserDao
 
     companion object {
         @Volatile
@@ -21,7 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "market_watch_db"
                 )
-                .fallbackToDestructiveMigration() // For development simplicity
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
