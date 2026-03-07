@@ -18,7 +18,11 @@
         tools:layout="@layout/fragment_search">
         <action
             android:id="@+id/action_search_to_stockDetails"
-            app:destination="@id/navigation_stock_details" />
+            app:destination="@id/navigation_stock_details"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -34,7 +38,11 @@
         tools:layout="@layout/fragment_portfolio">
         <action
             android:id="@+id/action_portfolio_to_stockDetails"
-            app:destination="@id/navigation_stock_details" />
+            app:destination="@id/navigation_stock_details"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -44,7 +52,11 @@
         tools:layout="@layout/fragment_profile">
         <action
             android:id="@+id/action_profile_to_userPosts"
-            app:destination="@id/navigation_user_posts" />
+            app:destination="@id/navigation_user_posts"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
     <fragment
