@@ -9,6 +9,7 @@ data class StockEntity(
     val description: String,
     val quantity: Double,
     val isFavorite: Boolean,
+    val totalCost: Double = 0.0,
     val currentPrice: Double = 0.0,
     val percentChange: Double = 0.0,
     val lastUpdated: Long = System.currentTimeMillis()
