@@ -1,3 +1,49 @@
 <resources>
-    <string name="app_name">Market_Watch</string>
+    <string name="app_name">Market Watch</string>
+
+    <!-- Auth Strings -->
+    <string name="login_title">Login</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="register_link">Don\'t have an account? Register</string>
+    <string name="registration_title">Create Account</string>
+    <string name="username_hint">Username</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="register_button">Register</string>
+    <string name="login_link">Already have an account? Login</string>
+    <string name="fill_all_fields">Please fill all fields</string>
+    <string name="passwords_dont_match">Passwords do not match</string>
+    <string name="login_success">Login successful.</string>
+    <string name="registration_success">Registration successful.</string>
+
+    <!-- Feed Strings -->
+    <string name="post_hint">What\'s on your mind?</string>
+    <string name="create_post">Create Post</string>
+    <string name="edit_post">Edit Post</string>
+    <string name="delete_post">Delete Post</string>
+    <string name="delete_post_confirm">Are you sure you want to delete this post?</string>
+    <string name="post_button">Post</string>
+    <string name="update_button">Update</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="delete_button">Delete</string>
+
+    <!-- Profile Strings -->
+    <string name="account_settings">Account Settings</string>
+    <string name="app_preferences">App Preferences</string>
+    <string name="update_display_name">Update Display Name</string>
+    <string name="security_password">Security &amp; Password</string>
+    <string name="my_community_posts">My Community Posts</string>
+    <string name="preferred_currency">Preferred Currency</string>
+    <string name="display_timezone">Display Timezone</string>
+    <string name="reset_wallet_data">Reset Wallet Data</string>
+    <string name="delete_my_account">Delete My Account</string>
+    <string name="edit_photo">Edit Photo</string>
+
+    <!-- Search Strings -->
+    <string name="search_hint">Search AAPL, Tesla, Crypto...</string>
+    <string name="discover_market">Discover the Market</string>
+    <string name="search_description">Search for stocks, indices or crypto symbols</string>
+    <string name="recent_searches">Recent Searches</string>
+    <string name="clear_button">Clear</string>
 </resources>
