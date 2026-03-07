@@ -7,16 +7,23 @@
     android:background="?android:attr/colorBackground"
     tools:context=".FeedFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/postsRecyclerView"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="100dp"
-        android:clipToPadding="false"
-        android:visibility="gone"
-        android:layoutAnimation="@anim/layout_animation_fall_down" />
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/postsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="100dp"
+            android:clipToPadding="false"
+            android:visibility="gone"
+            android:layoutAnimation="@anim/layout_animation_fall_down" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- Shimmer Loading State -->
     <com.facebook.shimmer.ShimmerFrameLayout

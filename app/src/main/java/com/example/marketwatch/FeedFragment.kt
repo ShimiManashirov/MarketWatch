@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.marketwatch.data.PostsRepository
 import com.example.marketwatch.data.local.AppDatabase
 import com.facebook.shimmer.ShimmerFrameLayout
@@ -32,6 +33,7 @@ class FeedFragment : Fragment() {
 
     private lateinit var shimmerContainer: ShimmerFrameLayout
     private lateinit var recyclerView: RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     private var selectedImageUri: Uri? = null
     private var dialogImageView: ImageView? = null
@@ -59,6 +61,7 @@ class FeedFragment : Fragment() {
         )
         val factory = object : ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
                 return FeedViewModel(repository) as T
             }
         }
@@ -66,6 +69,8 @@ class FeedFragment : Fragment() {
 
         shimmerContainer = view.findViewById(R.id.shimmerViewContainer)
         recyclerView = view.findViewById(R.id.postsRecyclerView)
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+        
         recyclerView.layoutManager = LinearLayoutManager(context)
 
         adapter = PostsAdapter(
@@ -81,6 +86,10 @@ class FeedFragment : Fragment() {
             showCreatePostDialog()
         }
 
+        swipeRefreshLayout.setOnRefreshListener {
+            viewModel.loadPosts()
+        }
+
         observeViewModel()
 
         return view
@@ -91,17 +100,21 @@ class FeedFragment : Fragment() {
             postsList.clear()
             postsList.addAll(posts)
             adapter.notifyDataSetChanged()
+            swipeRefreshLayout.isRefreshing = false
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             if (isLoading) {
-                shimmerContainer.startShimmer()
-                shimmerContainer.visibility = View.VISIBLE
-                recyclerView.visibility = View.GONE
+                if (!swipeRefreshLayout.isRefreshing) {
+                    shimmerContainer.startShimmer()
+                    shimmerContainer.visibility = View.VISIBLE
+                    recyclerView.visibility = View.GONE
+                }
             } else {
                 shimmerContainer.stopShimmer()
                 shimmerContainer.visibility = View.GONE
                 recyclerView.visibility = View.VISIBLE
+                swipeRefreshLayout.isRefreshing = false
             }
         }
 
@@ -109,6 +122,7 @@ class FeedFragment : Fragment() {
             message?.let {
                 Toast.makeText(context, it, Toast.LENGTH_LONG).show()
                 viewModel.clearError()
+                swipeRefreshLayout.isRefreshing = false
             }
         }
     }
