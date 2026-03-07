@@ -58,6 +58,7 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("com.facebook.shimmer:shimmer:0.5.0")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
