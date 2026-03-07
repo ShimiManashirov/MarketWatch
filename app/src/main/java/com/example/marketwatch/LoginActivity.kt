@@ -2,54 +2,50 @@ package com.example.marketwatch
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.marketwatch.data.AuthRepository
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
 
+    private lateinit var viewModel: LoginViewModel
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Handle the splash screen transition.
         installSplashScreen()
-        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         auth = FirebaseAuth.getInstance()
+        val repository = AuthRepository()
+        val factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return LoginViewModel(repository) as T
+            }
+        }
+        viewModel = ViewModelProvider(this, factory).get(LoginViewModel::class.java)
 
         val emailEditText: TextInputEditText = findViewById(R.id.emailEditText)
         val passwordEditText: TextInputEditText = findViewById(R.id.passwordEditText)
         val loginButton: Button = findViewById(R.id.loginButton)
         val registerButton: Button = findViewById(R.id.registerButton)
+        val progressBar: ProgressBar? = findViewById(R.id.loginProgressBar) // Check if exists in XML
+
+        setupObservers(progressBar)
 
         loginButton.setOnClickListener {
             val email = emailEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
-
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Toast.makeText(this, "Login successful.", Toast.LENGTH_SHORT).show()
-                        val intent = Intent(this, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Toast.makeText(baseContext, "Authentication failed: ${task.exception?.message}",
-                            Toast.LENGTH_SHORT).show()
-                    }
-                }
+            viewModel.login(email, password)
         }
 
         registerButton.setOnClickListener {
@@ -58,13 +54,32 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupObservers(progressBar: ProgressBar?) {
+        viewModel.loginResult.observe(this) { result ->
+            if (result.isSuccess) {
+                Toast.makeText(this, "Login successful.", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            }
+        }
+
+        viewModel.isLoading.observe(this) { isLoading ->
+            progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
+            findViewById<Button>(R.id.loginButton).isEnabled = !isLoading
+        }
+
+        viewModel.errorMessage.observe(this) { message ->
+            message?.let {
+                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+                viewModel.clearError()
+            }
+        }
+    }
+
     public override fun onStart() {
         super.onStart()
-        // Check if user is signed in (non-null) and update UI accordingly.
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+        if (auth.currentUser != null) {
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
     }
