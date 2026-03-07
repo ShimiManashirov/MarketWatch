@@ -2,4 +2,39 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Material 3 Primary -->
+    <color name="md_theme_light_primary">#0061A4</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#D1E4FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001D36</color>
+
+    <!-- Material 3 Secondary -->
+    <color name="md_theme_light_secondary">#535F70</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#D7E3F7</color>
+    <color name="md_theme_light_onSecondaryContainer">#101C2B</color>
+
+    <!-- Material 3 Tertiary -->
+    <color name="md_theme_light_tertiary">#6B5778</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#F2DAFF</color>
+    <color name="md_theme_light_onTertiaryContainer">#251431</color>
+
+    <!-- Material 3 Error -->
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+
+    <!-- Material 3 Background/Surface -->
+    <color name="md_theme_light_background">#FDFBFF</color>
+    <color name="md_theme_light_onBackground">#1A1C1E</color>
+    <color name="md_theme_light_surface">#FDFBFF</color>
+    <color name="md_theme_light_onSurface">#1A1C1E</color>
+    <color name="md_theme_light_outline">#73777F</color>
+
+    <!-- Stock Market Specific Colors -->
+    <color name="market_up">#4CAF50</color>
+    <color name="market_down">#F44336</color>
 </resources>
