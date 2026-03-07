@@ -33,20 +33,24 @@ class PortfolioRepository(private val localDb: AppDatabase) {
 
                 val items = snapshots?.mapNotNull { doc ->
                     try {
-                        // שיפור הקריאה: תמיכה גם ב-Long וגם ב-Double מה-Firestore
                         val symbol = doc.getString("symbol") ?: ""
                         val description = doc.getString("description") ?: ""
                         val isFavorite = doc.getBoolean("isFavorite") ?: false
                         
-                        // קבלת הכמות בצורה בטוחה (מספרים ב-Firestore יכולים להיות מסוגים שונים)
                         val quantityRaw = doc.get("quantity")
                         val quantity = when (quantityRaw) {
                             is Number -> quantityRaw.toDouble()
                             else -> 0.0
                         }
 
+                        val totalCostRaw = doc.get("totalCost")
+                        val totalCost = when (totalCostRaw) {
+                            is Number -> totalCostRaw.toDouble()
+                            else -> 0.0
+                        }
+
                         if (symbol.isNotBlank()) {
-                            PortfolioItem(symbol, description, quantity, isFavorite)
+                            PortfolioItem(symbol, description, quantity, isFavorite, totalCost)
                         } else null
                     } catch (ex: Exception) {
                         Log.e("PortfolioRepo", "Error parsing doc ${doc.id}", ex)
@@ -66,7 +70,8 @@ class PortfolioRepository(private val localDb: AppDatabase) {
                 symbol = it.symbol,
                 description = it.description,
                 quantity = it.quantity,
-                isFavorite = it.isFavorite
+                isFavorite = it.isFavorite,
+                totalCost = it.totalCost
             )
         }
         localDb.stockDao().deleteAll()
