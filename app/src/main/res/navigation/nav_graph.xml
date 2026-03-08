@@ -9,7 +9,15 @@
         android:id="@+id/navigation_feed"
         android:name="com.example.marketwatch.FeedFragment"
         android:label="Feed"
-        tools:layout="@layout/fragment_feed" />
+        tools:layout="@layout/fragment_feed">
+        <action
+            android:id="@+id/action_feed_to_postDetails"
+            app:destination="@id/navigation_post_details"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_search"
@@ -63,7 +71,15 @@
         android:id="@+id/navigation_user_posts"
         android:name="com.example.marketwatch.UserPostsFragment"
         android:label="My Activity"
-        tools:layout="@layout/activity_user_posts" />
+        tools:layout="@layout/activity_user_posts">
+        <action
+            android:id="@+id/action_userPosts_to_postDetails"
+            app:destination="@id/navigation_post_details"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_stock_details"
@@ -76,6 +92,29 @@
         <argument
             android:name="description"
             app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_post_details"
+        android:name="com.example.marketwatch.PostDetailsFragment"
+        android:label="Post Details">
+        <argument
+            android:name="postId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_map"
+        android:name="com.example.marketwatch.MapFragment"
+        android:label="Market Map"
+        tools:layout="@layout/fragment_map">
+        <action
+            android:id="@+id/action_map_to_postDetails"
+            app:destination="@id/navigation_post_details"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 
 </navigation>
