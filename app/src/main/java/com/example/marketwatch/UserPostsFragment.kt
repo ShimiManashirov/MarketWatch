@@ -41,7 +41,6 @@ class UserPostsFragment : Fragment() {
         emptyLayout = view.findViewById(R.id.emptyUserPostsLayout)
         val recyclerView = view.findViewById<RecyclerView>(R.id.userPostsRecyclerView)
 
-        // Set up toolbar for navigation
         toolbar.setNavigationOnClickListener { 
             findNavController().navigateUp()
         }

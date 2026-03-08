@@ -5,7 +5,9 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
 import android.text.InputType
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,6 +35,7 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
+import com.google.android.material.textfield.TextInputEditText
 import okhttp3.*
 import org.json.JSONObject
 import java.util.*
@@ -40,6 +43,7 @@ import java.util.*
 class StockDetailsFragment : Fragment() {
 
     private val viewModel: StockDetailsViewModel by viewModels()
+    private val portfolioViewModel: PortfolioViewModel by viewModels()
     private val args: StockDetailsFragmentArgs by navArgs()
     
     private lateinit var symbol: String
@@ -248,14 +252,35 @@ class StockDetailsFragment : Fragment() {
 
     private fun showTradeDialog(isBuy: Boolean) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_buy_stock, null)
-        val etQuantity = dialogView.findViewById<EditText>(R.id.etQuantity)
+        val etQuantity = dialogView.findViewById<TextInputEditText>(R.id.etQuantity)
+        val tvDialogSymbol = dialogView.findViewById<TextView>(R.id.dialogBuySymbol)
+        val tvCurrentPrice = dialogView.findViewById<TextView>(R.id.dialogCurrentPrice)
+        val tvTotalCost = dialogView.findViewById<TextView>(R.id.tvTotalCost)
+        val tvWalletBalance = dialogView.findViewById<TextView>(R.id.tvWalletBalance)
+
+        tvDialogSymbol.text = if (isBuy) "Buy $symbol" else "Sell $symbol"
+        tvCurrentPrice.text = "Market Price: $${String.format("%.2f", currentPriceUsd)}"
+        
+        portfolioViewModel.userBalance.observe(viewLifecycleOwner) { balance ->
+            tvWalletBalance.text = "Wallet: $${String.format("%.2f", balance)}"
+        }
+
+        etQuantity.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val qty = s.toString().toDoubleOrNull() ?: 0.0
+                tvTotalCost.text = "$${String.format("%.2f", qty * currentPriceUsd)}"
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
 
         AlertDialog.Builder(requireContext())
-            .setTitle(if (isBuy) "Buy $symbol" else "Sell $symbol")
+            .setTitle(null)
             .setView(dialogView)
             .setPositiveButton("Confirm") { _, _ ->
                 val qty = etQuantity.text.toString().toDoubleOrNull() ?: 0.0
                 if (qty > 0) viewModel.executeTrade(symbol, description, qty, currentPriceUsd, isBuy)
+                else Toast.makeText(context, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
