@@ -134,7 +134,7 @@
                         style="@style/TextAppearance.Material3.HeadlineMedium"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="AAPL"
+                        tools:text="AAPL"
                         android:textColor="?attr/colorOnSurface"
                         android:textStyle="bold" />
                     
@@ -161,7 +161,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Apple Inc."
+                tools:text="Apple Inc."
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <!-- Price Section -->
