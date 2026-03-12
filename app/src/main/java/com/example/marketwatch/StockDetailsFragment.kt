@@ -23,10 +23,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.marketwatch.data.NewsRepository
+import com.example.marketwatch.data.local.AppDatabase
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.squareup.picasso.Picasso
 import com.github.mikephil.charting.charts.LineChart
@@ -44,6 +48,7 @@ class StockDetailsFragment : Fragment() {
 
     private val viewModel: StockDetailsViewModel by viewModels()
     private val portfolioViewModel: PortfolioViewModel by viewModels()
+    private lateinit var newsViewModel: NewsViewModel
     private val args: StockDetailsFragmentArgs by navArgs()
     
     private lateinit var symbol: String
@@ -55,6 +60,7 @@ class StockDetailsFragment : Fragment() {
     private lateinit var sellButton: MaterialButton
     private lateinit var stockLogo: ImageView
     private lateinit var newsRecyclerView: RecyclerView
+    private lateinit var newsAdapter: NewsAdapter
     private lateinit var lineChart: LineChart
     private lateinit var priceTextView: TextView
     private lateinit var priceIlsTextView: TextView
@@ -81,11 +87,22 @@ class StockDetailsFragment : Fragment() {
         symbol = args.symbol
         description = args.description
 
+        // Manual NewsViewModel initialization
+        val newsRepository = NewsRepository(AppDatabase.getDatabase(requireContext()))
+        val newsFactory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return NewsViewModel(newsRepository) as T
+            }
+        }
+        newsViewModel = ViewModelProvider(this, newsFactory).get(NewsViewModel::class.java)
+
         initViews(view)
         setupObservers()
         
         viewModel.observeStockStatus(symbol)
         viewModel.fetchData(symbol)
+        newsViewModel.fetchNewsForSymbol(symbol)
         startWebSocket()
 
         return view
@@ -113,7 +130,12 @@ class StockDetailsFragment : Fragment() {
         view.findViewById<TextView>(R.id.detailsDescription).text = description
         
         newsRecyclerView.layoutManager = LinearLayoutManager(context)
-        newsRecyclerView.adapter = NewsAdapter(emptyList())
+        newsAdapter = NewsAdapter(emptyList()) { news, isBookmarked ->
+            newsViewModel.toggleBookmark(news, isBookmarked)
+            val msg = if (isBookmarked) "Bookmark removed" else "Bookmark added"
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+        newsRecyclerView.adapter = newsAdapter
         
         view.findViewById<MaterialButton>(R.id.buyStockButton).setOnClickListener { showTradeDialog(true) }
         sellButton.setOnClickListener { showTradeDialog(false) }
@@ -187,10 +209,15 @@ class StockDetailsFragment : Fragment() {
             }
         }
 
-        viewModel.news.observe(viewLifecycleOwner) { news ->
+        newsViewModel.newsList.observe(viewLifecycleOwner) { news ->
             if (news.isNotEmpty()) {
-                newsRecyclerView.adapter = NewsAdapter(news.take(5))
+                newsAdapter.updateNews(news.take(10))
             }
+        }
+
+        newsViewModel.bookmarkedNews.observe(viewLifecycleOwner) { bookmarks ->
+            val bookmarkedIds = bookmarks.map { it.id }.toSet()
+            newsAdapter.updateBookmarks(bookmarkedIds)
         }
 
         viewModel.tradeStatus.observe(viewLifecycleOwner) { status ->
