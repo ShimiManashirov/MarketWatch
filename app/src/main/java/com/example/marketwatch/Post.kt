@@ -2,6 +2,9 @@ package com.example.marketwatch
 
 import com.google.firebase.Timestamp
 
+/**
+ * Data model representing a community post.
+ */
 data class Post(
     val id: String = "",
     val userId: String = "",
@@ -10,5 +13,6 @@ data class Post(
     val content: String = "",
     val imageUrl: String? = null,
     val timestamp: Timestamp? = null,
-    val likes: List<String> = emptyList() // רשימה של UIDs של משתמשים שעשו לייק
+    val likes: List<String> = emptyList(),
+    val commentsCount: Int = 0
 )
