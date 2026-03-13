@@ -87,7 +87,6 @@ class StockDetailsFragment : Fragment() {
         symbol = args.symbol
         description = args.description
 
-        // Manual NewsViewModel initialization
         val newsRepository = NewsRepository(AppDatabase.getDatabase(requireContext()))
         val newsFactory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -132,8 +131,6 @@ class StockDetailsFragment : Fragment() {
         newsRecyclerView.layoutManager = LinearLayoutManager(context)
         newsAdapter = NewsAdapter(emptyList()) { news, isBookmarked ->
             newsViewModel.toggleBookmark(news, isBookmarked)
-            val msg = if (isBookmarked) "Bookmark removed" else "Bookmark added"
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
         newsRecyclerView.adapter = newsAdapter
         
@@ -163,6 +160,10 @@ class StockDetailsFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (!isLoading) hideShimmer()
+        }
+
         viewModel.stockStatus.observe(viewLifecycleOwner) { status ->
             val isFavorite = status?.isFavorite ?: false
             val ownedQty = status?.quantity ?: 0.0
@@ -184,7 +185,6 @@ class StockDetailsFragment : Fragment() {
                 updatePriceUI()
                 updateChangeUI(it)
                 updateStatsUI(it)
-                hideShimmer()
             }
         }
 
@@ -194,7 +194,7 @@ class StockDetailsFragment : Fragment() {
             if (candles != null && candles.status == "ok" && !candles.closePrices.isNullOrEmpty()) {
                 updateChartData(candles.closePrices)
             } else {
-                lineChart.setNoDataText("No chart data available")
+                lineChart.setNoDataText("Historical data unavailable")
                 lineChart.invalidate()
             }
         }
@@ -215,26 +215,26 @@ class StockDetailsFragment : Fragment() {
             }
         }
 
-        newsViewModel.bookmarkedNews.observe(viewLifecycleOwner) { bookmarks ->
-            val bookmarkedIds = bookmarks.map { it.id }.toSet()
-            newsAdapter.updateBookmarks(bookmarkedIds)
-        }
-
         viewModel.tradeStatus.observe(viewLifecycleOwner) { status ->
-            when (status) {
-                "SUCCESS" -> Toast.makeText(context, "Trade Successful!", Toast.LENGTH_SHORT).show()
-                "ALERT_SET" -> Toast.makeText(context, "Price alert set!", Toast.LENGTH_SHORT).show()
-                "ADDED_TO_FAVORITES" -> Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show()
-                "REMOVED_FROM_FAVORITES" -> Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
-                else -> if (status.isNotEmpty()) Toast.makeText(context, status, Toast.LENGTH_SHORT).show()
+            if (status.isEmpty()) return@observe
+            val message = when (status) {
+                "SUCCESS" -> "Trade Successful!"
+                "ALERT_SET" -> "Price alert set!"
+                "ADDED_TO_FAVORITES" -> "Added to favorites"
+                "REMOVED_FROM_FAVORITES" -> "Removed from favorites"
+                "ERROR_FETCHING_DATA" -> "Failed to load complete stock data"
+                else -> status
             }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun hideShimmer() {
-        shimmerLayout.stopShimmer()
-        shimmerLayout.visibility = View.GONE
-        contentView.visibility = View.VISIBLE
+        if (shimmerLayout.visibility == View.VISIBLE) {
+            shimmerLayout.stopShimmer()
+            shimmerLayout.visibility = View.GONE
+            contentView.visibility = View.VISIBLE
+        }
     }
 
     private fun updateChartData(prices: List<Double>) {
@@ -254,13 +254,9 @@ class StockDetailsFragment : Fragment() {
     }
 
     private fun updateStatsUI(quote: StockQuote) {
-        val highView = view?.findViewById<TextView>(R.id.detailsHigh)
-        val lowView = view?.findViewById<TextView>(R.id.detailsLow)
-        val prevCloseView = view?.findViewById<TextView>(R.id.detailsPrevClose)
-        
-        highView?.text = String.format("%.2f", quote.highPrice)
-        lowView?.text = String.format("%.2f", quote.lowPrice)
-        prevCloseView?.text = String.format("%.2f", quote.previousClose)
+        view?.findViewById<TextView>(R.id.detailsHigh)?.text = String.format("%.2f", quote.highPrice)
+        view?.findViewById<TextView>(R.id.detailsLow)?.text = String.format("%.2f", quote.lowPrice)
+        view?.findViewById<TextView>(R.id.detailsPrevClose)?.text = String.format("%.2f", quote.previousClose)
     }
 
     private fun updatePriceUI() {
@@ -302,7 +298,6 @@ class StockDetailsFragment : Fragment() {
         })
 
         AlertDialog.Builder(requireContext())
-            .setTitle(null)
             .setView(dialogView)
             .setPositiveButton("Confirm") { _, _ ->
                 val qty = etQuantity.text.toString().toDoubleOrNull() ?: 0.0

@@ -1,5 +1,6 @@
 package com.example.marketwatch
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,6 +9,10 @@ import com.example.marketwatch.data.StockRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for the Stock Details screen.
+ * Handles fetching real-time quotes, historical chart data, news, and company profiles.
+ */
 class StockDetailsViewModel : ViewModel() {
     private val repository = StockRepository()
 
@@ -32,6 +37,9 @@ class StockDetailsViewModel : ViewModel() {
     private val _candles = MutableLiveData<StockCandles?>()
     val candles: LiveData<StockCandles?> = _candles
 
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
     fun observeStockStatus(symbol: String) {
         viewModelScope.launch {
             repository.getStockStatus(symbol).collect { status ->
@@ -40,25 +48,50 @@ class StockDetailsViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Fetches all required data for a specific stock symbol.
+     */
     fun fetchData(symbol: String) {
+        _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // Fetch Quote (Essential)
                 val quoteResponse = repository.getQuote(symbol)
-                if (quoteResponse.isSuccessful) _quote.postValue(quoteResponse.body())
+                if (quoteResponse.isSuccessful) {
+                    _quote.postValue(quoteResponse.body())
+                }
 
+                // Fetch Profile
                 val profileResponse = repository.getCompanyProfile(symbol)
-                if (profileResponse.isSuccessful) _companyProfile.postValue(profileResponse.body())
+                if (profileResponse.isSuccessful) {
+                    _companyProfile.postValue(profileResponse.body())
+                }
 
+                // Fetch News
                 val newsResponse = repository.getNews(symbol)
-                if (newsResponse.isSuccessful) _news.postValue(newsResponse.body())
+                if (newsResponse.isSuccessful) {
+                    _news.postValue(newsResponse.body() ?: emptyList())
+                }
                 
+                // Fetch Chart Data (Candles)
                 val candlesResponse = repository.getCandles(symbol)
-                if (candlesResponse.isSuccessful) _candles.postValue(candlesResponse.body())
+                if (candlesResponse.isSuccessful) {
+                    val body = candlesResponse.body()
+                    if (body?.status == "no_data") {
+                        Log.w("StockDetails", "No candle data for $symbol")
+                    }
+                    _candles.postValue(body)
+                }
                 
+                // Fetch FX Rate
                 val rate = repository.getUsdToIlsRate()
                 _exchangeRate.postValue(rate)
+
             } catch (e: Exception) {
-                // Log error
+                Log.e("StockDetails", "Error fetching stock data", e)
+                _tradeStatus.postValue("ERROR_FETCHING_DATA")
+            } finally {
+                _isLoading.postValue(false)
             }
         }
     }
