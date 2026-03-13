@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="?android:colorBackground"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -19,29 +19,39 @@
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="?attr/homeAsUpIndicator">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:orientation="horizontal">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
-                <ImageButton
-                    android:id="@+id/priceAlertButton"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_lock_idle_alarm"
-                    app:tint="?attr/colorOnSurfaceVariant" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
-                <ImageButton
-                    android:id="@+id/favoriteStarButton"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/btn_star_big_off"
-                    app:tint="?attr/colorPrimary" />
-            </LinearLayout>
+                    <ImageButton
+                        android:id="@+id/priceAlertButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@null"
+                        android:src="@android:drawable/ic_lock_idle_alarm"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                    <ImageButton
+                        android:id="@+id/favoriteStarButton"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="@dimen/spacing_small"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@null"
+                        android:src="@android:drawable/btn_star_big_off"
+                        app:tint="?attr/colorPrimary" />
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </com.google.android.material.appbar.MaterialToolbar>
 
@@ -51,18 +61,33 @@
         android:id="@+id/stockDetailsShimmer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        android:visibility="visible">
+        android:visibility="visible"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
-            <View android:layout_width="150dp" android:layout_height="32dp" android:background="?attr/colorOutlineVariant" />
-            <View android:layout_width="250dp" android:layout_height="20dp" android:layout_marginTop="8dp" android:background="?attr/colorOutlineVariant" />
-            <View android:layout_width="200dp" android:layout_height="64dp" android:layout_marginTop="24dp" android:background="?attr/colorOutlineVariant" />
-            <View android:layout_width="match_parent" android:layout_height="250dp" android:layout_marginTop="24dp" android:background="?attr/colorOutlineVariant" />
+            android:padding="@dimen/spacing_large">
+            <View
+                android:layout_width="150dp"
+                android:layout_height="32dp"
+                android:background="?attr/colorOutlineVariant" />
+            <View
+                android:layout_width="250dp"
+                android:layout_height="20dp"
+                android:layout_marginTop="@dimen/spacing_small"
+                android:background="?attr/colorOutlineVariant" />
+            <View
+                android:layout_width="200dp"
+                android:layout_height="64dp"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:background="?attr/colorOutlineVariant" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginTop="@dimen/spacing_large"
+                android:background="?attr/colorOutlineVariant" />
         </LinearLayout>
     </com.facebook.shimmer.ShimmerFrameLayout>
 
@@ -77,7 +102,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="@dimen/spacing_large">
 
             <!-- Header Section -->
             <LinearLayout
@@ -89,7 +114,7 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="@dimen/radius_medium"
                     app:cardElevation="0dp"
                     app:strokeColor="?attr/colorOutlineVariant"
                     app:strokeWidth="1dp">
@@ -97,108 +122,105 @@
                         android:id="@+id/ivStockLogo"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:padding="8dp"
+                        android:contentDescription="@null"
+                        android:padding="@dimen/spacing_small"
                         android:scaleType="fitCenter" />
                 </com.google.android.material.card.MaterialCardView>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="@dimen/spacing_medium"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/detailsSymbol"
-                        style="@style/TextAppearance.Material3.HeadlineLarge"
+                        style="@style/TextAppearance.MarketWatch.Headline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnSurface"
-                        android:textStyle="bold"
                         android:letterSpacing="-0.02"
                         tools:text="AAPL" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipIndustry"
-                        style="@style/Widget.Material3.Chip.Assist"
+                        style="@style/Widget.MarketWatch.Chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="@dimen/spacing_xs"
                         android:visibility="gone"
                         app:chipBackgroundColor="?attr/colorPrimaryContainer"
-                        android:textColor="?attr/colorOnPrimaryContainer" />
+                        app:chipStrokeWidth="0dp" />
                 </LinearLayout>
             </LinearLayout>
 
             <TextView
                 android:id="@+id/detailsDescription"
-                style="@style/TextAppearance.Material3.BodyMedium"
+                style="@style/TextAppearance.MarketWatch.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginTop="@dimen/spacing_small"
                 tools:text="Apple Inc." />
 
             <!-- Price Information -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="@dimen/spacing_xl"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/detailsPrice"
-                    style="@style/TextAppearance.Material3.DisplayMedium"
+                    style="@style/TextAppearance.MarketWatch.Headline"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold"
+                    android:textSize="@dimen/text_display_small"
                     tools:text="$182.63" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="@dimen/spacing_xs"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/detailsChange"
-                        style="@style/TextAppearance.Material3.TitleMedium"
+                        style="@style/TextAppearance.MarketWatch.Title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textStyle="bold"
+                        android:textSize="@dimen/text_body_medium"
                         tools:text="+1.24 (0.68%)" />
 
                     <TextView
                         android:id="@+id/detailsPriceIls"
-                        style="@style/TextAppearance.Material3.BodyMedium"
+                        style="@style/TextAppearance.MarketWatch.Body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:layout_marginStart="@dimen/spacing_medium"
                         tools:text="≈ ₪675.73" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvOwnedShares"
-                    style="@style/TextAppearance.Material3.LabelLarge"
+                    style="@style/TextAppearance.MarketWatch.Caption"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="@dimen/spacing_medium"
                     android:background="?attr/colorPrimaryContainer"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="@dimen/spacing_medium"
+                    android:paddingVertical="@dimen/spacing_xs"
                     android:textColor="?attr/colorOnPrimaryContainer"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    tools:text="You own 10 shares" />
             </LinearLayout>
 
             <!-- Chart -->
             <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.MarketWatch.Card"
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
-                android:layout_marginTop="32dp"
-                app:cardCornerRadius="24dp"
+                android:layout_marginTop="@dimen/spacing_xl"
                 app:cardElevation="0dp"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
@@ -206,59 +228,133 @@
                     android:id="@+id/stockChart"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_margin="16dp" />
+                    android:layout_margin="@dimen/spacing_medium" />
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Buttons -->
+            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="@dimen/spacing_large"
                 android:orientation="horizontal">
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buyStockButton"
-                    style="@style/Widget.Material3.Button"
+                    style="@style/Widget.MarketWatch.Button"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
+                    android:layout_marginEnd="@dimen/spacing_small"
                     android:text="Buy"
-                    app:backgroundTint="#4CAF50"
-                    app:cornerRadius="16dp" />
+                    app:backgroundTint="@color/market_up" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/sellStockButton"
-                    style="@style/Widget.Material3.Button.TonalButton"
+                    style="@style/Widget.MarketWatch.Button.Tonal"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="@dimen/spacing_small"
                     android:text="Sell"
-                    android:visibility="gone"
-                    app:cornerRadius="16dp" />
+                    android:visibility="gone" />
             </LinearLayout>
 
-            <!-- Stats -->
-            <TextView style="@style/TextAppearance.Material3.TitleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="32dp" android:text="KEY STATISTICS" android:textColor="?attr/colorOnSurfaceVariant" android:letterSpacing="0.1" />
-            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" app:cardCornerRadius="24dp" app:cardElevation="0dp" app:strokeColor="?attr/colorOutlineVariant" app:strokeWidth="1dp">
-                <GridLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:columnCount="2" android:padding="16dp">
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="12dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Day High" android:textColor="?attr/colorOnSurfaceVariant" android:textSize="12sp" />
-                        <TextView android:id="@+id/detailsHigh" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.00" android:textColor="?attr/colorOnSurface" android:textSize="18sp" android:textStyle="bold" />
+            <!-- Key Stats -->
+            <TextView
+                style="@style/TextAppearance.MarketWatch.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:letterSpacing="0.1"
+                android:text="KEY STATISTICS" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.MarketWatch.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_medium"
+                app:cardElevation="0dp"
+                app:strokeColor="?attr/colorOutlineVariant"
+                app:strokeWidth="1dp">
+                <GridLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:columnCount="2"
+                    android:padding="@dimen/spacing_medium">
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_small">
+                        <TextView
+                            style="@style/TextAppearance.MarketWatch.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Day High" />
+                        <TextView
+                            android:id="@+id/detailsHigh"
+                            style="@style/TextAppearance.MarketWatch.Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="@dimen/text_title_small"
+                            tools:text="184.20" />
                     </LinearLayout>
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="12dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Day Low" android:textColor="?attr/colorOnSurfaceVariant" android:textSize="12sp" />
-                        <TextView android:id="@+id/detailsLow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.00" android:textColor="?attr/colorOnSurface" android:textSize="18sp" android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_small">
+                        <TextView
+                            style="@style/TextAppearance.MarketWatch.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Day Low" />
+                        <TextView
+                            android:id="@+id/detailsLow"
+                            style="@style/TextAppearance.MarketWatch.Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="@dimen/text_title_small"
+                            tools:text="181.15" />
                     </LinearLayout>
-                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:orientation="vertical" android:padding="12dp">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Prev. Close" android:textColor="?attr/colorOnSurfaceVariant" android:textSize="12sp" />
-                        <TextView android:id="@+id/detailsPrevClose" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.00" android:textColor="?attr/colorOnSurface" android:textSize="18sp" android:textStyle="bold" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_columnWeight="1"
+                        android:orientation="vertical"
+                        android:padding="@dimen/spacing_small">
+                        <TextView
+                            style="@style/TextAppearance.MarketWatch.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Prev. Close" />
+                        <TextView
+                            android:id="@+id/detailsPrevClose"
+                            style="@style/TextAppearance.MarketWatch.Title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="@dimen/text_title_small"
+                            tools:text="182.50" />
                     </LinearLayout>
                 </GridLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- News -->
-            <TextView style="@style/TextAppearance.Material3.TitleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="32dp" android:text="LATEST NEWS" android:textColor="?attr/colorOnSurfaceVariant" android:letterSpacing="0.1" />
-            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvStockNews" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:nestedScrollingEnabled="false" android:paddingBottom="32dp" />
+            <!-- Latest News -->
+            <TextView
+                style="@style/TextAppearance.MarketWatch.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:letterSpacing="0.1"
+                android:text="LATEST NEWS" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvStockNews"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_medium"
+                android:nestedScrollingEnabled="false"
+                android:paddingBottom="@dimen/spacing_xl" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
