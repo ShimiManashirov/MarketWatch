@@ -33,27 +33,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
-        <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ProfileActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PortfolioActivity"
-            android:exported="false" />
-        <activity
-            android:name=".SearchActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PostsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".UserPostsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".StockDetailsActivity"
-            android:exported="false" />
+
     </application>
 
 </manifest>

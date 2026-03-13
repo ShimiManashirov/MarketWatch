@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
@@ -21,6 +22,9 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var tabLayout: TabLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install the splash screen before calling super.onCreate()
+        installSplashScreen()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
@@ -50,7 +54,7 @@ class OnboardingActivity : AppCompatActivity() {
             OnboardingItem(
                 getString(R.string.onboarding_title_1),
                 getString(R.string.onboarding_desc_1),
-                R.mipmap.ic_launcher // Placeholder, ideally use custom vectors
+                R.mipmap.ic_launcher
             ),
             OnboardingItem(
                 getString(R.string.onboarding_title_2),
@@ -81,11 +85,9 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun finishOnboarding() {
-        // Mark onboarding as completed in SharedPreferences
         val sharedPrefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
         sharedPrefs.edit().putBoolean("onboarding_completed", true).apply()
 
-        // Navigate to Login
         startActivity(Intent(this, LoginActivity::class.java))
         finish()
     }
