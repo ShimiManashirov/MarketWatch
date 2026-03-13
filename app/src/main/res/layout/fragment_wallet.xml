@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="?android:colorBackground"
     tools:context=".WalletFragment">
 
     <androidx.core.widget.NestedScrollView
@@ -15,23 +15,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/spacing_medium">
 
             <TextView
-                style="@style/TextAppearance.Material3.HeadlineMedium"
+                style="@style/TextAppearance.MarketWatch.Headline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="My Wallet"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:layout_marginTop="@dimen/spacing_medium"
+                android:text="My Wallet" />
 
             <!-- Balance Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                app:cardCornerRadius="28dp"
+                android:layout_marginTop="@dimen/spacing_large"
+                app:cardCornerRadius="@dimen/radius_extra_large"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/colorPrimaryContainer"
                 app:strokeWidth="0dp">
@@ -40,10 +38,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="24dp">
+                    android:padding="@dimen/spacing_large">
 
                     <TextView
-                        style="@style/TextAppearance.Material3.LabelLarge"
+                        style="@style/TextAppearance.MarketWatch.Caption"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Available Balance"
@@ -52,37 +50,37 @@
 
                     <TextView
                         android:id="@+id/walletBalanceTextView"
-                        style="@style/TextAppearance.Material3.HeadlineLarge"
+                        style="@style/TextAppearance.MarketWatch.Headline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="$0.00"
+                        android:layout_marginTop="@dimen/spacing_small"
                         android:textColor="?attr/colorOnPrimaryContainer"
-                        android:textStyle="bold" />
+                        android:textSize="@dimen/text_display_small"
+                        tools:text="$12,500.00" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="24dp"
+                        android:layout_marginTop="@dimen/spacing_large"
                         android:orientation="horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/addFundsButton"
-                            style="@style/Widget.Material3.Button"
+                            style="@style/Widget.MarketWatch.Button"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
+                            android:layout_marginEnd="@dimen/spacing_small"
                             android:text="Deposit"
                             app:icon="@android:drawable/ic_input_add" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/withdrawFundsButton"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                            style="@style/Widget.MarketWatch.Button.Tonal"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="@dimen/spacing_small"
                             android:text="Withdraw"
                             app:icon="@android:drawable/ic_menu_upload" />
                     </LinearLayout>
@@ -90,21 +88,20 @@
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                style="@style/TextAppearance.Material3.TitleMedium"
+                style="@style/TextAppearance.MarketWatch.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:layout_marginStart="4dp"
+                android:layout_marginTop="@dimen/spacing_xl"
+                android:layout_marginStart="@dimen/spacing_xs"
                 android:text="Transaction History"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:textSize="@dimen/text_body_medium" />
 
             <!-- Shimmer for Transactions -->
             <com.facebook.shimmer.ShimmerFrameLayout
                 android:id="@+id/walletShimmerContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/spacing_medium"
                 app:shimmer_auto_start="true">
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -120,9 +117,9 @@
                 android:id="@+id/rvTransactions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/spacing_medium"
                 android:nestedScrollingEnabled="false"
-                android:paddingBottom="32dp"
+                android:paddingBottom="@dimen/spacing_xl"
                 android:visibility="gone" />
 
         </LinearLayout>

@@ -2,103 +2,103 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.MarketWatch.Card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginVertical="6dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="1dp"
-    app:strokeWidth="0dp"
-    app:cardBackgroundColor="?attr/colorSurface">
+    android:layout_marginHorizontal="@dimen/spacing_small"
+    android:layout_marginVertical="@dimen/spacing_xs">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:padding="@dimen/spacing_medium">
 
         <LinearLayout
+            android:id="@+id/symbolContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/stockSymbol"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="AAPL"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/holdingBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/bg_badge_owned"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="2dp"
-                    android:text="OWNED"
-                    android:textColor="@android:color/white"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-            </LinearLayout>
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toStartOf="@+id/priceContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/stockDescription"
+                android:id="@+id/stockSymbol"
+                style="@style/TextAppearance.MarketWatch.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Apple Inc."
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp"
-                android:ellipsize="end"
-                android:singleLine="true" />
+                android:textSize="@dimen/text_body_medium"
+                tools:text="AAPL" />
+
+            <TextView
+                android:id="@+id/holdingBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_small"
+                android:background="@drawable/bg_badge_owned"
+                android:paddingHorizontal="@dimen/spacing_xs"
+                android:paddingVertical="2dp"
+                android:text="OWNED"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/stockDescription"
+            style="@style/TextAppearance.MarketWatch.Caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            app:layout_constraintEnd_toStartOf="@+id/priceContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/symbolContainer"
+            tools:text="Apple Inc." />
+
         <LinearLayout
+            android:id="@+id/priceContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="end"
             android:orientation="vertical"
-            android:gravity="end">
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/favoriteIndicator"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/stockPrice"
+                style="@style/TextAppearance.MarketWatch.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="$0.00"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textSize="@dimen/text_body_medium"
+                tools:text="$150.00" />
 
             <TextView
                 android:id="@+id/stockChange"
+                style="@style/TextAppearance.MarketWatch.Caption"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0.00%"
-                android:textColor="#4CAF50"
-                android:textSize="14sp" />
+                android:textColor="@color/market_up"
+                tools:text="+1.25%" />
         </LinearLayout>
 
         <ImageView
             android:id="@+id/favoriteIndicator"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_marginStart="12dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:contentDescription="@null"
             android:src="@android:drawable/btn_star_big_on"
-            app:tint="?attr/colorPrimary"
             android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorPrimary"
             tools:visibility="visible" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

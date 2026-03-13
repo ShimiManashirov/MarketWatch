@@ -46,4 +46,15 @@
     <string name="search_description">Search for stocks, indices or crypto symbols</string>
     <string name="recent_searches">Recent Searches</string>
     <string name="clear_button">Clear</string>
+
+    <!-- Onboarding Strings -->
+    <string name="onboarding_title_1">Real-time Data</string>
+    <string name="onboarding_desc_1">Stay updated with live stock market data and financial news from around the world.</string>
+    <string name="onboarding_title_2">Smart Watchlist</string>
+    <string name="onboarding_desc_2">Track your favorite assets and manage your virtual portfolio with ease.</string>
+    <string name="onboarding_title_3">Instant Alerts</string>
+    <string name="onboarding_desc_3">Never miss a price target. Get notified instantly when the market reaches your goals.</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_get_started">Get Started</string>
+    <string name="btn_skip">Skip</string>
 </resources>

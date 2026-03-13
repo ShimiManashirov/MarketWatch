@@ -1,36 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="@dimen/spacing_large">
 
-    <EditText
-        android:id="@+id/dialogPostEditText"
+    <TextView
+        style="@style/TextAppearance.MarketWatch.Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing_medium"
+        android:text="@string/create_post"
+        android:textSize="@dimen/text_title_medium" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MarketWatch.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="What's on your mind?"
-        android:minLines="3"
-        android:gravity="top"
-        android:background="@android:color/transparent"
-        android:textSize="16sp" />
+        app:hintEnabled="false">
 
-    <ImageView
-        android:id="@+id/dialogPostImageView"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/dialogPostEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:gravity="top"
+            android:hint="@string/post_hint"
+            android:minLines="4"
+            style="@style/TextAppearance.MarketWatch.Body"
+            android:textSize="@dimen/text_body_medium" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/postImageContainer"
+        style="@style/Widget.MarketWatch.Card"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_marginTop="12dp"
-        android:scaleType="centerCrop"
-        android:visibility="gone" />
+        android:layout_marginTop="@dimen/spacing_small"
+        android:visibility="gone"
+        app:cardElevation="0dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:id="@+id/dialogPostImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop" />
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/dialogAddImageBtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.MarketWatch.Button.Text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="@dimen/spacing_small"
         android:text="Add Image"
-        android:textAllCaps="false"
-        android:textColor="#0D6EFD" />
+        app:icon="@android:drawable/ic_menu_camera" />
 
 </LinearLayout>
