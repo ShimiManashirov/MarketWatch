@@ -9,6 +9,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import com.google.firebase.auth.FirebaseAuth
 
 /**
  * Activity that handles the initial onboarding experience for new users.
@@ -23,9 +24,25 @@ class OnboardingActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install the splash screen before calling super.onCreate()
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         
         super.onCreate(savedInstanceState)
+
+        // Check if onboarding is already completed
+        val sharedPrefs = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val isOnboardingCompleted = sharedPrefs.getBoolean("onboarding_completed", false)
+
+        if (isOnboardingCompleted) {
+            // Check if user is already logged in
+            if (FirebaseAuth.getInstance().currentUser != null) {
+                startActivity(Intent(this, MainActivity::class.java))
+            } else {
+                startActivity(Intent(this, LoginActivity::class.java))
+            }
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_onboarding)
 
         initViews()
