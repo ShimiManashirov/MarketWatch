@@ -1,6 +1,7 @@
 package com.example.marketwatch
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -22,13 +24,15 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.picasso.Picasso
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * Fragment that displays the details of a single post and its comment thread.
+ */
 class PostDetailsFragment : Fragment() {
 
     private val args: PostDetailsFragmentArgs by navArgs()
@@ -40,7 +44,11 @@ class PostDetailsFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_post_details, container, false)
+        return inflater.inflate(R.layout.fragment_post_details, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val db = FirebaseFirestore.getInstance()
         val auth = FirebaseAuth.getInstance()
@@ -58,20 +66,18 @@ class PostDetailsFragment : Fragment() {
         commentViewModel = ViewModelProvider(this, factory).get(CommentViewModel::class.java)
 
         initViews(view)
-        setupObservers(view)
+        setupObservers()
 
         commentViewModel.setPostId(args.postId)
         loadPostDetails(view)
-
-        return view
     }
 
     private fun initViews(view: View) {
         val toolbar = view.findViewById<Toolbar>(R.id.postDetailsToolbar)
-        toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
+        toolbar?.setNavigationOnClickListener { findNavController().navigateUp() }
 
         val rvComments = view.findViewById<RecyclerView>(R.id.rvComments)
-        rvComments.layoutManager = LinearLayoutManager(context)
+        rvComments?.layoutManager = LinearLayoutManager(context)
         
         adapter = CommentAdapter(
             emptyList(),
@@ -79,37 +85,42 @@ class PostDetailsFragment : Fragment() {
         ) { comment ->
             commentViewModel.deleteComment(comment)
         }
-        rvComments.adapter = adapter
+        rvComments?.adapter = adapter
 
         val etComment = view.findViewById<TextInputEditText>(R.id.etComment)
         val btnSend = view.findViewById<ImageButton>(R.id.btnSendComment)
 
-        btnSend.setOnClickListener {
-            val content = etComment.text.toString().trim()
+        btnSend?.setOnClickListener {
+            val content = etComment?.text?.toString()?.trim() ?: ""
             if (content.isNotEmpty()) {
                 commentViewModel.addComment(content)
-                etComment.text?.clear()
+                etComment?.text?.clear()
             }
         }
     }
 
-    private fun setupObservers(view: View) {
+    private fun setupObservers() {
         commentViewModel.comments.observe(viewLifecycleOwner) { comments ->
             adapter.updateComments(comments)
         }
 
         commentViewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
-                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                commentViewModel.clearError()
+                if (isAdded) {
+                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    commentViewModel.clearError()
+                }
             }
         }
     }
 
     private fun loadPostDetails(view: View) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val post = postsRepository.getPostById(args.postId)
-            withContext(Dispatchers.Main) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val post = withContext(Dispatchers.IO) {
+                    postsRepository.getPostById(args.postId)
+                }
+                
                 if (post != null && isAdded) {
                     val userImage = view.findViewById<ImageView>(R.id.postUserProfileImage)
                     val userName = view.findViewById<TextView>(R.id.postUserName)
@@ -120,26 +131,34 @@ class PostDetailsFragment : Fragment() {
                     val tvLikeCount = view.findViewById<TextView>(R.id.tvLikeCount)
                     val btnLike = view.findViewById<ImageButton>(R.id.btnLike)
 
-                    userName.text = post.userName
-                    content.text = post.content
+                    userName?.text = post.userName
+                    content?.text = post.content
+                    
                     val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
-                    timestamp.text = post.timestamp?.toDate()?.let { sdf.format(it) } ?: "Just now"
-                    tvLikeCount.text = "${post.likes.size} likes"
+                    timestamp?.text = post.timestamp?.toDate()?.let { sdf.format(it) } ?: "Just now"
+                    tvLikeCount?.text = "${post.likes.size} likes"
 
-                    if (post.userProfilePicture.isNotBlank()) {
-                        Picasso.get().load(post.userProfilePicture).transform(CircleTransform()).into(userImage)
+                    if (post.userProfilePicture.isNotBlank() && userImage != null) {
+                        Picasso.get()
+                            .load(post.userProfilePicture)
+                            .placeholder(R.drawable.ic_account_circle)
+                            .transform(CircleTransform())
+                            .into(userImage)
                     }
 
-                    if (!post.imageUrl.isNullOrEmpty()) {
-                        postImageCard.visibility = View.VISIBLE
+                    if (!post.imageUrl.isNullOrEmpty() && postImage != null) {
+                        postImageCard?.visibility = View.VISIBLE
                         Picasso.get().load(post.imageUrl).into(postImage)
                     } else {
-                        postImageCard.visibility = View.GONE
+                        postImageCard?.visibility = View.GONE
                     }
                     
-                    val isLiked = post.likes.contains(FirebaseAuth.getInstance().currentUser?.uid)
-                    btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
+                    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+                    val isLiked = post.likes.contains(currentUserId)
+                    btnLike?.setImageResource(if (isLiked) android.R.drawable.star_big_on else android.R.drawable.star_big_off)
                 }
+            } catch (e: Exception) {
+                Log.e("PostDetails", "Error loading post details", e)
             }
         }
     }
