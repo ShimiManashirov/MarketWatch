@@ -34,8 +34,8 @@ class StockDetailsViewModel : ViewModel() {
     private val _exchangeRate = MutableLiveData<Double>(3.7)
     val exchangeRate: LiveData<Double> = _exchangeRate
 
-    private val _candles = MutableLiveData<StockCandles?>()
-    val candles: LiveData<StockCandles?> = _candles
+    private val _chartData = MutableLiveData<List<Double>?>()
+    val chartData: LiveData<List<Double>?> = _chartData
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -50,7 +50,7 @@ class StockDetailsViewModel : ViewModel() {
 
     /**
      * Fetches all required data for a specific stock symbol.
-     * Guaranteed to update loading states even if network calls fail.
+     * Uses AlphaVantage for reliable chart data and Finnhub for real-time quotes.
      */
     fun fetchData(symbol: String) {
         _isLoading.value = true
@@ -62,19 +62,9 @@ class StockDetailsViewModel : ViewModel() {
                     _quote.postValue(quoteResponse.body())
                 }
 
-                // 2. Fetch Chart Data (Historical Candles)
-                val candlesResponse = repository.getCandles(symbol)
-                if (candlesResponse.isSuccessful) {
-                    val body = candlesResponse.body()
-                    // Finnhub returns status "no_data" if range is invalid or empty
-                    if (body?.status == "no_data") {
-                        Log.w("StockDetails", "No candle data found for symbol: $symbol")
-                    }
-                    _candles.postValue(body)
-                } else {
-                    // Ensure the UI knows the chart failed so it can stop loading
-                    _candles.postValue(null)
-                }
+                // 2. Fetch reliable Chart Data from AlphaVantage
+                val historicalData = repository.getHistoricalDataAlpha(symbol)
+                _chartData.postValue(historicalData.ifEmpty { null })
 
                 // 3. Fetch Company Profile
                 val profileResponse = repository.getCompanyProfile(symbol)
@@ -93,8 +83,8 @@ class StockDetailsViewModel : ViewModel() {
                 _exchangeRate.postValue(rate)
 
             } catch (e: Exception) {
-                Log.e("StockDetails", "Exception while fetching stock data: ${e.message}")
-                _candles.postValue(null) // Reset chart state on error
+                Log.e("StockDetails", "Error fetching stock data: ${e.message}")
+                _chartData.postValue(null)
                 _tradeStatus.postValue("ERROR_FETCHING_DATA")
             } finally {
                 _isLoading.postValue(false)
