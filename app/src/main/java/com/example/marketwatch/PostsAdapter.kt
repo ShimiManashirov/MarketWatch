@@ -9,16 +9,22 @@ import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Adapter for the community feed.
+ * Handles display of posts including user info, content, images, and interactions.
+ */
 class PostsAdapter(
     private val posts: List<Post>,
     private val currentUserId: String?,
     private val onEditClick: (Post) -> Unit,
     private val onDeleteClick: (Post) -> Unit,
-    private val onLikeClick: (Post) -> Unit
+    private val onLikeClick: (Post) -> Unit,
+    private val onCommentClick: (Post) -> Unit
 ) : RecyclerView.Adapter<PostsAdapter.PostViewHolder>() {
 
     class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -31,6 +37,7 @@ class PostsAdapter(
         val menuButton: ImageButton = view.findViewById(R.id.postMenuButton)
         val btnLike: ImageButton = view.findViewById(R.id.btnLike)
         val tvLikeCount: TextView = view.findViewById(R.id.tvLikeCount)
+        val btnComment: MaterialButton = view.findViewById(R.id.btnComment)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -56,11 +63,10 @@ class PostsAdapter(
             holder.menuButton.visibility = View.GONE
         }
 
-        // Use Picasso for user image
-        val profilePic = if (post.userProfilePicture.isNotBlank()) post.userProfilePicture else null
-        if (profilePic != null) {
+        // Profile image
+        if (post.userProfilePicture.isNotBlank()) {
             Picasso.get()
-                .load(profilePic)
+                .load(post.userProfilePicture)
                 .placeholder(R.drawable.ic_account_circle)
                 .transform(CircleTransform())
                 .into(holder.userImage)
@@ -68,25 +74,24 @@ class PostsAdapter(
             holder.userImage.setImageResource(R.drawable.ic_account_circle)
         }
 
-        // Use Picasso for post image
+        // Post image
         if (!post.imageUrl.isNullOrEmpty()) {
             holder.postImageCard.visibility = View.VISIBLE
-            Picasso.get()
-                .load(post.imageUrl)
-                .into(holder.postImage)
+            Picasso.get().load(post.imageUrl).into(holder.postImage)
         } else {
             holder.postImageCard.visibility = View.GONE
         }
 
-        // Like Logic
+        // Like logic
         val isLiked = currentUserId != null && post.likes.contains(currentUserId)
         holder.btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
         holder.btnLike.setColorFilter(if (isLiked) Color.parseColor("#E91E63") else Color.GRAY)
         holder.tvLikeCount.text = "${post.likes.size} likes"
 
-        holder.btnLike.setOnClickListener {
-            onLikeClick(post)
-        }
+        holder.btnLike.setOnClickListener { onLikeClick(post) }
+        
+        // Comment logic
+        holder.btnComment.setOnClickListener { onCommentClick(post) }
     }
 
     private fun showPopupMenu(view: View, post: Post) {

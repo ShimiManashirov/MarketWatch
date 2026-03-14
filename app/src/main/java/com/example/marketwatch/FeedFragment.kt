@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -78,7 +79,11 @@ class FeedFragment : Fragment() {
             FirebaseAuth.getInstance().currentUser?.uid,
             onEditClick = { post -> showEditPostDialog(post) },
             onDeleteClick = { post -> showDeleteConfirmationDialog(post) },
-            onLikeClick = { post -> viewModel.toggleLike(post) }
+            onLikeClick = { post -> viewModel.toggleLike(post) },
+            onCommentClick = { post ->
+                val action = FeedFragmentDirections.actionFeedToPostDetails(post.id)
+                findNavController().navigate(action)
+            }
         )
         recyclerView.adapter = adapter
 

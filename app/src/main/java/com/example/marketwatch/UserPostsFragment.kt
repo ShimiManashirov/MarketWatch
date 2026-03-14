@@ -51,7 +51,11 @@ class UserPostsFragment : Fragment() {
             auth.currentUser?.uid,
             onEditClick = { post -> showEditPostDialog(post) },
             onDeleteClick = { post -> showDeleteConfirmationDialog(post) },
-            onLikeClick = { post -> toggleLike(post) }
+            onLikeClick = { post -> toggleLike(post) },
+            onCommentClick = { post ->
+                val action = UserPostsFragmentDirections.actionUserPostsToPostDetails(post.id)
+                findNavController().navigate(action)
+            }
         )
         recyclerView.adapter = adapter
 
