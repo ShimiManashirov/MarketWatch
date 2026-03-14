@@ -6,76 +6,80 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="@dimen/spacing_small"
-    android:layout_marginVertical="@dimen/spacing_xs">
+    android:layout_marginVertical="@dimen/spacing_xs"
+    app:cardElevation="2dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/spacing_medium">
 
-        <!-- User Header -->
+        <!-- Circular User Avatar -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/postUserProfileImage"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:scaleType="centerCrop"
+            android:src="@drawable/ic_account_circle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-            tools:src="@drawable/ic_account_circle" />
+            app:strokeColor="?attr/colorOutlineVariant"
+            app:strokeWidth="1dp" />
 
+        <!-- User Information -->
         <TextView
             android:id="@+id/postUserName"
             style="@style/TextAppearance.MarketWatch.Title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_medium"
             android:textSize="@dimen/text_body_medium"
             app:layout_constraintEnd_toStartOf="@+id/postMenuButton"
             app:layout_constraintStart_toEndOf="@id/postUserProfileImage"
             app:layout_constraintTop_toTopOf="@id/postUserProfileImage"
-            tools:text="User Name" />
+            tools:text="Market Analyst" />
 
         <TextView
             android:id="@+id/postTimestamp"
             style="@style/TextAppearance.MarketWatch.Caption"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginStart="@dimen/spacing_medium"
             app:layout_constraintEnd_toStartOf="@+id/postMenuButton"
             app:layout_constraintStart_toEndOf="@id/postUserProfileImage"
             app:layout_constraintTop_toBottomOf="@id/postUserName"
-            tools:text="Just now" />
+            tools:text="2 hours ago" />
 
         <ImageButton
             android:id="@+id/postMenuButton"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@null"
+            android:contentDescription="Options"
             android:src="@android:drawable/ic_menu_more"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tint="?attr/colorOnSurfaceVariant" />
 
-        <!-- Post Content -->
+        <!-- Post Content Text -->
         <TextView
             android:id="@+id/postContent"
             style="@style/TextAppearance.MarketWatch.Body"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_medium"
+            android:lineSpacingExtra="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/postUserProfileImage"
-            tools:text="This is a premium post content that looks great on the new UI." />
+            tools:text="Just analyzed the latest tech trends. AAPL is looking strong for the next quarter! 📈 #Stocks #Finance" />
 
-        <!-- Optional Image -->
+        <!-- Optional Post Image with Premium Container -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/postImageCard"
             android:layout_width="0dp"
-            android:layout_height="200dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/spacing_medium"
             android:visibility="gone"
             app:cardCornerRadius="@dimen/radius_medium"
@@ -83,40 +87,73 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/postContent"
+            app:strokeColor="?attr/colorOutlineVariant"
             app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorOutlineVariant">
+            tools:visibility="visible">
 
             <ImageView
                 android:id="@+id/postImage"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@null"
-                android:scaleType="centerCrop" />
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="Post Image"
+                android:maxHeight="400dp"
+                android:scaleType="centerCrop"
+                tools:src="@mipmap/ic_launcher" />
+
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Interaction Bar -->
-        <ImageButton
-            android:id="@+id/btnLike"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+        <!-- Interaction Footer -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
             android:layout_marginTop="@dimen/spacing_medium"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@null"
-            android:src="@android:drawable/btn_star_big_off"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/postImageCard"
-            app:tint="?attr/colorOnSurfaceVariant" />
+            android:background="?attr/colorOutlineVariant"
+            app:layout_constraintTop_toBottomOf="@id/postImageCard" />
 
-        <TextView
-            android:id="@+id/tvLikeCount"
-            style="@style/TextAppearance.MarketWatch.Caption"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/interactionLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing_small"
-            app:layout_constraintBottom_toBottomOf="@id/btnLike"
-            app:layout_constraintStart_toEndOf="@id/btnLike"
-            app:layout_constraintTop_toTopOf="@id/btnLike"
-            tools:text="0 likes" />
+            android:layout_marginTop="@dimen/spacing_small"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/divider">
+
+            <ImageButton
+                android:id="@+id/btnLike"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Like"
+                android:src="@android:drawable/btn_star_big_off"
+                app:tint="?attr/colorOnSurfaceVariant" />
+
+            <TextView
+                android:id="@+id/tvLikeCount"
+                style="@style/TextAppearance.MarketWatch.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/spacing_xs"
+                android:textStyle="bold"
+                tools:text="24 Likes" />
+
+            <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnComment"
+                style="@style/Widget.MarketWatch.Button.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comment"
+                android:textAllCaps="false"
+                android:textSize="@dimen/text_caption"
+                app:icon="@android:drawable/stat_notify_chat"
+                app:iconSize="16dp"
+                app:iconTint="?attr/colorPrimary" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>
