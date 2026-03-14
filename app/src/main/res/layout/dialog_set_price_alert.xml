@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing_large">
+
+    <TextView
+        android:id="@+id/tvAlertTitle"
+        style="@style/TextAppearance.MarketWatch.Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Price Alert"
+        android:textSize="@dimen/text_title_medium" />
+
+    <TextView
+        android:id="@+id/tvAlertSubtitle"
+        style="@style/TextAppearance.MarketWatch.Body"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_xs"
+        android:text="Get notified when the market reaches your goal."
+        android:textSize="@dimen/text_body_small" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MarketWatch.TextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_large"
+        android:hint="Target Price (USD)"
+        app:startIconDrawable="@android:drawable/ic_lock_idle_alarm">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etTargetPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/tvCurrentPriceInfo"
+        style="@style/TextAppearance.MarketWatch.Caption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="@dimen/spacing_xs"
+        android:text="Current: $0.00" />
+
+</LinearLayout>

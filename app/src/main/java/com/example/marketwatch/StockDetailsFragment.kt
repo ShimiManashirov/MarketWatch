@@ -318,15 +318,16 @@ class StockDetailsFragment : Fragment() {
     }
 
     private fun showPriceAlertDialog() {
-        val etPrice = EditText(requireContext()).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            hint = "Enter target price in USD"
-        }
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_set_price_alert, null)
+        val etPrice = dialogView.findViewById<TextInputEditText>(R.id.etTargetPrice)
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvCurrent = dialogView.findViewById<TextView>(R.id.tvCurrentPriceInfo)
+
+        tvTitle.text = "Set Alert for $symbol"
+        tvCurrent.text = "Current: $${String.format("%.2f", currentPriceUsd)}"
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Set Price Alert for $symbol")
-            .setMessage("Get notified when the price reaches your target.")
-            .setView(etPrice)
+            .setView(dialogView)
             .setPositiveButton("Set Alert") { _, _ ->
                 val targetPrice = etPrice.text.toString().toDoubleOrNull()
                 if (targetPrice != null && targetPrice > 0) viewModel.setPriceAlert(symbol, description, targetPrice)

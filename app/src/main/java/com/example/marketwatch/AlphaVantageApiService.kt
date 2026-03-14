@@ -14,6 +14,7 @@ interface AlphaVantageApiService {
 }
 
 data class AlphaVantageResponse(
+    val errorMessage: String?,
     @com.google.gson.annotations.SerializedName("Time Series (Daily)")
     val timeSeries: Map<String, DailyData>?
 )
