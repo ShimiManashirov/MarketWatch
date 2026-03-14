@@ -73,6 +73,30 @@ class PostsRepository(
         awaitClose { listener.remove() }
     }
 
+    /**
+     * Fetches a single post by its ID from Firestore.
+     */
+    suspend fun getPostById(postId: String): Post? = withContext(Dispatchers.IO) {
+        try {
+            val doc = db.collection("posts").document(postId).get().await()
+            if (doc.exists()) {
+                val likesList = doc.get("likes") as? List<String> ?: emptyList()
+                Post(
+                    id = doc.id,
+                    userId = doc.getString("userId") ?: "",
+                    userName = doc.getString("userName") ?: "Unknown",
+                    userProfilePicture = doc.getString("userProfilePicture") ?: "",
+                    content = doc.getString("content") ?: "",
+                    imageUrl = doc.getString("imageUrl"),
+                    timestamp = doc.getTimestamp("timestamp"),
+                    likes = likesList
+                )
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun createPost(content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
         val user = auth.currentUser ?: return@withContext
         val userId = user.uid
