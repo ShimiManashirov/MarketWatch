@@ -19,7 +19,7 @@
             android:clipToPadding="false"
             android:paddingHorizontal="@dimen/spacing_small"
             android:paddingTop="@dimen/spacing_small"
-            android:paddingBottom="88dp"
+            android:paddingBottom="100dp"
             android:visibility="gone" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
@@ -51,7 +51,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/spacing_large"
-        android:layout_marginBottom="88dp"
+        android:layout_marginBottom="116dp"
         android:text="New Post"
         app:icon="@android:drawable/ic_input_add" />
 

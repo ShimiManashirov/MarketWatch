@@ -32,32 +32,4 @@
             android:textSize="@dimen/text_body_medium" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/postImageContainer"
-        style="@style/Widget.MarketWatch.Card"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_marginTop="@dimen/spacing_small"
-        android:visibility="gone"
-        app:cardElevation="0dp"
-        app:strokeColor="?attr/colorOutlineVariant"
-        app:strokeWidth="1dp">
-
-        <ImageView
-            android:id="@+id/dialogPostImageView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@null"
-            android:scaleType="centerCrop" />
-    </com.google.android.material.card.MaterialCardView>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/dialogAddImageBtn"
-        style="@style/Widget.MarketWatch.Button.Text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_small"
-        android:text="Add Image"
-        app:icon="@android:drawable/ic_menu_camera" />
-
 </LinearLayout>
