@@ -20,21 +20,29 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+/**
+ * Fragment displaying the community feed.
+ * Allows users to view, like, and navigate to post details for commenting.
+ */
 class FeedFragment : Fragment() {
 
     private lateinit var viewModel: FeedViewModel
     private lateinit var adapter: PostsAdapter
     private val postsList = mutableListOf<Post>()
 
-    private lateinit var shimmerContainer: ShimmerFrameLayout
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private var shimmerContainer: ShimmerFrameLayout? = null
+    private var recyclerView: RecyclerView? = null
+    private var swipeRefreshLayout: SwipeRefreshLayout? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_feed, container, false)
+        return inflater.inflate(R.layout.fragment_feed, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val repository = PostsRepository(
             FirebaseFirestore.getInstance(),
@@ -53,7 +61,7 @@ class FeedFragment : Fragment() {
         recyclerView = view.findViewById(R.id.postsRecyclerView)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
         
-        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView?.layoutManager = LinearLayoutManager(context)
 
         adapter = PostsAdapter(
             postsList,
@@ -66,19 +74,17 @@ class FeedFragment : Fragment() {
                 findNavController().navigate(action)
             }
         )
-        recyclerView.adapter = adapter
+        recyclerView?.adapter = adapter
 
-        view.findViewById<ExtendedFloatingActionButton>(R.id.fabAddPost).setOnClickListener {
+        view.findViewById<ExtendedFloatingActionButton>(R.id.fabAddPost)?.setOnClickListener {
             showCreatePostDialog()
         }
 
-        swipeRefreshLayout.setOnRefreshListener {
+        swipeRefreshLayout?.setOnRefreshListener {
             viewModel.loadPosts()
         }
 
         observeViewModel()
-
-        return view
     }
 
     private fun observeViewModel() {
@@ -86,39 +92,39 @@ class FeedFragment : Fragment() {
             postsList.clear()
             postsList.addAll(posts)
             adapter.notifyDataSetChanged()
-            swipeRefreshLayout.isRefreshing = false
+            swipeRefreshLayout?.isRefreshing = false
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             if (isLoading) {
-                if (!swipeRefreshLayout.isRefreshing) {
-                    shimmerContainer.startShimmer()
-                    shimmerContainer.visibility = View.VISIBLE
-                    recyclerView.visibility = View.GONE
+                if (swipeRefreshLayout?.isRefreshing == false) {
+                    shimmerContainer?.startShimmer()
+                    shimmerContainer?.visibility = View.VISIBLE
+                    recyclerView?.visibility = View.GONE
                 }
             } else {
-                shimmerContainer.stopShimmer()
-                shimmerContainer.visibility = View.GONE
-                recyclerView.visibility = View.VISIBLE
-                swipeRefreshLayout.isRefreshing = false
+                shimmerContainer?.stopShimmer()
+                shimmerContainer?.visibility = View.GONE
+                recyclerView?.visibility = View.VISIBLE
+                swipeRefreshLayout?.isRefreshing = false
             }
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
             message?.let {
-                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                if (isAdded) Toast.makeText(context, it, Toast.LENGTH_LONG).show()
                 viewModel.clearError()
-                swipeRefreshLayout.isRefreshing = false
+                swipeRefreshLayout?.isRefreshing = false
             }
         }
     }
 
     private fun showCreatePostDialog() {
-        if (!isAdded) return
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
+        val context = context ?: return
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
 
-        AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(context)
             .setView(dialogView)
             .setPositiveButton("Post") { _, _ ->
                 val content = postEditText.text.toString().trim()
@@ -131,13 +137,13 @@ class FeedFragment : Fragment() {
     }
 
     private fun showEditPostDialog(post: Post) {
-        if (!isAdded) return
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
+        val context = context ?: return
+        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
         
         postEditText.setText(post.content)
 
-        AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(context)
             .setView(dialogView)
             .setPositiveButton("Update") { _, _ ->
                 val newContent = postEditText.text.toString().trim()
@@ -150,7 +156,8 @@ class FeedFragment : Fragment() {
     }
 
     private fun showDeleteConfirmationDialog(post: Post) {
-        AlertDialog.Builder(requireContext())
+        val context = context ?: return
+        AlertDialog.Builder(context)
             .setTitle("Delete Post")
             .setMessage("Are you sure you want to delete this post?")
             .setPositiveButton("Delete") { _, _ ->
