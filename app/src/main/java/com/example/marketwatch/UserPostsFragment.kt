@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
@@ -14,7 +13,6 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.squareup.picasso.Picasso
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -116,14 +114,8 @@ class UserPostsFragment : Fragment() {
     private fun showEditPostDialog(post: Post) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
-        val dialogImageView = dialogView.findViewById<ImageView>(R.id.dialogPostImageView)
-        dialogView.findViewById<View>(R.id.dialogAddImageBtn).visibility = View.GONE 
 
         postEditText.setText(post.content)
-        if (!post.imageUrl.isNullOrEmpty()) {
-            dialogImageView.visibility = View.VISIBLE
-            Picasso.get().load(post.imageUrl).into(dialogImageView)
-        }
 
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Post")

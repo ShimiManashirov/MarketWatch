@@ -1,16 +1,11 @@
 package com.example.marketwatch
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -24,7 +19,6 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.squareup.picasso.Picasso
 
 class FeedFragment : Fragment() {
 
@@ -35,19 +29,6 @@ class FeedFragment : Fragment() {
     private lateinit var shimmerContainer: ShimmerFrameLayout
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
-
-    private var selectedImageUri: Uri? = null
-    private var dialogImageView: ImageView? = null
-
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            selectedImageUri = result.data?.data
-            dialogImageView?.let {
-                it.visibility = View.VISIBLE
-                Picasso.get().load(selectedImageUri).into(it)
-            }
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -136,23 +117,13 @@ class FeedFragment : Fragment() {
         if (!isAdded) return
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
-        val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
-        dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
-
-        selectedImageUri = null 
-
-        addImageBtn.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
-            pickImageLauncher.launch(intent)
-        }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Create Post")
             .setView(dialogView)
             .setPositiveButton("Post") { _, _ ->
                 val content = postEditText.text.toString().trim()
                 if (content.isNotEmpty()) {
-                    viewModel.createPost(content, selectedImageUri)
+                    viewModel.createPost(content, null)
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -163,28 +134,15 @@ class FeedFragment : Fragment() {
         if (!isAdded) return
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
-        val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
-        dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
         
         postEditText.setText(post.content)
-        selectedImageUri = post.imageUrl?.let { Uri.parse(it) }
-        if (selectedImageUri != null) {
-            dialogImageView?.visibility = View.VISIBLE
-            Picasso.get().load(selectedImageUri).into(dialogImageView!!)
-        }
-
-        addImageBtn.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
-            pickImageLauncher.launch(intent)
-        }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Edit Post")
             .setView(dialogView)
             .setPositiveButton("Update") { _, _ ->
                 val newContent = postEditText.text.toString().trim()
                 if (newContent.isNotEmpty()) {
-                    viewModel.updatePost(post.id, newContent, selectedImageUri)
+                    viewModel.updatePost(post.id, newContent, null)
                 }
             }
             .setNegativeButton("Cancel", null)
