@@ -33,21 +33,25 @@
 
                     <ImageButton
                         android:id="@+id/priceAlertButton"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@null"
                         android:src="@android:drawable/ic_lock_idle_alarm"
-                        app:tint="?attr/colorOnSurfaceVariant" />
+                        android:padding="8dp"
+                        android:scaleType="fitCenter"
+                        app:tint="?attr/colorPrimary" />
 
                     <ImageButton
                         android:id="@+id/favoriteStarButton"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:layout_marginEnd="@dimen/spacing_small"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@null"
                         android:src="@android:drawable/btn_star_big_off"
+                        android:padding="8dp"
+                        android:scaleType="fitCenter"
                         app:tint="?attr/colorPrimary" />
                 </LinearLayout>
 
