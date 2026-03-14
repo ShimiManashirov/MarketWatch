@@ -3,9 +3,13 @@ package com.example.marketwatch
 import android.graphics.*
 import com.squareup.picasso.Transformation
 
+/**
+ * Picasso transformation to crop an image into a circle.
+ * Optimized for memory usage and handles null configuration edge cases.
+ */
 class CircleTransform : Transformation {
     override fun transform(source: Bitmap): Bitmap {
-        val size = Math.min(source.width, Math.max(source.height, 1))
+        val size = Math.min(source.width, source.height)
         val x = (source.width - size) / 2
         val y = (source.height - size) / 2
 
@@ -14,7 +18,10 @@ class CircleTransform : Transformation {
             source.recycle()
         }
 
-        val bitmap = Bitmap.createBitmap(size, size, source.config ?: Bitmap.Config.ARGB_8888)
+        // Handle potentially null config
+        val config = source.config ?: Bitmap.Config.ARGB_8888
+        val bitmap = Bitmap.createBitmap(size, size, config)
+
         val canvas = Canvas(bitmap)
         val paint = Paint()
         val shader = BitmapShader(squaredBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
