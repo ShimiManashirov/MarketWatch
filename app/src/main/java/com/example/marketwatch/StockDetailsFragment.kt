@@ -190,9 +190,9 @@ class StockDetailsFragment : Fragment() {
 
         viewModel.exchangeRate.observe(viewLifecycleOwner) { _ -> updatePriceUI() }
 
-        viewModel.candles.observe(viewLifecycleOwner) { candles ->
-            if (candles != null && candles.status == "ok" && !candles.closePrices.isNullOrEmpty()) {
-                updateChartData(candles.closePrices)
+        viewModel.chartData.observe(viewLifecycleOwner) { data ->
+            if (!data.isNullOrEmpty()) {
+                updateChartData(data)
             } else {
                 lineChart.setNoDataText("Historical data unavailable")
                 lineChart.invalidate()
