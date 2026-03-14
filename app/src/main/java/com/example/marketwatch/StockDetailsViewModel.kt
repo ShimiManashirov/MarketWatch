@@ -50,45 +50,51 @@ class StockDetailsViewModel : ViewModel() {
 
     /**
      * Fetches all required data for a specific stock symbol.
+     * Guaranteed to update loading states even if network calls fail.
      */
     fun fetchData(symbol: String) {
         _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Fetch Quote (Essential)
+                // 1. Fetch Quote (Critical for UI)
                 val quoteResponse = repository.getQuote(symbol)
                 if (quoteResponse.isSuccessful) {
                     _quote.postValue(quoteResponse.body())
                 }
 
-                // Fetch Profile
+                // 2. Fetch Chart Data (Historical Candles)
+                val candlesResponse = repository.getCandles(symbol)
+                if (candlesResponse.isSuccessful) {
+                    val body = candlesResponse.body()
+                    // Finnhub returns status "no_data" if range is invalid or empty
+                    if (body?.status == "no_data") {
+                        Log.w("StockDetails", "No candle data found for symbol: $symbol")
+                    }
+                    _candles.postValue(body)
+                } else {
+                    // Ensure the UI knows the chart failed so it can stop loading
+                    _candles.postValue(null)
+                }
+
+                // 3. Fetch Company Profile
                 val profileResponse = repository.getCompanyProfile(symbol)
                 if (profileResponse.isSuccessful) {
                     _companyProfile.postValue(profileResponse.body())
                 }
 
-                // Fetch News
+                // 4. Fetch News
                 val newsResponse = repository.getNews(symbol)
                 if (newsResponse.isSuccessful) {
                     _news.postValue(newsResponse.body() ?: emptyList())
                 }
                 
-                // Fetch Chart Data (Candles)
-                val candlesResponse = repository.getCandles(symbol)
-                if (candlesResponse.isSuccessful) {
-                    val body = candlesResponse.body()
-                    if (body?.status == "no_data") {
-                        Log.w("StockDetails", "No candle data for $symbol")
-                    }
-                    _candles.postValue(body)
-                }
-                
-                // Fetch FX Rate
+                // 5. Fetch Exchange Rate
                 val rate = repository.getUsdToIlsRate()
                 _exchangeRate.postValue(rate)
 
             } catch (e: Exception) {
-                Log.e("StockDetails", "Error fetching stock data", e)
+                Log.e("StockDetails", "Exception while fetching stock data: ${e.message}")
+                _candles.postValue(null) // Reset chart state on error
                 _tradeStatus.postValue("ERROR_FETCHING_DATA")
             } finally {
                 _isLoading.postValue(false)
