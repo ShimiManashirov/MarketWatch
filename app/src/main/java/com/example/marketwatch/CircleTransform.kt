@@ -4,8 +4,8 @@ import android.graphics.*
 import com.squareup.picasso.Transformation
 
 /**
- * Picasso transformation to crop an image into a circle.
- * Optimized for memory usage and handles null configuration edge cases.
+ * A standard Picasso transformation to crop an image into a circle.
+ * This version is more robust and handles potential Bitmap configuration issues.
  */
 class CircleTransform : Transformation {
     override fun transform(source: Bitmap): Bitmap {
@@ -14,14 +14,11 @@ class CircleTransform : Transformation {
         val y = (source.height - size) / 2
 
         val squaredBitmap = Bitmap.createBitmap(source, x, y, size, size)
-        if (squaredBitmap != source) {
-            source.recycle()
-        }
-
-        // Handle potentially null config
-        val config = source.config ?: Bitmap.Config.ARGB_8888
-        val bitmap = Bitmap.createBitmap(size, size, config)
-
+        
+        // We do NOT recycle source here if it's the same as squaredBitmap
+        // But Bitmap.createBitmap might return the same object if no changes needed.
+        
+        val bitmap = Bitmap.createBitmap(size, size, source.config ?: Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val paint = Paint()
         val shader = BitmapShader(squaredBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
@@ -31,7 +28,14 @@ class CircleTransform : Transformation {
         val r = size / 2f
         canvas.drawCircle(r, r, r, paint)
 
-        squaredBitmap.recycle()
+        // Clean up the intermediate squared bitmap
+        if (squaredBitmap != source) {
+            squaredBitmap.recycle()
+        }
+        
+        // Picasso requires us to recycle the source bitmap
+        source.recycle()
+
         return bitmap
     }
 
