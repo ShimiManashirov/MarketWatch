@@ -28,6 +28,8 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.facebook.shimmer.ShimmerFrameLayout
+import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.squareup.picasso.Picasso
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -93,8 +95,15 @@ class StockDetailsFragment : Fragment() {
 
     private fun initViews(view: View) {
         val toolbar = view.findViewById<Toolbar>(R.id.stockDetailsToolbar)
+        val collapsingToolbar = view.findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbar)
+        val appBarLayout = view.findViewById<AppBarLayout>(R.id.appBarLayout)
+        
         toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
-        toolbar.title = symbol
+        
+        appBarLayout.addOnOffsetChangedListener { appBar, verticalOffset ->
+            val isCollapsed = Math.abs(verticalOffset) >= appBar.totalScrollRange
+            collapsingToolbar.title = if (isCollapsed) symbol else ""
+        }
 
         shimmerLayout = view.findViewById(R.id.stockDetailsShimmer)
         contentView = view.findViewById(R.id.stockDetailsContent)
@@ -109,8 +118,8 @@ class StockDetailsFragment : Fragment() {
         priceIlsTextView = view.findViewById(R.id.detailsPriceIls)
         chipIndustry = view.findViewById(R.id.chipIndustry)
 
-        view.findViewById<TextView>(R.id.detailsSymbol).text = symbol
-        view.findViewById<TextView>(R.id.detailsDescription).text = description
+        view.findViewById<TextView>(R.id.detailsSymbolHeader).text = symbol
+        view.findViewById<TextView>(R.id.detailsDescriptionHeader).text = description
         
         newsRecyclerView.layoutManager = LinearLayoutManager(context)
         newsRecyclerView.adapter = NewsAdapter(emptyList())
@@ -171,9 +180,6 @@ class StockDetailsFragment : Fragment() {
         viewModel.candles.observe(viewLifecycleOwner) { candles ->
             if (candles != null && candles.status == "ok" && !candles.closePrices.isNullOrEmpty()) {
                 updateChartData(candles.closePrices)
-            } else {
-                lineChart.setNoDataText("No chart data available")
-                lineChart.invalidate()
             }
         }
 
@@ -227,13 +233,9 @@ class StockDetailsFragment : Fragment() {
     }
 
     private fun updateStatsUI(quote: StockQuote) {
-        val highView = view?.findViewById<TextView>(R.id.detailsHigh)
-        val lowView = view?.findViewById<TextView>(R.id.detailsLow)
-        val prevCloseView = view?.findViewById<TextView>(R.id.detailsPrevClose)
-        
-        highView?.text = String.format("%.2f", quote.highPrice)
-        lowView?.text = String.format("%.2f", quote.lowPrice)
-        prevCloseView?.text = String.format("%.2f", quote.previousClose)
+        view?.findViewById<TextView>(R.id.detailsHigh)?.text = String.format("%.2f", quote.highPrice)
+        view?.findViewById<TextView>(R.id.detailsLow)?.text = String.format("%.2f", quote.lowPrice)
+        view?.findViewById<TextView>(R.id.detailsPrevClose)?.text = String.format("%.2f", quote.previousClose)
     }
 
     private fun updatePriceUI() {
@@ -254,17 +256,10 @@ class StockDetailsFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_buy_stock, null)
         val etQuantity = dialogView.findViewById<TextInputEditText>(R.id.etQuantity)
         val tvDialogSymbol = dialogView.findViewById<TextView>(R.id.dialogBuySymbol)
-        val tvCurrentPrice = dialogView.findViewById<TextView>(R.id.dialogCurrentPrice)
         val tvTotalCost = dialogView.findViewById<TextView>(R.id.tvTotalCost)
-        val tvWalletBalance = dialogView.findViewById<TextView>(R.id.tvWalletBalance)
 
         tvDialogSymbol.text = if (isBuy) "Buy $symbol" else "Sell $symbol"
-        tvCurrentPrice.text = "Market Price: $${String.format("%.2f", currentPriceUsd)}"
         
-        portfolioViewModel.userBalance.observe(viewLifecycleOwner) { balance ->
-            tvWalletBalance.text = "Wallet: $${String.format("%.2f", balance)}"
-        }
-
         etQuantity.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -275,12 +270,10 @@ class StockDetailsFragment : Fragment() {
         })
 
         AlertDialog.Builder(requireContext())
-            .setTitle(null)
             .setView(dialogView)
             .setPositiveButton("Confirm") { _, _ ->
                 val qty = etQuantity.text.toString().toDoubleOrNull() ?: 0.0
                 if (qty > 0) viewModel.executeTrade(symbol, description, qty, currentPriceUsd, isBuy)
-                else Toast.makeText(context, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()

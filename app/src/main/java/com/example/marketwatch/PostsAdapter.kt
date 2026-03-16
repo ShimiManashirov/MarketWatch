@@ -28,8 +28,8 @@ class PostsAdapter(
         val content: TextView = view.findViewById(R.id.postContent)
         val postImageCard: View = view.findViewById(R.id.postImageCard)
         val postImage: ImageView = view.findViewById(R.id.postImage)
-        val menuButton: ImageButton = view.findViewById(R.id.postMenuButton)
-        val btnLike: ImageButton = view.findViewById(R.id.btnLike)
+        val menuButton: View = view.findViewById(R.id.postMenuButton)
+        val btnLike: ImageView = view.findViewById(R.id.btnLike)
         val tvLikeCount: TextView = view.findViewById(R.id.tvLikeCount)
     }
 
@@ -44,45 +44,46 @@ class PostsAdapter(
         holder.userName.text = if (post.userName.isNotBlank()) post.userName else "Anonymous"
         holder.content.text = if (post.content.isNotBlank()) post.content else "(No content)"
         
-        val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
-        holder.timestamp.text = post.timestamp?.toDate()?.let { sdf.format(it) } ?: "Just now"
+        // Format date to match partner's screen: MAR 14, 20:00
+        val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.US)
+        holder.timestamp.text = post.timestamp?.toDate()?.let { sdf.format(it).uppercase() } ?: "JUST NOW"
 
-        if (post.userId == currentUserId) {
-            holder.menuButton.visibility = View.VISIBLE
-            holder.menuButton.setOnClickListener { view ->
-                showPopupMenu(view, post)
-            }
-        } else {
-            holder.menuButton.visibility = View.GONE
+        // Setup menu for the dropdown icon
+        holder.menuButton.setOnClickListener { view ->
+            showPopupMenu(view, post)
         }
 
-        // Use Picasso for user image
+        // Load profile picture
         val profilePic = if (post.userProfilePicture.isNotBlank()) post.userProfilePicture else null
-        if (profilePic != null) {
-            Picasso.get()
-                .load(profilePic)
-                .placeholder(R.drawable.ic_account_circle)
-                .transform(CircleTransform())
-                .into(holder.userImage)
-        } else {
-            holder.userImage.setImageResource(R.drawable.ic_account_circle)
-        }
+        Picasso.get()
+            .load(profilePic)
+            .placeholder(R.drawable.ic_account_circle)
+            .error(R.drawable.ic_account_circle)
+            .transform(CircleTransform())
+            .into(holder.userImage)
 
-        // Use Picasso for post image
+        // Post Image visibility
         if (!post.imageUrl.isNullOrEmpty()) {
             holder.postImageCard.visibility = View.VISIBLE
-            Picasso.get()
-                .load(post.imageUrl)
-                .into(holder.postImage)
+            Picasso.get().load(post.imageUrl).into(holder.postImage)
         } else {
             holder.postImageCard.visibility = View.GONE
         }
 
-        // Like Logic
+        // Like Logic - match "0 LIKES" style
         val isLiked = currentUserId != null && post.likes.contains(currentUserId)
+        
+        // Change icon based on status
         holder.btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
-        holder.btnLike.setColorFilter(if (isLiked) Color.parseColor("#E91E63") else Color.GRAY)
-        holder.tvLikeCount.text = "${post.likes.size} likes"
+        
+        // Change color to DARK RED when liked, else GRAY
+        if (isLiked) {
+            holder.btnLike.setColorFilter(Color.parseColor("#B71C1C")) // Dark Red
+        } else {
+            holder.btnLike.setColorFilter(Color.parseColor("#8E8E93")) // Standard Gray
+        }
+
+        holder.tvLikeCount.text = "${post.likes.size} LIKES"
 
         holder.btnLike.setOnClickListener {
             onLikeClick(post)
@@ -91,8 +92,12 @@ class PostsAdapter(
 
     private fun showPopupMenu(view: View, post: Post) {
         val popup = PopupMenu(view.context, view)
-        popup.menu.add("Edit")
-        popup.menu.add("Delete")
+        if (post.userId == currentUserId) {
+            popup.menu.add("Edit")
+            popup.menu.add("Delete")
+        } else {
+            popup.menu.add("Report")
+        }
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
                 "Edit" -> onEditClick(post)
