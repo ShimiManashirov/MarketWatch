@@ -4,12 +4,10 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
 import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
@@ -37,7 +35,7 @@ class PostsAdapter(
         val menuButton: View = view.findViewById(R.id.postMenuButton)
         val btnLike: ImageView = view.findViewById(R.id.btnLike)
         val tvLikeCount: TextView = view.findViewById(R.id.tvLikeCount)
-        val btnComment: MaterialButton = view.findViewById(R.id.btnComment)
+        val btnComment: ImageView = view.findViewById(R.id.btnComment)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -51,16 +49,13 @@ class PostsAdapter(
         holder.userName.text = if (post.userName.isNotBlank()) post.userName else "Anonymous"
         holder.content.text = if (post.content.isNotBlank()) post.content else "(No content)"
         
-        // Format date to match partner's screen: MAR 14, 20:00
         val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.US)
         holder.timestamp.text = post.timestamp?.toDate()?.let { sdf.format(it).uppercase() } ?: "JUST NOW"
 
-        // Setup menu for the dropdown icon
         holder.menuButton.setOnClickListener { view ->
             showPopupMenu(view, post)
         }
 
-        // Load profile picture
         val profilePic = if (post.userProfilePicture.isNotBlank()) post.userProfilePicture else null
         Picasso.get()
             .load(profilePic)
@@ -69,7 +64,6 @@ class PostsAdapter(
             .transform(CircleTransform())
             .into(holder.userImage)
 
-        // Post Image visibility
         if (!post.imageUrl.isNullOrEmpty()) {
             holder.postImageCard.visibility = View.VISIBLE
             Picasso.get().load(post.imageUrl).into(holder.postImage)
@@ -77,30 +71,17 @@ class PostsAdapter(
             holder.postImageCard.visibility = View.GONE
         }
 
-        // Like Logic - match "0 LIKES" style
         val isLiked = currentUserId != null && post.likes.contains(currentUserId)
-        
-        // Change icon based on status
         holder.btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
         
-        // Change color to DARK RED when liked, else GRAY
         if (isLiked) {
-            holder.btnLike.setColorFilter(Color.parseColor("#B71C1C")) // Dark Red
+            holder.btnLike.setColorFilter(Color.parseColor("#B71C1C"))
         } else {
-            holder.btnLike.setColorFilter(Color.parseColor("#8E8E93")) // Standard Gray
+            holder.btnLike.setColorFilter(Color.parseColor("#8E8E93"))
         }
 
         holder.tvLikeCount.text = "${post.likes.size} LIKES"
-
-        holder.btnLike.setOnClickListener {
-            onLikeClick(post)
-        }
-
-        holder.tvLikeCount.text = "${post.likes.size} LIKES"
-
         holder.btnLike.setOnClickListener { onLikeClick(post) }
-        
-        // Comment logic
         holder.btnComment.setOnClickListener { onCommentClick(post) }
     }
 

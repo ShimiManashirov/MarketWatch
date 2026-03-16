@@ -23,7 +23,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -50,6 +49,7 @@ class StockDetailsFragment : Fragment() {
 
     private val viewModel: StockDetailsViewModel by viewModels()
     private val portfolioViewModel: PortfolioViewModel by viewModels()
+    private lateinit var newsViewModel: NewsViewModel
     private val args: StockDetailsFragmentArgs by navArgs()
     
     private lateinit var symbol: String
@@ -90,7 +90,7 @@ class StockDetailsFragment : Fragment() {
 
         val newsRepository = NewsRepository(AppDatabase.getDatabase(requireContext()))
         val newsFactory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
                 return NewsViewModel(newsRepository) as T
             }
@@ -198,9 +198,9 @@ class StockDetailsFragment : Fragment() {
 
         viewModel.exchangeRate.observe(viewLifecycleOwner) { _ -> updatePriceUI() }
 
-        viewModel.candles.observe(viewLifecycleOwner) { candles ->
-            if (candles != null && candles.status == "ok" && !candles.closePrices.isNullOrEmpty()) {
-                updateChartData(candles.closePrices)
+        viewModel.chartData.observe(viewLifecycleOwner) { prices ->
+            prices?.let {
+                updateChartData(it)
             }
         }
 

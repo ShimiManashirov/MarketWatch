@@ -115,13 +115,13 @@ class UserPostsFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
 
-        postEditText.setText(post.content)
+        postEditText?.setText(post.content)
 
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Post")
             .setView(dialogView)
             .setPositiveButton("Update") { _, _ ->
-                val newContent = postEditText.text.toString().trim()
+                val newContent = postEditText?.text?.toString()?.trim() ?: ""
                 if (newContent.isNotEmpty()) {
                     updatePost(post.id, newContent)
                 }

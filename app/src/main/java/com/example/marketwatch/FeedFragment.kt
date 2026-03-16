@@ -127,7 +127,7 @@ class FeedFragment : Fragment() {
         AlertDialog.Builder(context)
             .setView(dialogView)
             .setPositiveButton("Post") { _, _ ->
-                val content = postEditText.text.toString().trim()
+                val content = postEditText?.text?.toString()?.trim() ?: ""
                 if (content.isNotEmpty()) {
                     viewModel.createPost(content, null)
                 }
@@ -141,12 +141,12 @@ class FeedFragment : Fragment() {
         val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
         
-        postEditText.setText(post.content)
+        postEditText?.setText(post.content)
 
         AlertDialog.Builder(context)
             .setView(dialogView)
             .setPositiveButton("Update") { _, _ ->
-                val newContent = postEditText.text.toString().trim()
+                val newContent = postEditText?.text?.toString()?.trim() ?: ""
                 if (newContent.isNotEmpty()) {
                     viewModel.updatePost(post.id, newContent, null)
                 }
