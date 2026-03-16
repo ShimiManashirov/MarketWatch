@@ -9,16 +9,22 @@ import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Adapter for the community feed.
+ * Handles display of posts including user info, content, images, and interactions.
+ */
 class PostsAdapter(
     private val posts: List<Post>,
     private val currentUserId: String?,
     private val onEditClick: (Post) -> Unit,
     private val onDeleteClick: (Post) -> Unit,
-    private val onLikeClick: (Post) -> Unit
+    private val onLikeClick: (Post) -> Unit,
+    private val onCommentClick: (Post) -> Unit
 ) : RecyclerView.Adapter<PostsAdapter.PostViewHolder>() {
 
     class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -31,6 +37,7 @@ class PostsAdapter(
         val menuButton: View = view.findViewById(R.id.postMenuButton)
         val btnLike: ImageView = view.findViewById(R.id.btnLike)
         val tvLikeCount: TextView = view.findViewById(R.id.tvLikeCount)
+        val btnComment: MaterialButton = view.findViewById(R.id.btnComment)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -85,9 +92,10 @@ class PostsAdapter(
 
         holder.tvLikeCount.text = "${post.likes.size} LIKES"
 
-        holder.btnLike.setOnClickListener {
-            onLikeClick(post)
-        }
+        holder.btnLike.setOnClickListener { onLikeClick(post) }
+        
+        // Comment logic
+        holder.btnComment.setOnClickListener { onCommentClick(post) }
     }
 
     private fun showPopupMenu(view: View, post: Post) {

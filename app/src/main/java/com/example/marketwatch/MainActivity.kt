@@ -5,14 +5,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
@@ -27,6 +32,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Enable edge-to-edge support
+        enableEdgeToEdge()
+        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -36,6 +44,26 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
         setupToolbar()
         setupPriceAlertWorker()
+        applyWindowInsets()
+    }
+
+    private fun applyWindowInsets() {
+        val appBarLayout: AppBarLayout = findViewById(R.id.appBarLayout)
+        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_navigation)
+
+        // Adjust top padding for the status bar/notch
+        ViewCompat.setOnApplyWindowInsetsListener(appBarLayout) { view, insets ->
+            val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            view.updatePadding(top = statusBar.top)
+            insets
+        }
+
+        // Adjust bottom padding for the navigation bar
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { view, insets ->
+            val navBar = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            view.updatePadding(bottom = navBar.bottom)
+            insets
+        }
     }
 
     private fun setupNavigation() {

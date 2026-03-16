@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="@dimen/spacing_large">
 
     <TextView
         android:id="@+id/dialogBuySymbol"
+        style="@style/TextAppearance.MarketWatch.Headline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Buy AAPL"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textSize="@dimen/text_title_medium" />
 
     <TextView
         android:id="@+id/dialogCurrentPrice"
+        style="@style/TextAppearance.MarketWatch.Body"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="@dimen/spacing_xs"
         android:text="Market Price: $0.00"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:textSize="14sp" />
+        android:textSize="@dimen/text_body_small" />
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        style="@style/Widget.MarketWatch.TextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="@dimen/spacing_large"
         android:hint="Quantity">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -40,36 +40,35 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_marginTop="@dimen/spacing_large"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <TextView
+            style="@style/TextAppearance.MarketWatch.Body"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Estimated Total"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textSize="16sp" />
+            android:textSize="@dimen/text_body_medium" />
 
         <TextView
             android:id="@+id/tvTotalCost"
+            style="@style/TextAppearance.MarketWatch.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="$0.00"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textColor="?attr/colorPrimary"
+            android:textSize="@dimen/text_title_small" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/tvWalletBalance"
+        style="@style/TextAppearance.MarketWatch.Caption"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginTop="4dp"
-        android:text="Wallet: $0.00"
-        android:textColor="?attr/colorOnSurfaceVariant"
-        android:textSize="12sp" />
+        android:layout_marginTop="@dimen/spacing_xs"
+        android:text="Wallet: $0.00" />
 
 </LinearLayout>

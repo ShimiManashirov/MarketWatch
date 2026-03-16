@@ -1,5 +1,6 @@
 package com.example.marketwatch
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,6 +9,10 @@ import com.example.marketwatch.data.StockRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for the Stock Details screen.
+ * Handles fetching real-time quotes, historical chart data, news, and company profiles.
+ */
 class StockDetailsViewModel : ViewModel() {
     private val repository = StockRepository()
 
@@ -29,8 +34,11 @@ class StockDetailsViewModel : ViewModel() {
     private val _exchangeRate = MutableLiveData<Double>(3.7)
     val exchangeRate: LiveData<Double> = _exchangeRate
 
-    private val _candles = MutableLiveData<StockCandles?>()
-    val candles: LiveData<StockCandles?> = _candles
+    private val _chartData = MutableLiveData<List<Double>?>()
+    val chartData: LiveData<List<Double>?> = _chartData
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
 
     fun observeStockStatus(symbol: String) {
         viewModelScope.launch {
@@ -40,25 +48,46 @@ class StockDetailsViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Fetches all required data for a specific stock symbol.
+     * Uses AlphaVantage for reliable chart data and Finnhub for real-time quotes.
+     */
     fun fetchData(symbol: String) {
+        _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                // 1. Fetch Quote (Critical for UI)
                 val quoteResponse = repository.getQuote(symbol)
-                if (quoteResponse.isSuccessful) _quote.postValue(quoteResponse.body())
+                if (quoteResponse.isSuccessful) {
+                    _quote.postValue(quoteResponse.body())
+                }
 
+                // 2. Fetch reliable Chart Data from AlphaVantage
+                val historicalData = repository.getHistoricalDataAlpha(symbol)
+                _chartData.postValue(historicalData.ifEmpty { null })
+
+                // 3. Fetch Company Profile
                 val profileResponse = repository.getCompanyProfile(symbol)
-                if (profileResponse.isSuccessful) _companyProfile.postValue(profileResponse.body())
+                if (profileResponse.isSuccessful) {
+                    _companyProfile.postValue(profileResponse.body())
+                }
 
+                // 4. Fetch News
                 val newsResponse = repository.getNews(symbol)
-                if (newsResponse.isSuccessful) _news.postValue(newsResponse.body())
+                if (newsResponse.isSuccessful) {
+                    _news.postValue(newsResponse.body() ?: emptyList())
+                }
                 
-                val candlesResponse = repository.getCandles(symbol)
-                if (candlesResponse.isSuccessful) _candles.postValue(candlesResponse.body())
-                
+                // 5. Fetch Exchange Rate
                 val rate = repository.getUsdToIlsRate()
                 _exchangeRate.postValue(rate)
+
             } catch (e: Exception) {
-                // Log error
+                Log.e("StockDetails", "Error fetching stock data: ${e.message}")
+                _chartData.postValue(null)
+                _tradeStatus.postValue("ERROR_FETCHING_DATA")
+            } finally {
+                _isLoading.postValue(false)
             }
         }
     }

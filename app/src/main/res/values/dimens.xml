@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing / Margins -->
+    <dimen name="spacing_none">0dp</dimen>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    <dimen name="spacing_xxl">48dp</dimen>
+    <dimen name="spacing_huge">64dp</dimen>
+
+    <!-- Corner Radii -->
+    <dimen name="radius_small">4dp</dimen>
+    <dimen name="radius_medium">12dp</dimen>
+    <dimen name="radius_large">16dp</dimen>
+    <dimen name="radius_extra_large">28dp</dimen>
+    <dimen name="radius_round">100dp</dimen>
+
+    <!-- Text Sizes -->
+    <dimen name="text_caption">12sp</dimen>
+    <dimen name="text_body_small">14sp</dimen>
+    <dimen name="text_body_medium">16sp</dimen>
+    <dimen name="text_title_small">18sp</dimen>
+    <dimen name="text_title_medium">20sp</dimen>
+    <dimen name="text_headline_small">24sp</dimen>
+    <dimen name="text_headline_medium">28sp</dimen>
+    <dimen name="text_display_small">32sp</dimen>
+
+    <!-- Component Specific -->
+    <dimen name="logo_size">100dp</dimen>
+    <dimen name="button_height">56dp</dimen>
+    <dimen name="card_elevation">2dp</dimen>
+    <dimen name="card_stroke">1dp</dimen>
+    <dimen name="input_field_margin">16dp</dimen>
+    <dimen name="profile_image_size">120dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+</resources>
