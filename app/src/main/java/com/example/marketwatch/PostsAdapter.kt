@@ -92,6 +92,12 @@ class PostsAdapter(
 
         holder.tvLikeCount.text = "${post.likes.size} LIKES"
 
+        holder.btnLike.setOnClickListener {
+            onLikeClick(post)
+        }
+
+        holder.tvLikeCount.text = "${post.likes.size} LIKES"
+
         holder.btnLike.setOnClickListener { onLikeClick(post) }
         
         // Comment logic
