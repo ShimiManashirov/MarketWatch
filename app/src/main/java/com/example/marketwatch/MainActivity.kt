@@ -3,21 +3,17 @@ package com.example.marketwatch
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.firebase.auth.FirebaseAuth
@@ -30,11 +26,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var navController: NavController
+    private lateinit var bottomNav: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Enable edge-to-edge support
-        enableEdgeToEdge()
-        
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -44,35 +38,27 @@ class MainActivity : AppCompatActivity() {
         setupNavigation()
         setupToolbar()
         setupPriceAlertWorker()
-        applyWindowInsets()
-    }
-
-    private fun applyWindowInsets() {
-        val appBarLayout: AppBarLayout = findViewById(R.id.appBarLayout)
-        val bottomNav: BottomNavigationView = findViewById(R.id.bottom_navigation)
-
-        // Adjust top padding for the status bar/notch
-        ViewCompat.setOnApplyWindowInsetsListener(appBarLayout) { view, insets ->
-            val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-            view.updatePadding(top = statusBar.top)
-            insets
-        }
-
-        // Adjust bottom padding for the navigation bar
-        ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { view, insets ->
-            val navBar = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            view.updatePadding(bottom = navBar.bottom)
-            insets
-        }
     }
 
     private fun setupNavigation() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
-        val navView: BottomNavigationView = findViewById(R.id.bottom_navigation)
+        bottomNav = findViewById(R.id.bottom_navigation)
         
-        navView.setupWithNavController(navController)
+        bottomNav.setupWithNavController(navController)
+
+        // Hide BottomNav when inside details screens
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.navigation_post_details, R.id.navigation_stock_details -> {
+                    bottomNav.visibility = View.GONE
+                }
+                else -> {
+                    bottomNav.visibility = View.VISIBLE
+                }
+            }
+        }
     }
 
     private fun setupPriceAlertWorker() {

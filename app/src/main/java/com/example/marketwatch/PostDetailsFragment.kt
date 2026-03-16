@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -20,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.marketwatch.data.CommentRepository
 import com.example.marketwatch.data.PostsRepository
 import com.example.marketwatch.data.local.AppDatabase
-import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.picasso.Picasso
@@ -30,9 +30,6 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-/**
- * Fragment that displays the details of a single post and its comment thread.
- */
 class PostDetailsFragment : Fragment() {
 
     private val args: PostDetailsFragmentArgs by navArgs()
@@ -87,8 +84,9 @@ class PostDetailsFragment : Fragment() {
         }
         rvComments?.adapter = adapter
 
-        val etComment = view.findViewById<TextInputEditText>(R.id.etComment)
-        val btnSend = view.findViewById<ImageButton>(R.id.btnSendComment)
+        // Fix: Use generic EditText to prevent ClassCastException
+        val etComment = view.findViewById<EditText>(R.id.etComment)
+        val btnSend = view.findViewById<View>(R.id.btnSendComment)
 
         btnSend?.setOnClickListener {
             val content = etComment?.text?.toString()?.trim() ?: ""
@@ -107,7 +105,7 @@ class PostDetailsFragment : Fragment() {
         commentViewModel.error.observe(viewLifecycleOwner) { error ->
             error?.let {
                 if (isAdded) {
-                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error: Check your connection or permissions", Toast.LENGTH_SHORT).show()
                     commentViewModel.clearError()
                 }
             }
@@ -122,43 +120,33 @@ class PostDetailsFragment : Fragment() {
                 }
                 
                 if (post != null && isAdded) {
-                    val userImage = view.findViewById<ImageView>(R.id.postUserProfileImage)
                     val userName = view.findViewById<TextView>(R.id.postUserName)
-                    val timestamp = view.findViewById<TextView>(R.id.postTimestamp)
                     val content = view.findViewById<TextView>(R.id.postContent)
-                    val postImageCard = view.findViewById<View>(R.id.postImageCard)
-                    val postImage = view.findViewById<ImageView>(R.id.postImage)
                     val tvLikeCount = view.findViewById<TextView>(R.id.tvLikeCount)
-                    val btnLike = view.findViewById<ImageButton>(R.id.btnLike)
+                    val userImage = view.findViewById<ImageView>(R.id.postUserProfileImage)
+                    val postImage = view.findViewById<ImageView>(R.id.postImage)
+                    val btnLike = view.findViewById<View>(R.id.btnLike)
 
                     userName?.text = post.userName
                     content?.text = post.content
-                    
-                    val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
-                    timestamp?.text = post.timestamp?.toDate()?.let { sdf.format(it) } ?: "Just now"
-                    tvLikeCount?.text = "${post.likes.size} likes"
+                    tvLikeCount?.text = "${post.likes.size} LIKES"
 
                     if (post.userProfilePicture.isNotBlank() && userImage != null) {
-                        Picasso.get()
-                            .load(post.userProfilePicture)
-                            .placeholder(R.drawable.ic_account_circle)
-                            .transform(CircleTransform())
-                            .into(userImage)
+                        Picasso.get().load(post.userProfilePicture).transform(CircleTransform()).into(userImage)
                     }
 
                     if (!post.imageUrl.isNullOrEmpty() && postImage != null) {
-                        postImageCard?.visibility = View.VISIBLE
+                        view.findViewById<View>(R.id.postImageCard)?.visibility = View.VISIBLE
                         Picasso.get().load(post.imageUrl).into(postImage)
-                    } else {
-                        postImageCard?.visibility = View.GONE
                     }
                     
-                    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-                    val isLiked = post.likes.contains(currentUserId)
-                    btnLike?.setImageResource(if (isLiked) android.R.drawable.star_big_on else android.R.drawable.star_big_off)
+                    if (btnLike is ImageView) {
+                        val isLiked = post.likes.contains(FirebaseAuth.getInstance().currentUser?.uid)
+                        btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("PostDetails", "Error loading post details", e)
+                Log.e("PostDetails", "Error loading details", e)
             }
         }
     }

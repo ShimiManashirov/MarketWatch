@@ -1,11 +1,16 @@
 package com.example.marketwatch
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -19,30 +24,36 @@ import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.squareup.picasso.Picasso
 
-/**
- * Fragment displaying the community feed.
- * Allows users to view, like, and navigate to post details for commenting.
- */
 class FeedFragment : Fragment() {
 
     private lateinit var viewModel: FeedViewModel
     private lateinit var adapter: PostsAdapter
     private val postsList = mutableListOf<Post>()
 
-    private var shimmerContainer: ShimmerFrameLayout? = null
-    private var recyclerView: RecyclerView? = null
-    private var swipeRefreshLayout: SwipeRefreshLayout? = null
+    private lateinit var shimmerContainer: ShimmerFrameLayout
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+
+    private var selectedImageUri: Uri? = null
+    private var dialogImageView: ImageView? = null
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            selectedImageUri = result.data?.data
+            dialogImageView?.let {
+                it.visibility = View.VISIBLE
+                Picasso.get().load(selectedImageUri).into(it)
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_feed, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        val view = inflater.inflate(R.layout.fragment_feed, container, false)
 
         val repository = PostsRepository(
             FirebaseFirestore.getInstance(),
@@ -61,7 +72,7 @@ class FeedFragment : Fragment() {
         recyclerView = view.findViewById(R.id.postsRecyclerView)
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
         
-        recyclerView?.layoutManager = LinearLayoutManager(context)
+        recyclerView.layoutManager = LinearLayoutManager(context)
 
         adapter = PostsAdapter(
             postsList,
@@ -69,22 +80,24 @@ class FeedFragment : Fragment() {
             onEditClick = { post -> showEditPostDialog(post) },
             onDeleteClick = { post -> showDeleteConfirmationDialog(post) },
             onLikeClick = { post -> viewModel.toggleLike(post) },
-            onCommentClick = { post ->
+            onCommentClick = { post -> 
                 val action = FeedFragmentDirections.actionFeedToPostDetails(post.id)
                 findNavController().navigate(action)
             }
         )
-        recyclerView?.adapter = adapter
+        recyclerView.adapter = adapter
 
-        view.findViewById<ExtendedFloatingActionButton>(R.id.fabAddPost)?.setOnClickListener {
+        view.findViewById<ExtendedFloatingActionButton>(R.id.fabAddPost).setOnClickListener {
             showCreatePostDialog()
         }
 
-        swipeRefreshLayout?.setOnRefreshListener {
+        swipeRefreshLayout.setOnRefreshListener {
             viewModel.loadPosts()
         }
 
         observeViewModel()
+
+        return view
     }
 
     private fun observeViewModel() {
@@ -92,44 +105,60 @@ class FeedFragment : Fragment() {
             postsList.clear()
             postsList.addAll(posts)
             adapter.notifyDataSetChanged()
-            swipeRefreshLayout?.isRefreshing = false
+            swipeRefreshLayout.isRefreshing = false
         }
 
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             if (isLoading) {
-                if (swipeRefreshLayout?.isRefreshing == false) {
-                    shimmerContainer?.startShimmer()
-                    shimmerContainer?.visibility = View.VISIBLE
-                    recyclerView?.visibility = View.GONE
+                if (!swipeRefreshLayout.isRefreshing) {
+                    shimmerContainer.startShimmer()
+                    shimmerContainer.visibility = View.VISIBLE
+                    recyclerView.visibility = View.GONE
                 }
             } else {
-                shimmerContainer?.stopShimmer()
-                shimmerContainer?.visibility = View.GONE
-                recyclerView?.visibility = View.VISIBLE
-                swipeRefreshLayout?.isRefreshing = false
+                shimmerContainer.stopShimmer()
+                shimmerContainer.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+                swipeRefreshLayout.isRefreshing = false
             }
         }
 
         viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
             message?.let {
-                if (isAdded) Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
                 viewModel.clearError()
-                swipeRefreshLayout?.isRefreshing = false
+                swipeRefreshLayout.isRefreshing = false
             }
         }
     }
 
     private fun showCreatePostDialog() {
-        val context = context ?: return
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_create_post, null)
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
+        val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
+        val imageUrlEditText = dialogView.findViewById<EditText>(R.id.dialogImageUrlEditText)
+        dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
 
-        AlertDialog.Builder(context)
+        selectedImageUri = null 
+
+        addImageBtn?.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+            pickImageLauncher.launch(intent)
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Create Post")
             .setView(dialogView)
             .setPositiveButton("Post") { _, _ ->
-                val content = postEditText?.text?.toString()?.trim() ?: ""
+                val content = postEditText.text.toString().trim()
+                val manualUrl = imageUrlEditText?.text?.toString()?.trim()
+                
                 if (content.isNotEmpty()) {
-                    viewModel.createPost(content, null)
+                    if (!manualUrl.isNullOrEmpty()) {
+                        viewModel.createPost(content, Uri.parse(manualUrl))
+                    } else {
+                        viewModel.createPost(content, selectedImageUri)
+                    }
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -137,18 +166,30 @@ class FeedFragment : Fragment() {
     }
 
     private fun showEditPostDialog(post: Post) {
-        val context = context ?: return
-        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_create_post, null)
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
+        val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
+        dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
         
-        postEditText?.setText(post.content)
+        postEditText.setText(post.content)
+        selectedImageUri = post.imageUrl?.let { Uri.parse(it) }
+        if (selectedImageUri != null) {
+            dialogImageView?.visibility = View.VISIBLE
+            Picasso.get().load(selectedImageUri).into(dialogImageView!!)
+        }
 
-        AlertDialog.Builder(context)
+        addImageBtn?.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+            pickImageLauncher.launch(intent)
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Post")
             .setView(dialogView)
             .setPositiveButton("Update") { _, _ ->
-                val newContent = postEditText?.text?.toString()?.trim() ?: ""
+                val newContent = postEditText.text.toString().trim()
                 if (newContent.isNotEmpty()) {
-                    viewModel.updatePost(post.id, newContent, null)
+                    viewModel.updatePost(post.id, newContent, selectedImageUri)
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -156,8 +197,7 @@ class FeedFragment : Fragment() {
     }
 
     private fun showDeleteConfirmationDialog(post: Post) {
-        val context = context ?: return
-        AlertDialog.Builder(context)
+        AlertDialog.Builder(requireContext())
             .setTitle("Delete Post")
             .setMessage("Are you sure you want to delete this post?")
             .setPositiveButton("Delete") { _, _ ->
