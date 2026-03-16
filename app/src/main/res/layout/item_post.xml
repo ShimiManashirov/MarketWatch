@@ -78,7 +78,8 @@
         <!-- Post Content -->
         <TextView
             android:id="@+id/postContent"
-            android:layout_width="match_parent"
+            style="@style/TextAppearance.MarketWatch.Body"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:textColor="#3A3A3C"
@@ -111,11 +112,13 @@
 
         <!-- Interaction Bar -->
         <LinearLayout
+            android:id="@+id/interactionLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@id/divider">
 
             <ImageView
                 android:id="@+id/btnLike"

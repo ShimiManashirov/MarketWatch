@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="?android:colorBackground"
     tools:context=".PortfolioFragment">
 
     <androidx.core.widget.NestedScrollView
@@ -15,24 +15,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="@dimen/spacing_medium">
 
             <TextView
-                style="@style/TextAppearance.Material3.HeadlineMedium"
+                style="@style/TextAppearance.MarketWatch.Headline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Investment Portfolio"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold" />
+                android:layout_marginTop="@dimen/spacing_medium"
+                android:text="Investment Portfolio" />
 
             <!-- Summary Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/portfolioSummaryCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                app:cardCornerRadius="24dp"
+                android:layout_marginTop="@dimen/spacing_large"
+                app:cardCornerRadius="@dimen/radius_extra_large"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="?attr/colorPrimary"
                 app:strokeWidth="0dp">
@@ -41,36 +39,36 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="@dimen/spacing_large">
                     
                     <TextView
+                        style="@style/TextAppearance.MarketWatch.Caption"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Total Balance"
-                        android:textColor="#E0E0E0"
-                        android:textSize="14sp" />
+                        android:textColor="#E0E0E0" />
                     
                     <TextView
                         android:id="@+id/tvTotalBalance"
+                        style="@style/TextAppearance.MarketWatch.Headline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="$0.00"
                         android:textColor="@android:color/white"
-                        android:textSize="32sp"
-                        android:textStyle="bold" />
+                        android:textSize="@dimen/text_display_small"
+                        tools:text="$12,540.00" />
 
                     <TextView
                         android:id="@+id/tvTotalBalanceIls"
+                        style="@style/TextAppearance.MarketWatch.Body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="≈ ₪0.00"
                         android:textColor="#E0E0E0"
-                        android:textSize="16sp" />
+                        tools:text="≈ ₪46,320.00" />
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="16dp"
+                        android:layout_marginVertical="@dimen/spacing_medium"
                         android:background="#40FFFFFF" />
 
                     <LinearLayout
@@ -84,18 +82,19 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
+                                style="@style/TextAppearance.MarketWatch.Caption"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Cash"
-                                android:textColor="#E0E0E0"
-                                android:textSize="12sp" />
+                                android:textColor="#E0E0E0" />
                             <TextView
                                 android:id="@+id/tvCashBalance"
+                                style="@style/TextAppearance.MarketWatch.Title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="$0.00"
                                 android:textColor="@android:color/white"
-                                android:textStyle="bold" />
+                                android:textSize="@dimen/text_body_medium"
+                                tools:text="$2,400.00" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -104,18 +103,19 @@
                             android:layout_weight="1"
                             android:orientation="vertical">
                             <TextView
+                                style="@style/TextAppearance.MarketWatch.Caption"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Total Profit"
-                                android:textColor="#E0E0E0"
-                                android:textSize="12sp" />
+                                android:textColor="#E0E0E0" />
                             <TextView
                                 android:id="@+id/tvTotalProfit"
+                                style="@style/TextAppearance.MarketWatch.Title"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="+$0.00"
                                 android:textColor="@android:color/white"
-                                android:textStyle="bold" />
+                                android:textSize="@dimen/text_body_medium"
+                                tools:text="+$1,250.00" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -124,11 +124,10 @@
             <!-- Allocation Chart Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/portfolioChartCard"
+                style="@style/Widget.MarketWatch.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp"
+                android:layout_marginTop="@dimen/spacing_large"
                 app:cardBackgroundColor="?attr/colorSurfaceVariant"
                 app:strokeWidth="0dp">
 
@@ -136,20 +135,20 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="@dimen/spacing_medium">
                     
                     <TextView
-                        style="@style/TextAppearance.Material3.TitleSmall"
+                        style="@style/TextAppearance.MarketWatch.Title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Asset Distribution"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
+                        android:textSize="@dimen/text_body_medium" />
 
                     <com.github.mikephil.charting.charts.PieChart
                         android:id="@+id/portfolioPieChart"
                         android:layout_width="match_parent"
                         android:layout_height="220dp"
-                        android:layout_marginTop="8dp" />
+                        android:layout_marginTop="@dimen/spacing_small" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -159,31 +158,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="32dp">
+                android:layout_marginTop="@dimen/spacing_xl">
 
                 <TextView
                     android:id="@+id/titleHoldings"
-                    style="@style/TextAppearance.Material3.TitleLarge"
+                    style="@style/TextAppearance.MarketWatch.Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="My Portfolio Holdings"
-                    android:textColor="?attr/colorPrimary"
-                    android:textStyle="bold" />
+                    android:text="Portfolio Holdings"
+                    android:textColor="?attr/colorPrimary" />
                 
                 <TextView
-                    style="@style/TextAppearance.Material3.BodySmall"
+                    style="@style/TextAppearance.MarketWatch.Caption"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Stocks you currently own"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
+                    android:text="Stocks you currently own" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/portfolioRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="@dimen/spacing_medium"
                     android:nestedScrollingEnabled="false" />
             </LinearLayout>
 
@@ -191,7 +186,7 @@
                 android:id="@+id/sectionDivider"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="24dp"
+                android:layout_marginVertical="@dimen/spacing_large"
                 android:background="?attr/colorOutlineVariant" />
 
             <!-- Section 2: Watchlist (Favorites) -->
@@ -203,27 +198,23 @@
 
                 <TextView
                     android:id="@+id/titleWatchlist"
-                    style="@style/TextAppearance.Material3.TitleLarge"
+                    style="@style/TextAppearance.MarketWatch.Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
                     android:text="My Watchlist"
-                    android:textColor="?attr/colorSecondary"
-                    android:textStyle="bold" />
+                    android:textColor="?attr/colorSecondary" />
 
                 <TextView
-                    style="@style/TextAppearance.Material3.BodySmall"
+                    style="@style/TextAppearance.MarketWatch.Caption"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Stocks you are following"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
+                    android:text="Stocks you are following" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/watchlistRecyclerView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="@dimen/spacing_medium"
                     android:nestedScrollingEnabled="false" />
             </LinearLayout>
 
@@ -248,24 +239,23 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="32dp"
+        android:padding="@dimen/spacing_xl"
         android:visibility="gone">
 
         <ImageView
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:alpha="0.3"
+            android:contentDescription="@null"
             android:src="@android:drawable/ic_menu_search"
             app:tint="?attr/colorOnSurface" />
 
         <TextView
-            style="@style/TextAppearance.Material3.BodyLarge"
+            style="@style/TextAppearance.MarketWatch.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Your portfolio is empty"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:textStyle="bold" />
+            android:layout_marginTop="@dimen/spacing_medium"
+            android:text="Your portfolio is empty" />
 
     </LinearLayout>
 
