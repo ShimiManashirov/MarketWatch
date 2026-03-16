@@ -36,6 +36,7 @@ class PostsAdapter(
         val btnLike: ImageView = view.findViewById(R.id.btnLike)
         val tvLikeCount: TextView = view.findViewById(R.id.tvLikeCount)
         val btnComment: ImageView = view.findViewById(R.id.btnComment)
+        val tvCommentCount: TextView = view.findViewById(R.id.tvCommentCount)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -82,6 +83,10 @@ class PostsAdapter(
 
         holder.tvLikeCount.text = "${post.likes.size} LIKES"
         holder.btnLike.setOnClickListener { onLikeClick(post) }
+
+        // Display comment count
+        val commentText = if (post.commentsCount == 1) "1 Comment" else "${post.commentsCount} Comments"
+        holder.tvCommentCount.text = commentText
         holder.btnComment.setOnClickListener { onCommentClick(post) }
     }
 

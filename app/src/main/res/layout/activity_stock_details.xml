@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="280dp"
         android:fitsSystemWindows="true"
-        android:background="?attr/colorSurface">
+        android:background="?attr/colorSurface"
+        app:elevation="4dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
@@ -33,38 +34,62 @@
                 android:gravity="bottom"
                 app:layout_collapseMode="parallax">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="0dp"
-                    app:strokeColor="?attr/colorOutlineVariant"
-                    app:strokeWidth="1dp">
-                    <ImageView
-                        android:id="@+id/ivStockLogo"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="8dp"
-                        android:scaleType="fitCenter" />
-                </com.google.android.material.card.MaterialCardView>
-
-                <TextView
-                    android:id="@+id/detailsSymbolHeader"
-                    style="@style/TextAppearance.Material3.HeadlineLarge"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textStyle="bold"
-                    tools:text="AAPL" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="24dp">
 
-                <TextView
-                    android:id="@+id/detailsDescriptionHeader"
-                    style="@style/TextAppearance.Material3.BodyMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    tools:text="Apple Inc." />
+                    <!-- Stock Logo Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_marginEnd="16dp"
+                        app:cardCornerRadius="20dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="?attr/colorOutlineVariant"
+                        app:strokeWidth="2dp"
+                        app:cardBackgroundColor="?attr/colorSurfaceVariant">
+                        <ImageView
+                            android:id="@+id/ivStockLogo"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="Company Logo" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Stock Info -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="bottom">
+
+                        <TextView
+                            android:id="@+id/detailsSymbolHeader"
+                            style="@style/TextAppearance.Material3.HeadlineLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textStyle="bold"
+                            android:textSize="32sp"
+                            tools:text="AAPL" />
+
+                        <TextView
+                            android:id="@+id/detailsDescriptionHeader"
+                            style="@style/TextAppearance.Material3.BodyMedium"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:layout_marginTop="4dp"
+                            android:textSize="14sp"
+                            tools:text="Apple Inc." />
+                    </LinearLayout>
+                </LinearLayout>
+
             </LinearLayout>
 
             <com.google.android.material.appbar.MaterialToolbar
@@ -72,28 +97,35 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
-                app:navigationIcon="?attr/homeAsUpIndicator">
+                app:navigationIcon="?attr/homeAsUpIndicator"
+                android:background="?attr/colorSurfaceContainer">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp">
                     <ImageButton
                         android:id="@+id/priceAlertButton"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@android:drawable/ic_lock_idle_alarm"
-                        app:tint="?attr/colorOnSurfaceVariant" />
+                        app:tint="?attr/colorOnSurfaceVariant"
+                        android:contentDescription="Price Alert"
+                        android:scaleType="centerInside" />
                     <ImageButton
                         android:id="@+id/favoriteStarButton"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginEnd="8dp"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="8dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@android:drawable/btn_star_big_off"
-                        app:tint="?attr/colorPrimary" />
+                        app:tint="?attr/colorPrimary"
+                        android:contentDescription="Add to Favorites"
+                        android:scaleType="centerInside" />
                 </LinearLayout>
             </com.google.android.material.appbar.MaterialToolbar>
 

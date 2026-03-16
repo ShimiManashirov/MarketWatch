@@ -145,14 +145,14 @@
                 app:tint="#3A66A7" />
 
             <TextView
-                android:id="@+id/tvCommentLabel"
+                android:id="@+id/tvCommentCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Comment"
                 android:textColor="#3A66A7"
                 android:textSize="15sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="5 Comments" />
 
         </LinearLayout>
 
