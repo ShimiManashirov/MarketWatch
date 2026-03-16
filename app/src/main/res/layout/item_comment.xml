@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.MarketWatch.Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/spacing_small"
+    android:layout_marginVertical="@dimen/spacing_xs"
+    app:cardElevation="0dp"
+    app:strokeColor="?attr/colorOutlineVariant"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_medium">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivCommentUserImage"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_account_circle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+        <TextView
+            android:id="@+id/tvCommentUserName"
+            style="@style/TextAppearance.MarketWatch.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:textSize="@dimen/text_body_small"
+            app:layout_constraintBottom_toTopOf="@+id/tvCommentTimestamp"
+            app:layout_constraintStart_toEndOf="@id/ivCommentUserImage"
+            app:layout_constraintTop_toTopOf="@id/ivCommentUserImage"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:text="User Name" />
+
+        <TextView
+            android:id="@+id/tvCommentTimestamp"
+            style="@style/TextAppearance.MarketWatch.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@id/ivCommentUserImage"
+            app:layout_constraintStart_toStartOf="@id/tvCommentUserName"
+            app:layout_constraintTop_toBottomOf="@id/tvCommentUserName"
+            tools:text="Just now" />
+
+        <TextView
+            android:id="@+id/tvCommentContent"
+            style="@style/TextAppearance.MarketWatch.Body"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:textSize="@dimen/text_body_small"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivCommentUserImage"
+            tools:text="This is a premium comment content that fits the new design language." />
+
+        <ImageButton
+            android:id="@+id/btnDeleteComment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@null"
+            android:src="@android:drawable/ic_menu_delete"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorError"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

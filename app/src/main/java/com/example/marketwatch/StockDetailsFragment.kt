@@ -23,10 +23,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.marketwatch.data.NewsRepository
+import com.example.marketwatch.data.local.AppDatabase
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
@@ -57,6 +61,7 @@ class StockDetailsFragment : Fragment() {
     private lateinit var sellButton: MaterialButton
     private lateinit var stockLogo: ImageView
     private lateinit var newsRecyclerView: RecyclerView
+    private lateinit var newsAdapter: NewsAdapter
     private lateinit var lineChart: LineChart
     private lateinit var priceTextView: TextView
     private lateinit var priceIlsTextView: TextView
@@ -83,11 +88,21 @@ class StockDetailsFragment : Fragment() {
         symbol = args.symbol
         description = args.description
 
+        val newsRepository = NewsRepository(AppDatabase.getDatabase(requireContext()))
+        val newsFactory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                @Suppress("UNCHECKED_CAST")
+                return NewsViewModel(newsRepository) as T
+            }
+        }
+        newsViewModel = ViewModelProvider(this, newsFactory).get(NewsViewModel::class.java)
+
         initViews(view)
         setupObservers()
         
         viewModel.observeStockStatus(symbol)
         viewModel.fetchData(symbol)
+        newsViewModel.fetchNewsForSymbol(symbol)
         startWebSocket()
 
         return view
@@ -122,7 +137,10 @@ class StockDetailsFragment : Fragment() {
         view.findViewById<TextView>(R.id.detailsDescriptionHeader).text = description
         
         newsRecyclerView.layoutManager = LinearLayoutManager(context)
-        newsRecyclerView.adapter = NewsAdapter(emptyList())
+        newsAdapter = NewsAdapter(emptyList()) { news, isBookmarked ->
+            newsViewModel.toggleBookmark(news, isBookmarked)
+        }
+        newsRecyclerView.adapter = newsAdapter
         
         view.findViewById<MaterialButton>(R.id.buyStockButton).setOnClickListener { showTradeDialog(true) }
         sellButton.setOnClickListener { showTradeDialog(false) }
@@ -150,6 +168,10 @@ class StockDetailsFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            if (!isLoading) hideShimmer()
+        }
+
         viewModel.stockStatus.observe(viewLifecycleOwner) { status ->
             val isFavorite = status?.isFavorite ?: false
             val ownedQty = status?.quantity ?: 0.0
@@ -171,7 +193,6 @@ class StockDetailsFragment : Fragment() {
                 updatePriceUI()
                 updateChangeUI(it)
                 updateStatsUI(it)
-                hideShimmer()
             }
         }
 
@@ -193,27 +214,32 @@ class StockDetailsFragment : Fragment() {
             }
         }
 
-        viewModel.news.observe(viewLifecycleOwner) { news ->
+        newsViewModel.newsList.observe(viewLifecycleOwner) { news ->
             if (news.isNotEmpty()) {
-                newsRecyclerView.adapter = NewsAdapter(news.take(5))
+                newsAdapter.updateNews(news.take(10))
             }
         }
 
         viewModel.tradeStatus.observe(viewLifecycleOwner) { status ->
-            when (status) {
-                "SUCCESS" -> Toast.makeText(context, "Trade Successful!", Toast.LENGTH_SHORT).show()
-                "ALERT_SET" -> Toast.makeText(context, "Price alert set!", Toast.LENGTH_SHORT).show()
-                "ADDED_TO_FAVORITES" -> Toast.makeText(context, "Added to favorites", Toast.LENGTH_SHORT).show()
-                "REMOVED_FROM_FAVORITES" -> Toast.makeText(context, "Removed from favorites", Toast.LENGTH_SHORT).show()
-                else -> if (status.isNotEmpty()) Toast.makeText(context, status, Toast.LENGTH_SHORT).show()
+            if (status.isEmpty()) return@observe
+            val message = when (status) {
+                "SUCCESS" -> "Trade Successful!"
+                "ALERT_SET" -> "Price alert set!"
+                "ADDED_TO_FAVORITES" -> "Added to favorites"
+                "REMOVED_FROM_FAVORITES" -> "Removed from favorites"
+                "ERROR_FETCHING_DATA" -> "Failed to load complete stock data"
+                else -> status
             }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun hideShimmer() {
-        shimmerLayout.stopShimmer()
-        shimmerLayout.visibility = View.GONE
-        contentView.visibility = View.VISIBLE
+        if (shimmerLayout.visibility == View.VISIBLE) {
+            shimmerLayout.stopShimmer()
+            shimmerLayout.visibility = View.GONE
+            contentView.visibility = View.VISIBLE
+        }
     }
 
     private fun updateChartData(prices: List<Double>) {
@@ -274,6 +300,7 @@ class StockDetailsFragment : Fragment() {
             .setPositiveButton("Confirm") { _, _ ->
                 val qty = etQuantity.text.toString().toDoubleOrNull() ?: 0.0
                 if (qty > 0) viewModel.executeTrade(symbol, description, qty, currentPriceUsd, isBuy)
+                else Toast.makeText(context, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -289,15 +316,16 @@ class StockDetailsFragment : Fragment() {
     }
 
     private fun showPriceAlertDialog() {
-        val etPrice = EditText(requireContext()).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-            hint = "Enter target price in USD"
-        }
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_set_price_alert, null)
+        val etPrice = dialogView.findViewById<TextInputEditText>(R.id.etTargetPrice)
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvAlertTitle)
+        val tvCurrent = dialogView.findViewById<TextView>(R.id.tvCurrentPriceInfo)
+
+        tvTitle.text = "Set Alert for $symbol"
+        tvCurrent.text = "Current: $${String.format("%.2f", currentPriceUsd)}"
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Set Price Alert for $symbol")
-            .setMessage("Get notified when the price reaches your target.")
-            .setView(etPrice)
+            .setView(dialogView)
             .setPositiveButton("Set Alert") { _, _ ->
                 val targetPrice = etPrice.text.toString().toDoubleOrNull()
                 if (targetPrice != null && targetPrice > 0) viewModel.setPriceAlert(symbol, description, targetPrice)

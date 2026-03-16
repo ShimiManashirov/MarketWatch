@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
+    android:background="?android:colorBackground"
     tools:context=".SearchFragment">
 
     <LinearLayout
@@ -22,9 +22,9 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginVertical="8dp"
-                app:cardCornerRadius="28dp"
+                android:layout_marginHorizontal="@dimen/spacing_medium"
+                android:layout_marginVertical="@dimen/spacing_small"
+                app:cardCornerRadius="@dimen/radius_extra_large"
                 app:cardElevation="0dp"
                 app:strokeColor="?attr/colorOutlineVariant"
                 app:strokeWidth="1dp">
@@ -34,7 +34,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:iconifiedByDefault="false"
-                    app:queryHint="Search AAPL, Tesla, Crypto..."
+                    app:queryHint="@string/search_hint"
                     app:queryBackground="@android:color/transparent"
                     app:searchIcon="@android:drawable/ic_menu_search" />
             </com.google.android.material.card.MaterialCardView>
@@ -58,7 +58,7 @@
                 android:id="@+id/searchShimmerContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingHorizontal="16dp"
+                android:paddingHorizontal="@dimen/spacing_medium"
                 android:visibility="gone"
                 app:shimmer_auto_start="false">
 
@@ -70,112 +70,110 @@
                     <include layout="@layout/item_stock_search_shimmer" />
                     <include layout="@layout/item_stock_search_shimmer" />
                     <include layout="@layout/item_stock_search_shimmer" />
-                    <include layout="@layout/item_stock_search_shimmer" />
                 </LinearLayout>
             </com.facebook.shimmer.ShimmerFrameLayout>
 
             <!-- Empty/Suggestions State -->
-            <LinearLayout
+            <androidx.core.widget.NestedScrollView
                 android:id="@+id/emptySearchContainer"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="32dp">
+                android:layout_height="match_parent">
 
-                <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:alpha="0.2"
-                    android:src="@android:drawable/ic_menu_search"
-                    app:tint="?attr/colorOnSurface" />
-
-                <TextView
-                    style="@style/TextAppearance.Material3.TitleMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Discover the Market"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textStyle="bold" />
-
-                <TextView
-                    style="@style/TextAppearance.Material3.BodyMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Search for stocks, indices or crypto symbols"
-                    android:textAlignment="center"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-                
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="@dimen/spacing_xl">
+
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:alpha="0.2"
+                        android:contentDescription="@null"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="?attr/colorOnSurface" />
 
                     <TextView
-                        style="@style/TextAppearance.Material3.LabelLarge"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Recent Searches"
-                        android:textColor="?attr/colorOnSurfaceVariant" />
-
-                    <TextView
-                        android:id="@+id/clearHistoryText"
-                        style="@style/TextAppearance.Material3.LabelLarge"
+                        style="@style/TextAppearance.MarketWatch.Title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Clear"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:textColor="?attr/colorPrimary" />
+                        android:layout_marginTop="@dimen/spacing_medium"
+                        android:text="@string/discover_market" />
+
+                    <TextView
+                        style="@style/TextAppearance.MarketWatch.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        android:text="@string/search_description"
+                        android:textAlignment="center" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_large"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/TextAppearance.MarketWatch.Caption"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/recent_searches" />
+
+                        <TextView
+                            android:id="@+id/clearHistoryText"
+                            style="@style/TextAppearance.MarketWatch.Caption"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/clear_button"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:textColor="?attr/colorPrimary" />
+                    </LinearLayout>
+
+                    <!-- Quick Suggestion Chips -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/suggestionChipGroup"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/spacing_small"
+                        app:chipSpacingHorizontal="@dimen/spacing_small">
+
+                        <com.google.android.material.chip.Chip
+                            style="@style/Widget.MarketWatch.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="AAPL" />
+                        <com.google.android.material.chip.Chip
+                            style="@style/Widget.MarketWatch.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TSLA" />
+                        <com.google.android.material.chip.Chip
+                            style="@style/Widget.MarketWatch.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="BTC" />
+                        <com.google.android.material.chip.Chip
+                            style="@style/Widget.MarketWatch.Chip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NVDA" />
+                    </com.google.android.material.chip.ChipGroup>
                 </LinearLayout>
-
-                <!-- Quick Suggestion Chips -->
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/suggestionChipGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:chipSpacingHorizontal="8dp">
-
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Suggestion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="AAPL" />
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Suggestion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="TSLA" />
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Suggestion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="BTC" />
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Suggestion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="NVDA" />
-                </com.google.android.material.chip.ChipGroup>
-            </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
 
             <!-- Results State -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/searchRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingHorizontal="16dp"
                 android:clipToPadding="false"
                 android:paddingBottom="88dp"
-                android:visibility="gone"
-                android:layoutAnimation="@anim/layout_animation_fall_down" />
+                android:visibility="gone" />
 
         </FrameLayout>
     </LinearLayout>
