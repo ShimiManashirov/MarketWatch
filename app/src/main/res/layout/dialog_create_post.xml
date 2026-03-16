@@ -4,32 +4,80 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="@dimen/spacing_large">
+    android:padding="24dp"
+    android:background="?attr/colorSurface">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create New Post"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <TextView
         style="@style/TextAppearance.MarketWatch.Title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing_medium"
-        android:text="@string/create_post"
-        android:textSize="@dimen/text_title_medium" />
+        android:layout_marginTop="16dp"
+        android:background="@android:color/transparent"
+        android:gravity="top"
+        android:hint="What's on your mind?"
+        android:minLines="4"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="16sp" />
 
     <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MarketWatch.TextInputLayout"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:hintEnabled="false">
+        android:layout_marginTop="16dp"
+        android:hint="Image URL (Optional)"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/dialogPostEditText"
+            android:id="@+id/dialogImageUrlEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:gravity="top"
-            android:hint="@string/post_hint"
-            android:minLines="4"
-            style="@style/TextAppearance.MarketWatch.Body"
-            android:textSize="@dimen/text_body_medium" />
+            android:inputType="textUri" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Add Image button and preview ImageView (IDs used from FeedFragment.kt) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical">
+
+        <ImageButton
+            android:id="@+id/dialogAddImageBtn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_add"
+            android:contentDescription="Add image"
+            android:tint="?attr/colorOnSurface" />
+
+        <ImageView
+            android:id="@+id/dialogPostImageView"
+            android:layout_width="0dp"
+            android:layout_height="150dp"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Tip: Use direct links from Imgur, Pinterest, etc."
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp" />
 
 </LinearLayout>

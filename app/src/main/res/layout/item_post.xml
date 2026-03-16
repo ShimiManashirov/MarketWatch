@@ -37,6 +37,7 @@
             </androidx.cardview.widget.CardView>
 
             <LinearLayout
+                android:id="@+id/userInfoLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_toEndOf="@id/avatarContainer"
@@ -85,7 +86,7 @@
             android:textSize="18sp"
             tools:text="Cool app" />
 
-        <!-- Image Container (Added back to fix the bug) -->
+        <!-- Optional Image Container -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/postImageCard"
             android:layout_width="match_parent"
@@ -156,5 +157,5 @@
 
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
