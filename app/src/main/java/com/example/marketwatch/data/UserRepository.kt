@@ -59,6 +59,11 @@ class UserRepository(
         db.collection("users").document(userId).update("profilePictureUrl", uri.toString()).await()
     }
 
+    suspend fun updateProfilePictureUrl(url: String) = withContext(Dispatchers.IO) {
+        val userId = auth.currentUser?.uid ?: return@withContext
+        db.collection("users").document(userId).update("profilePictureUrl", url).await()
+    }
+
     suspend fun updateCurrency(currencyCode: String) = withContext(Dispatchers.IO) {
         val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("currency", currencyCode).await()

@@ -36,11 +36,11 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
         }
     }
 
-    fun updateProfilePicture(uri: Uri) {
+    fun updateProfilePictureUrl(url: String) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                repository.updateProfilePicture(uri)
+                repository.updateProfilePictureUrl(url)
                 _successMessage.value = "Profile picture updated"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update profile picture"
