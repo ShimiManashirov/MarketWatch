@@ -46,6 +46,7 @@ class PostsRepository(
                 snapshots?.forEach { doc ->
                     try {
                         val likesList = doc.get("likes") as? List<String> ?: emptyList()
+                        val commentsCount = (doc.get("commentsCount") as? Number)?.toInt() ?: 0
                         val post = Post(
                             id = doc.id,
                             userId = doc.getString("userId") ?: "",
@@ -54,7 +55,8 @@ class PostsRepository(
                             content = doc.getString("content") ?: "",
                             imageUrl = doc.getString("imageUrl"),
                             timestamp = doc.getTimestamp("timestamp"),
-                            likes = likesList
+                            likes = likesList,
+                            commentsCount = commentsCount
                         )
                         posts.add(post)
                         entities.add(post.toEntity())
@@ -81,6 +83,7 @@ class PostsRepository(
             val doc = db.collection("posts").document(postId).get().await()
             if (doc.exists()) {
                 val likesList = doc.get("likes") as? List<String> ?: emptyList()
+                val commentsCount = (doc.get("commentsCount") as? Number)?.toInt() ?: 0
                 Post(
                     id = doc.id,
                     userId = doc.getString("userId") ?: "",
@@ -89,7 +92,8 @@ class PostsRepository(
                     content = doc.getString("content") ?: "",
                     imageUrl = doc.getString("imageUrl"),
                     timestamp = doc.getTimestamp("timestamp"),
-                    likes = likesList
+                    likes = likesList,
+                    commentsCount = commentsCount
                 )
             } else null
         } catch (e: Exception) {
@@ -112,7 +116,8 @@ class PostsRepository(
             "content" to content,
             "imageUrl" to imageUri?.toString(),
             "timestamp" to Timestamp.now(),
-            "likes" to emptyList<String>()
+            "likes" to emptyList<String>(),
+            "commentsCount" to 0
         )
 
         db.collection("posts").add(postData).await()
