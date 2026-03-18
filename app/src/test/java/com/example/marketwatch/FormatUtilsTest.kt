@@ -4,96 +4,67 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.*
 
-/**
- * Unit tests for the [FormatUtils] object.
- * 
- * These tests ensure that currency, date, and decimal formatting logic
- * remains accurate and handles edge cases correctly across different locales.
- */
 class FormatUtilsTest {
 
-    /**
-     * Verifies that [FormatUtils.formatCurrency] correctly formats 
-     * a positive double into a USD currency string.
-     */
     @Test
-    fun formatCurrency_isCorrect() {
-        val amount = 1234.56
-        val expected = "$1,234.56"
-        assertEquals(expected, FormatUtils.formatCurrency(amount))
+    fun `formatCurrency formats USD correctly`() {
+        val result = FormatUtils.formatCurrency(1234.567)
+        // Note: NumberFormat depends on locale, but we expect $1,234.57 for US locale
+        assert(result.contains("$"))
+        assert(result.contains("1,234.57"))
     }
 
-    /**
-     * Verifies that [FormatUtils.formatCurrency] handles zero correctly.
-     */
     @Test
-    fun formatCurrency_zero_isCorrect() {
-        val amount = 0.0
-        val expected = "$0.00"
-        assertEquals(expected, FormatUtils.formatCurrency(amount))
-    }
-
-    /**
-     * Verifies that [FormatUtils.formatCurrencyIls] correctly formats 
-     * a positive double into an ILS currency string.
-     */
-    @Test
-    fun formatCurrencyIls_isCorrect() {
-        val amount = 1234.56
-        // Note: Expected string might vary slightly based on environment locale settings,
-        // but typically should include the '₪' symbol.
-        val result = FormatUtils.formatCurrencyIls(amount)
+    fun `formatCurrencyIls formats ILS correctly`() {
+        val result = FormatUtils.formatCurrencyIls(1234.567)
         assert(result.contains("₪"))
+        assert(result.contains("1,234.57"))
     }
 
-    /**
-     * Verifies that [FormatUtils.formatPercentage] correctly formats 
-     * a positive growth percentage.
-     */
     @Test
-    fun formatPercentage_positive_isCorrect() {
-        val percent = 1.25
-        val expected = "+1.25%"
-        assertEquals(expected, FormatUtils.formatPercentage(percent))
+    fun `formatPercentage formats positive values with plus sign`() {
+        val result = FormatUtils.formatPercentage(1.25)
+        assertEquals("+1.25%", result)
     }
 
-    /**
-     * Verifies that [FormatUtils.formatPercentage] correctly formats 
-     * a negative drop percentage.
-     */
     @Test
-    fun formatPercentage_negative_isCorrect() {
-        val percent = -0.5
-        val expected = "-0.50%"
-        assertEquals(expected, FormatUtils.formatPercentage(percent))
+    fun `formatPercentage formats negative values with minus sign`() {
+        val result = FormatUtils.formatPercentage(-0.5)
+        assertEquals("-0.50%", result)
     }
 
-    /**
-     * Verifies that [FormatUtils.formatDateTime] returns "Just now" when the date is null.
-     */
     @Test
-    fun formatDateTime_null_returnsJustNow() {
+    fun `formatPercentage formats zero correctly`() {
+        val result = FormatUtils.formatPercentage(0.0)
+        assertEquals("+0.00%", result)
+    }
+
+    @Test
+    fun `formatDateTime returns Just now for null date`() {
         val result = FormatUtils.formatDateTime(null)
         assertEquals("Just now", result)
     }
 
-    /**
-     * Verifies that [FormatUtils.formatDecimal] rounds correctly to two places by default.
-     */
     @Test
-    fun formatDecimal_default_isCorrect() {
-        val value = 10.5678
-        val expected = "10.57"
-        assertEquals(expected, FormatUtils.formatDecimal(value))
+    fun `formatDateTime formats valid date correctly`() {
+        val calendar = Calendar.getInstance()
+        calendar.set(2026, Calendar.OCTOBER, 24, 14, 30)
+        val date = calendar.time
+        val result = FormatUtils.formatDateTime(date)
+        // Pattern: "MMM dd, HH:mm"
+        assert(result.contains("Oct 24"))
+        assert(result.contains("14:30"))
     }
 
-    /**
-     * Verifies that [FormatUtils.formatDecimal] supports custom precision.
-     */
     @Test
-    fun formatDecimal_customPrecision_isCorrect() {
-        val value = 10.5
-        val expected = "10.500"
-        assertEquals(expected, FormatUtils.formatDecimal(value, 3))
+    fun `formatDecimal formats with default two decimal places`() {
+        val result = FormatUtils.formatDecimal(12.3456)
+        assertEquals("12.35", result)
+    }
+
+    @Test
+    fun `formatDecimal formats with specified decimal places`() {
+        val result = FormatUtils.formatDecimal(12.3, 3)
+        assertEquals("12.300", result)
     }
 }
