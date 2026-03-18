@@ -107,7 +107,7 @@ class ProfileViewModelTest {
     }
 
     @Test
-    fun `clearError and clearSuccessMessage reset state`() {
+    fun `clearError and clearSuccessMessage reset state`() = runTest {
         // Trigger messages manually (since we can't easily mock private setters for simple tests)
         viewModel.updateName("Test")
         advanceUntilIdle()

@@ -1,8 +1,8 @@
 package com.example.marketwatch
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +11,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.text.InputType
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -19,8 +21,6 @@ import com.example.marketwatch.data.UserRepository
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.squareup.picasso.Picasso
-import java.util.Locale
 
 class ProfileFragment : Fragment() {
 
@@ -28,6 +28,16 @@ class ProfileFragment : Fragment() {
     private lateinit var profileImageView: ImageView
     private lateinit var nameTextView: TextView
     private lateinit var emailTextView: TextView
+    
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val imageUri = result.data?.data
+            if (imageUri != null) {
+                // Upload to Imgur (Free, no credit card)
+                viewModel.uploadProfilePictureToImgur(requireContext(), imageUri)
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,13 +58,8 @@ class ProfileFragment : Fragment() {
         nameTextView = view.findViewById(R.id.profileNameTextView)
         emailTextView = view.findViewById(R.id.profileEmailTextView)
         
-        val changePictureBtn: MaterialButton = view.findViewById(R.id.changePictureButton)
-
-        // Force reset the listener to ensure it doesn't open the gallery
-        changePictureBtn.setOnClickListener(null)
-        changePictureBtn.setOnClickListener {
-            Log.d("ProfileFragment", "!!!! BUTTON CLICKED - SHOWING DIALOG !!!!")
-            showChangePictureUrlDialog()
+        view.findViewById<MaterialButton>(R.id.changePictureButton).setOnClickListener {
+            showPictureOptionsDialog()
         }
 
         view.findViewById<MaterialButton>(R.id.changeNameButton).setOnClickListener { showChangeNameDialog() }
@@ -69,6 +74,24 @@ class ProfileFragment : Fragment() {
         return view
     }
 
+    private fun showPictureOptionsDialog() {
+        val options = arrayOf("Pick from Gallery", "Enter Image URL", "Cancel")
+        AlertDialog.Builder(requireContext())
+            .setTitle("Set Profile Picture")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> pickImageFromGallery()
+                    1 -> showChangePictureUrlDialog()
+                }
+            }
+            .show()
+    }
+
+    private fun pickImageFromGallery() {
+        val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+        pickImageLauncher.launch(intent)
+    }
+
     private fun showChangePictureUrlDialog() {
         val editText = EditText(requireContext()).apply {
             hint = "Enter Image URL here..."
@@ -77,14 +100,10 @@ class ProfileFragment : Fragment() {
         
         AlertDialog.Builder(requireContext())
             .setTitle("Set Profile Picture URL")
-            .setMessage("Paste a direct link to an image from the web (e.g., Imgur, Pinterest, etc.)")
             .setView(editText)
             .setPositiveButton("Save URL") { _, _ ->
                 val url = editText.text.toString().trim()
-                if (url.isNotEmpty()) {
-                    Log.d("ProfileFragment", "Updating URL to: $url")
-                    viewModel.updateProfilePictureUrl(url)
-                }
+                if (url.isNotEmpty()) viewModel.updateProfilePictureUrl(url)
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -95,16 +114,21 @@ class ProfileFragment : Fragment() {
             user?.let {
                 emailTextView.text = it.email
                 nameTextView.text = it.name
-                
-                if (!it.profilePictureUrl.isNullOrEmpty()) {
-                    Log.d("ProfileFragment", "Loading image: ${it.profilePictureUrl}")
-                    Picasso.get()
-                        .load(it.profilePictureUrl)
-                        .placeholder(R.drawable.ic_account_circle)
-                        .error(R.drawable.ic_account_circle)
-                        .transform(CircleTransform())
-                        .into(profileImageView)
-                }
+                ImageManager.loadProfileImage(profileImageView, it.profilePictureUrl)
+            }
+        }
+        
+        viewModel.successMessage.observe(viewLifecycleOwner) { msg ->
+            msg?.let {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                viewModel.clearSuccessMessage()
+            }
+        }
+
+        viewModel.errorMessage.observe(viewLifecycleOwner) { msg ->
+            msg?.let {
+                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                viewModel.clearError()
             }
         }
     }

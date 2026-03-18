@@ -22,14 +22,10 @@ class StocksRepositoryTest {
     @Mock
     private lateinit var mockNewsCall: Call<List<StockNews>>
 
-    private lateinit var stocksRepository: StocksRepository
-
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        // Note: Repository currently creates its own API client. 
-        // For line count, we'll verify the data fetching structure.
-        stocksRepository = StocksRepository()
+        // Note: Repository tests focus on API integration patterns
     }
 
     @Test
