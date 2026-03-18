@@ -68,10 +68,26 @@ class StockDetailsViewModelTest {
     }
 
     @Test
-    fun `calculateMovingAverage returns correct value`() {
-        val prices = listOf(10.0, 20.0, 30.0, 40.0, 50.0)
-        // This is a logic test if the method exists in VM
-        // val ma = viewModel.calculateMovingAverage(prices, 3)
-        // assertEquals(40.0, ma, 0.01)
+    fun `fetchStockNews updates newsList`() = runTest {
+        val symbol = "AAPL"
+        val news = listOf(StockNews(1, "biz", 100L, "H", "I", "S", "Src", "Sum", "U"))
+        `when`(repository.getStockNews(symbol)).thenReturn(news)
+
+        viewModel.fetchStockNews(symbol)
+        advanceUntilIdle()
+
+        assertEquals(news, viewModel.stockNews.value)
+    }
+
+    @Test
+    fun `fetchStockCandles updates chartData`() = runTest {
+        val symbol = "AAPL"
+        val candles = StockCandles(listOf(150.0), listOf(155.0), listOf(148.0), listOf(149.0), "ok", listOf(1000L), listOf(100L))
+        `when`(repository.getStockCandles(eq(symbol), anyString(), anyString(), anyString())).thenReturn(candles)
+
+        viewModel.fetchStockCandles(symbol, "D")
+        advanceUntilIdle()
+
+        assertEquals(candles, viewModel.stockCandles.value)
     }
 }
