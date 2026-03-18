@@ -5,16 +5,19 @@ import com.example.marketwatch.User
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class UserRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
 
     fun getUserProfile(): Flow<User?> = callbackFlow {
@@ -56,7 +59,14 @@ class UserRepository(
 
     suspend fun updateProfilePicture(uri: Uri) = withContext(Dispatchers.IO) {
         val userId = auth.currentUser?.uid ?: return@withContext
-        db.collection("users").document(userId).update("profilePictureUrl", uri.toString()).await()
+        
+        // Upload to Firebase Storage
+        val fileName = "profile_pics/$userId/${UUID.randomUUID()}.jpg"
+        val ref = storage.reference.child(fileName)
+        ref.putFile(uri).await()
+        val downloadUrl = ref.downloadUrl.await().toString()
+        
+        db.collection("users").document(userId).update("profilePictureUrl", downloadUrl).await()
     }
 
     suspend fun updateProfilePictureUrl(url: String) = withContext(Dispatchers.IO) {
