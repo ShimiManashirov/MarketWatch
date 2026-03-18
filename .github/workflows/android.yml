@@ -2,18 +2,20 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "feat/tests" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "feat/tests" ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  test:
+    name: Run Unit and Instrumented Tests
+    runs-on: macos-latest # macOS is required for hardware acceleration on emulators
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: set up JDK 17
+    - name: Checkout the code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
@@ -23,7 +25,12 @@ jobs:
     - name: Decode Google Services JSON
       env:
         GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-      run: echo $GOOGLE_SERVICES_JSON > app/google-services.json
+      run: |
+        if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+          echo "{}" > app/google-services.json
+        else
+          echo $GOOGLE_SERVICES_JSON > app/google-services.json
+        fi
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
@@ -33,3 +40,12 @@ jobs:
 
     - name: Run Unit Tests
       run: ./gradlew test
+
+    - name: Run Instrumented Tests (Espresso)
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 33
+        target: google_apis
+        arch: x86_64
+        profile: Nexus 6
+        script: ./gradlew connectedCheck

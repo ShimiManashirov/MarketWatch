@@ -10,6 +10,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -18,11 +19,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class PostsRepository(
     private val db: FirebaseFirestore,
     private val localDb: AppDatabase,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
 
     fun getLocalPosts(): Flow<List<Post>> {
@@ -75,9 +78,6 @@ class PostsRepository(
         awaitClose { listener.remove() }
     }
 
-    /**
-     * Fetches a single post by its ID from Firestore.
-     */
     suspend fun getPostById(postId: String): Post? = withContext(Dispatchers.IO) {
         try {
             val doc = db.collection("posts").document(postId).get().await()
@@ -108,13 +108,21 @@ class PostsRepository(
         val userDoc = db.collection("users").document(userId).get().await()
         val userName = userDoc.getString("name") ?: "Unknown User"
         val profilePic = userDoc.getString("profilePictureUrl") ?: ""
+
+        var uploadedImageUrl: String? = null
+        if (imageUri != null) {
+            val fileName = "post_images/${UUID.randomUUID()}.jpg"
+            val ref = storage.reference.child(fileName)
+            ref.putFile(imageUri).await()
+            uploadedImageUrl = ref.downloadUrl.await().toString()
+        }
         
         val postData = hashMapOf(
             "userId" to userId,
             "userName" to userName,
             "userProfilePicture" to profilePic,
             "content" to content,
-            "imageUrl" to imageUri?.toString(),
+            "imageUrl" to uploadedImageUrl,
             "timestamp" to Timestamp.now(),
             "likes" to emptyList<String>(),
             "commentsCount" to 0
@@ -124,9 +132,19 @@ class PostsRepository(
     }
 
     suspend fun updatePost(postId: String, content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
+        var uploadedImageUrl: String? = null
+        if (imageUri != null && !imageUri.toString().startsWith("http")) {
+            val fileName = "post_images/${UUID.randomUUID()}.jpg"
+            val ref = storage.reference.child(fileName)
+            ref.putFile(imageUri).await()
+            uploadedImageUrl = ref.downloadUrl.await().toString()
+        } else if (imageUri != null) {
+            uploadedImageUrl = imageUri.toString()
+        }
+
         val updates = hashMapOf<String, Any>(
             "content" to content,
-            "imageUrl" to (imageUri?.toString() ?: "")
+            "imageUrl" to (uploadedImageUrl ?: "")
         )
         db.collection("posts").document(postId).update(updates).await()
     }
