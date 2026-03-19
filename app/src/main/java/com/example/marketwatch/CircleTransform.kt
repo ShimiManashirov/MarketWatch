@@ -5,7 +5,7 @@ import com.squareup.picasso.Transformation
 
 /**
  * A robust Picasso transformation to crop an image into a circle.
- * Properly manages bitmap recycling to prevent "recycled bitmap" crashes.
+ * Properly manages bitmap recycling to comply with Picasso's contract.
  */
 class CircleTransform : Transformation {
     override fun transform(source: Bitmap): Bitmap {
@@ -13,10 +13,8 @@ class CircleTransform : Transformation {
         val x = (source.width - size) / 2
         val y = (source.height - size) / 2
 
-        // Create a squared version of the source
         val squaredBitmap = Bitmap.createBitmap(source, x, y, size, size)
         
-        // Create the output bitmap
         val bitmap = Bitmap.createBitmap(size, size, source.config ?: Bitmap.Config.ARGB_8888)
         
         val canvas = Canvas(bitmap)
@@ -28,11 +26,9 @@ class CircleTransform : Transformation {
         val r = size / 2f
         canvas.drawCircle(r, r, r, paint)
 
-        // Picasso Contract: We must recycle the source bitmap.
+        // Picasso contract: source must be recycled if a different instance is returned
         source.recycle()
-        
-        // If squaredBitmap is a new instance (not source), we should recycle it too.
-        if (squaredBitmap != source) {
+        if (squaredBitmap !== source) {
             squaredBitmap.recycle()
         }
 
