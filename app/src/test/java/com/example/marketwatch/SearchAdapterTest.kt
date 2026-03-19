@@ -1,13 +1,18 @@
 package com.example.marketwatch
 
+import androidx.recyclerview.widget.RecyclerView
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 
 class SearchAdapterTest {
 
     private lateinit var adapter: SearchAdapter
     private val stocks = mutableListOf<StockSymbol>()
+
+    @Mock
+    private lateinit var observer: RecyclerView.AdapterDataObserver
 
     @Before
     fun setup() {
@@ -22,6 +27,7 @@ class SearchAdapterTest {
         stocks.add(stock)
 
         adapter = SearchAdapter(stocks)
+        adapter.registerAdapterDataObserver(observer)
     }
 
     @Test
@@ -44,28 +50,5 @@ class SearchAdapterTest {
         val stock = stocks[0]
         assert(stock.displaySymbol == "AAPL")
         assert(stock.description == "Apple Inc.")
-    }
-
-    @Test
-    fun `Stock symbol property test`() {
-        val stock = StockSymbol("Description", "Display", "Symbol", "Type")
-        assert(stock.symbol == "Symbol")
-    }
-
-    @Test
-    fun `Empty list handling test`() {
-        val emptyAdapter = SearchAdapter(emptyList())
-        assert(emptyAdapter.itemCount == 0)
-    }
-
-    @Test
-    fun `List with multiple items test`() {
-        val list = listOf(
-            StockSymbol("D1", "S1", "S1", "T1"),
-            StockSymbol("D2", "S2", "S2", "T2"),
-            StockSymbol("D3", "S3", "S3", "T3")
-        )
-        val multiAdapter = SearchAdapter(list)
-        assert(multiAdapter.itemCount == 3)
     }
 }

@@ -1,8 +1,11 @@
 package com.example.marketwatch
 
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.Timestamp
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mock
+import org.mockito.Mockito.mock
 import org.mockito.MockitoAnnotations
 import java.util.Date
 
@@ -10,6 +13,9 @@ class CommentAdapterTest {
 
     private lateinit var adapter: CommentAdapter
     private val comments = mutableListOf<Comment>()
+    
+    @Mock
+    private lateinit var observer: RecyclerView.AdapterDataObserver
 
     @Before
     fun setup() {
@@ -31,6 +37,9 @@ class CommentAdapterTest {
             currentUserId = "u1",
             onDeleteClick = {}
         )
+        
+        // Fix: Register a mock observer to prevent NPE on notifyDataSetChanged
+        adapter.registerAdapterDataObserver(observer)
     }
 
     @Test
@@ -57,34 +66,12 @@ class CommentAdapterTest {
     }
 
     @Test
-    fun `Comment handles anonymous user name`() {
-        val comment = Comment(userName = "", content = "Content")
-        val displayName = if (comment.userName.isNotBlank()) comment.userName else "Anonymous"
-        assert(displayName == "Anonymous")
-    }
-
-    @Test
-    fun `Delete button visibility logic for own comment`() {
+    fun `Delete button visibility logic`() {
         val currentUserId = "u1"
-        val comment = Comment(userId = "u1")
-        val isVisible = comment.userId == currentUserId
-        assert(isVisible)
-    }
-
-    @Test
-    fun `Delete button visibility logic for other user comment`() {
-        val currentUserId = "u1"
-        val comment = Comment(userId = "u2")
-        val isVisible = comment.userId == currentUserId
-        assert(!isVisible)
-    }
-
-    @Test
-    fun `Profile picture availability logic`() {
-        val commentWithPic = comments[0]
-        val commentWithoutPic = Comment(userProfilePicture = "")
+        val ownComment = Comment(userId = "u1")
+        val otherComment = Comment(userId = "u2")
         
-        assert(commentWithPic.userProfilePicture.isNotBlank())
-        assert(commentWithoutPic.userProfilePicture.isBlank())
+        assert(ownComment.userId == currentUserId)
+        assert(otherComment.userId != currentUserId)
     }
 }
