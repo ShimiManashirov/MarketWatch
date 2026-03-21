@@ -1,21 +1,20 @@
 package com.example.marketwatch
 
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.Timestamp
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.Mockito.mock
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.util.Date
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class CommentAdapterTest {
 
     private lateinit var adapter: CommentAdapter
     private val comments = mutableListOf<Comment>()
-    
-    @Mock
-    private lateinit var observer: RecyclerView.AdapterDataObserver
 
     @Before
     fun setup() {
@@ -37,9 +36,6 @@ class CommentAdapterTest {
             currentUserId = "u1",
             onDeleteClick = {}
         )
-        
-        // Fix: Register a mock observer to prevent NPE on notifyDataSetChanged
-        adapter.registerAdapterDataObserver(observer)
     }
 
     @Test
@@ -63,15 +59,5 @@ class CommentAdapterTest {
         assert(comment.userName == "Test User")
         assert(comment.content == "Great insights!")
         assert(comment.userId == "u1")
-    }
-
-    @Test
-    fun `Delete button visibility logic`() {
-        val currentUserId = "u1"
-        val ownComment = Comment(userId = "u1")
-        val otherComment = Comment(userId = "u2")
-        
-        assert(ownComment.userId == currentUserId)
-        assert(otherComment.userId != currentUserId)
     }
 }

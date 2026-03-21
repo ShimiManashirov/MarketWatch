@@ -1,18 +1,18 @@
 package com.example.marketwatch
 
-import androidx.recyclerview.widget.RecyclerView
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mock
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class SearchAdapterTest {
 
     private lateinit var adapter: SearchAdapter
     private val stocks = mutableListOf<StockSymbol>()
-
-    @Mock
-    private lateinit var observer: RecyclerView.AdapterDataObserver
 
     @Before
     fun setup() {
@@ -27,7 +27,6 @@ class SearchAdapterTest {
         stocks.add(stock)
 
         adapter = SearchAdapter(stocks)
-        adapter.registerAdapterDataObserver(observer)
     }
 
     @Test

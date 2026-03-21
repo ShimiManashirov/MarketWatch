@@ -1,19 +1,19 @@
 package com.example.marketwatch
 
-import androidx.recyclerview.widget.RecyclerView
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mock
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class NewsAdapterTest {
 
     private lateinit var adapter: NewsAdapter
     private val newsList = mutableListOf<StockNews>()
     private val bookmarkedIds = mutableSetOf<Long>()
-
-    @Mock
-    private lateinit var observer: RecyclerView.AdapterDataObserver
 
     @Before
     fun setup() {
@@ -38,9 +38,6 @@ class NewsAdapterTest {
             bookmarkedIds = bookmarkedIds,
             onBookmarkClick = { _, _ -> }
         )
-        
-        // Fix: Register observer to prevent NPE on notifyDataSetChanged
-        adapter.registerAdapterDataObserver(observer)
     }
 
     @Test

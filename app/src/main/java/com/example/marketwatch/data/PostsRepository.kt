@@ -22,9 +22,9 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class PostsRepository(
-    private val db: FirebaseFirestore,
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val localDb: AppDatabase,
-    private val auth: FirebaseAuth,
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
 
@@ -183,7 +183,7 @@ class PostsRepository(
         userProfilePicture = userProfilePicture,
         content = content,
         imageUrl = imageUrl,
-        timestamp = Timestamp(timestamp, 0),
+        timestamp = timestamp?.let { Timestamp(it, 0) },
         likes = emptyList()
     )
 }
