@@ -7,13 +7,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.marketwatch.data.ImgurRepository
 import com.example.marketwatch.data.UserRepository
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
 
-    private val imgurRepository = ImgurRepository()
     val userProfile: LiveData<User?> = repository.getUserProfile().asLiveData()
 
     private val _isLoading = MutableLiveData<Boolean>()
@@ -40,18 +38,22 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
     }
 
     /**
-     * Uploads image to Imgur (Free, no credit card required)
+     * Uploads profile picture to Firebase Storage
      */
-    fun uploadProfilePictureToImgur(context: Context, uri: Uri) {
+    fun uploadProfilePicture(context: Context, uri: Uri) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                val uploadedUrl = imgurRepository.uploadImage(context, uri)
-                if (uploadedUrl != null) {
-                    repository.updateProfilePictureUrl(uploadedUrl)
-                    _successMessage.value = "Profile picture uploaded to Imgur!"
+                
+                // 1. Compress image
+                val imageBytes = ImageManager.uriToCompressedBytes(context, uri)
+                
+                if (imageBytes != null) {
+                    // 2. Upload to Firebase Storage
+                    repository.uploadProfilePicture(imageBytes)
+                    _successMessage.value = "Profile picture updated successfully!"
                 } else {
-                    _errorMessage.value = "Failed to upload to Imgur"
+                    _errorMessage.value = "Failed to process image"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error: ${e.message}"

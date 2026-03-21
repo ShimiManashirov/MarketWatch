@@ -17,10 +17,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.marketwatch.data.UserRepository
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.TimeZone
 
 class ProfileFragment : Fragment() {
 
@@ -28,13 +31,29 @@ class ProfileFragment : Fragment() {
     private lateinit var profileImageView: ImageView
     private lateinit var nameTextView: TextView
     private lateinit var emailTextView: TextView
+    private lateinit var currencyTextView: TextView
+    private lateinit var timezoneTextView: TextView
+
+    private val avatarUrls = listOf(
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Felix",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Aneka",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Boo",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Jasper",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Lucky",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Luna",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Max",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Milo",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Oliver",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Jack",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Toby",
+        "https://api.dicebear.com/7.x/avataaars/png?seed=Bella"
+    )
     
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val imageUri = result.data?.data
             if (imageUri != null) {
-                // Upload to Imgur (Free, no credit card)
-                viewModel.uploadProfilePictureToImgur(requireContext(), imageUri)
+                viewModel.uploadProfilePicture(requireContext(), imageUri)
             }
         }
     }
@@ -57,16 +76,20 @@ class ProfileFragment : Fragment() {
         profileImageView = view.findViewById(R.id.profileImageView)
         nameTextView = view.findViewById(R.id.profileNameTextView)
         emailTextView = view.findViewById(R.id.profileEmailTextView)
+        currencyTextView = view.findViewById(R.id.profileCurrencyTextView)
+        timezoneTextView = view.findViewById(R.id.profileTimezoneTextView)
         
-        view.findViewById<MaterialButton>(R.id.changePictureButton).setOnClickListener {
-            showPictureOptionsDialog()
-        }
-
+        // Listeners
+        view.findViewById<MaterialButton>(R.id.changePictureButton).setOnClickListener { showAvatarPickerContainer() }
         view.findViewById<MaterialButton>(R.id.changeNameButton).setOnClickListener { showChangeNameDialog() }
         view.findViewById<MaterialButton>(R.id.changePasswordButton).setOnClickListener { showChangePasswordDialog() }
         view.findViewById<MaterialButton>(R.id.myPostsButton).setOnClickListener { 
             findNavController().navigate(R.id.action_profile_to_userPosts)
         }
+        
+        // Fix for the reported buttons
+        view.findViewById<MaterialButton>(R.id.setCurrencyButton).setOnClickListener { showCurrencyDialog() }
+        view.findViewById<MaterialButton>(R.id.setTimezoneButton).setOnClickListener { showTimezoneDialog() }
         view.findViewById<MaterialButton>(R.id.resetWalletButton).setOnClickListener { showResetConfirmationDialog() }
         view.findViewById<MaterialButton>(R.id.deleteAccountButton).setOnClickListener { showDeleteAccountConfirmationDialog() }
 
@@ -74,39 +97,71 @@ class ProfileFragment : Fragment() {
         return view
     }
 
-    private fun showPictureOptionsDialog() {
-        val options = arrayOf("Pick from Gallery", "Enter Image URL", "Cancel")
+    private fun showCurrencyDialog() {
+        val currencies = arrayOf("USD", "EUR", "GBP", "ILS", "JPY")
         AlertDialog.Builder(requireContext())
-            .setTitle("Set Profile Picture")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> pickImageFromGallery()
-                    1 -> showChangePictureUrlDialog()
-                }
+            .setTitle("Select Currency")
+            .setItems(currencies) { _, which ->
+                viewModel.updateCurrency(currencies[which])
             }
             .show()
     }
+
+    private fun showTimezoneDialog() {
+        val timezones = arrayOf("UTC", "Israel", "GMT", "CET", "EST", "PST")
+        val ids = arrayOf("UTC", "Asia/Jerusalem", "GMT", "CET", "EST", "PST")
+        AlertDialog.Builder(requireContext())
+            .setTitle("Select Timezone")
+            .setItems(timezones) { _, which ->
+                viewModel.updateTimezone(ids[which])
+            }
+            .show()
+    }
+
+    private fun showAvatarPickerContainer() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_avatar_picker, null)
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.avatarRecyclerView)
+        val btnCustom = dialogView.findViewById<MaterialButton>(R.id.btnCustomFromGallery)
+        
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Select Avatar")
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        recyclerView.layoutManager = GridLayoutManager(context, 3)
+        recyclerView.adapter = object : RecyclerView.Adapter<AvatarViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AvatarViewHolder {
+                val v = LayoutInflater.from(parent.context).inflate(R.layout.item_avatar, parent, false)
+                return AvatarViewHolder(v)
+            }
+
+            override fun onBindViewHolder(holder: AvatarViewHolder, position: Int) {
+                val url = avatarUrls[position]
+                val iv = holder.itemView.findViewById<ImageView>(R.id.avatarImageView)
+                ImageManager.loadProfileImage(iv, url)
+                holder.itemView.setOnClickListener {
+                    viewModel.updateProfilePictureUrl(url)
+                    dialog.dismiss()
+                }
+            }
+
+            override fun getItemCount() = avatarUrls.size
+        }
+
+        btnCustom.setOnClickListener {
+            pickImageFromGallery()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private class AvatarViewHolder(view: View) : RecyclerView.ViewHolder(view)
 
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
         pickImageLauncher.launch(intent)
-    }
-
-    private fun showChangePictureUrlDialog() {
-        val editText = EditText(requireContext()).apply {
-            hint = "Enter Image URL here..."
-            inputType = InputType.TYPE_TEXT_VARIATION_URI
-        }
-        
-        AlertDialog.Builder(requireContext())
-            .setTitle("Set Profile Picture URL")
-            .setView(editText)
-            .setPositiveButton("Save URL") { _, _ ->
-                val url = editText.text.toString().trim()
-                if (url.isNotEmpty()) viewModel.updateProfilePictureUrl(url)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     private fun observeViewModel() {
@@ -114,6 +169,8 @@ class ProfileFragment : Fragment() {
             user?.let {
                 emailTextView.text = it.email
                 nameTextView.text = it.name
+                currencyTextView.text = it.currency
+                timezoneTextView.text = it.timezone
                 ImageManager.loadProfileImage(profileImageView, it.profilePictureUrl)
             }
         }

@@ -2,8 +2,13 @@ package com.example.marketwatch
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.widget.ImageView
+import com.squareup.picasso.MemoryPolicy
+import com.squareup.picasso.NetworkPolicy
 import com.squareup.picasso.Picasso
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
@@ -19,30 +24,45 @@ object ImageManager {
     private const val MAX_IMAGE_HEIGHT = 1080 // Maximum height in pixels
 
     /**
+     * Compress an image from Uri and return it as ByteArray for Firebase upload
+     */
+    fun uriToCompressedBytes(context: Context, uri: Uri): ByteArray? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val originalBitmap = BitmapFactory.decodeStream(inputStream) ?: return null
+            val optimizedBitmap = optimizeBitmap(originalBitmap)
+            
+            val outputStream = ByteArrayOutputStream()
+            optimizedBitmap.compress(Bitmap.CompressFormat.JPEG, IMAGE_QUALITY, outputStream)
+            
+            val bytes = outputStream.toByteArray()
+            
+            // Cleanup
+            if (optimizedBitmap != originalBitmap) {
+                optimizedBitmap.recycle()
+            }
+            originalBitmap.recycle()
+            
+            bytes
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
      * Save a bitmap to local storage with size optimization
-     * @param context The application context
-     * @param bitmap The bitmap to save
-     * @param fileName The name of the file (optional, will generate if not provided)
-     * @return The absolute path of the saved file
      */
     fun saveBitmapLocally(context: Context, bitmap: Bitmap, fileName: String? = null): String {
         val finalFileName = fileName ?: "img_${System.currentTimeMillis()}.jpg"
         val file = File(context.filesDir, finalFileName)
         
         try {
-            // Optimize bitmap size if too large
             val optimizedBitmap = optimizeBitmap(bitmap)
-            
             FileOutputStream(file).use { out ->
                 optimizedBitmap.compress(Bitmap.CompressFormat.JPEG, IMAGE_QUALITY, out)
                 out.flush()
             }
-            
-            // Recycle the optimized bitmap if it's different
-            if (optimizedBitmap != bitmap) {
-                optimizedBitmap.recycle()
-            }
-            
+            if (optimizedBitmap != bitmap) optimizedBitmap.recycle()
         } catch (e: Exception) {
             throw Exception("Failed to save bitmap: ${e.message}")
         }
@@ -50,46 +70,31 @@ object ImageManager {
         return file.absolutePath
     }
 
-    /**
-     * Optimize bitmap size to prevent OutOfMemory errors
-     */
     private fun optimizeBitmap(bitmap: Bitmap): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
+        if (width <= MAX_IMAGE_WIDTH && height <= MAX_IMAGE_HEIGHT) return bitmap
         
-        // If bitmap is smaller than max, return as is
-        if (width <= MAX_IMAGE_WIDTH && height <= MAX_IMAGE_HEIGHT) {
-            return bitmap
-        }
-        
-        // Calculate scaling ratio
         val widthRatio = width.toFloat() / MAX_IMAGE_WIDTH
         val heightRatio = height.toFloat() / MAX_IMAGE_HEIGHT
         val scaleFactor = maxOf(widthRatio, heightRatio)
         
         val newWidth = (width / scaleFactor).toInt()
         val newHeight = (height / scaleFactor).toInt()
-        
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
     }
 
-    // ...existing code...
-
     /**
      * Load an image into an ImageView with Picasso
-     * Handles both URL and local file paths
-     * @param imageView The target ImageView
-     * @param source The image source (URL or file path)
-     * @param placeholderId The placeholder drawable resource ID
-     * @param errorId The error drawable resource ID
-     * @param isCircle Whether to apply circle transformation
+     * @param skipCache Useful when updating profile picture to force reload
      */
     fun loadImage(
         imageView: ImageView,
         source: String?,
         placeholderId: Int = R.drawable.ic_account_circle,
         errorId: Int = R.drawable.ic_account_circle,
-        isCircle: Boolean = false
+        isCircle: Boolean = false,
+        skipCache: Boolean = false
     ) {
         if (source.isNullOrEmpty()) {
             imageView.setImageResource(placeholderId)
@@ -99,8 +104,13 @@ object ImageManager {
         var request = if (source.startsWith("http")) {
             Picasso.get().load(source)
         } else {
-            // It's a local file path
             Picasso.get().load(File(source))
+        }
+
+        if (skipCache) {
+            request = request
+                .memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+                .networkPolicy(NetworkPolicy.NO_CACHE)
         }
 
         request = request
@@ -117,84 +127,35 @@ object ImageManager {
         request.into(imageView)
     }
 
-    /**
-     * Load a profile image with optimizations
-     */
     fun loadProfileImage(
         imageView: ImageView,
         source: String?,
-        placeholderId: Int = R.drawable.ic_account_circle
+        placeholderId: Int = R.drawable.ic_account_circle,
+        skipCache: Boolean = false
     ) {
         loadImage(
             imageView = imageView,
             source = source,
             placeholderId = placeholderId,
             errorId = placeholderId,
-            isCircle = true
+            isCircle = true,
+            skipCache = skipCache
         )
     }
 
-    /**
-     * Get the cache directory for images
-     */
     fun getImageCacheDir(context: Context): File {
         val cacheDir = File(context.cacheDir, "images")
-        if (!cacheDir.exists()) {
-            cacheDir.mkdirs()
-        }
+        if (!cacheDir.exists()) cacheDir.mkdirs()
         return cacheDir
     }
 
-    /**
-     * Clear old cached images (older than CACHE_DURATION_DAYS)
-     */
     @Suppress("unused")
     fun clearOldCache(context: Context) {
         val cacheDir = getImageCacheDir(context)
         val now = System.currentTimeMillis()
         val maxAge = TimeUnit.DAYS.toMillis(CACHE_DURATION_DAYS)
-
         cacheDir.listFiles()?.forEach { file ->
-            if (now - file.lastModified() > maxAge) {
-                file.delete()
-            }
-        }
-    }
-
-    /**
-     * Delete a specific cached image
-     */
-    @Suppress("unused")
-    fun deleteCachedImage(filePath: String): Boolean {
-        return try {
-            File(filePath).delete()
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Get size of all cached images
-     */
-    @Suppress("unused")
-    fun getCacheSizeInMB(context: Context): Double {
-        val cacheDir = getImageCacheDir(context)
-        var sizeInBytes = 0L
-        cacheDir.listFiles()?.forEach { file ->
-            sizeInBytes += file.length()
-        }
-        return sizeInBytes / (1024.0 * 1024.0)
-    }
-
-    /**
-     * Clear all cached images
-     */
-    @Suppress("unused")
-    fun clearAllCache(context: Context) {
-        val cacheDir = getImageCacheDir(context)
-        cacheDir.listFiles()?.forEach { file ->
-            file.delete()
+            if (now - file.lastModified() > maxAge) file.delete()
         }
     }
 }
-

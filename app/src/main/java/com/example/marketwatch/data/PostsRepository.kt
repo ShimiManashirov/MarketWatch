@@ -1,6 +1,5 @@
 package com.example.marketwatch.data
 
-import android.net.Uri
 import android.util.Log
 import com.example.marketwatch.Post
 import com.example.marketwatch.data.local.AppDatabase
@@ -101,7 +100,10 @@ class PostsRepository(
         }
     }
 
-    suspend fun createPost(content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
+    /**
+     * Creates a new post with optional image bytes
+     */
+    suspend fun createPost(content: String, imageBytes: ByteArray?) = withContext(Dispatchers.IO) {
         val user = auth.currentUser ?: return@withContext
         val userId = user.uid
         
@@ -110,10 +112,10 @@ class PostsRepository(
         val profilePic = userDoc.getString("profilePictureUrl") ?: ""
 
         var uploadedImageUrl: String? = null
-        if (imageUri != null) {
+        if (imageBytes != null) {
             val fileName = "post_images/${UUID.randomUUID()}.jpg"
             val ref = storage.reference.child(fileName)
-            ref.putFile(imageUri).await()
+            ref.putBytes(imageBytes).await()
             uploadedImageUrl = ref.downloadUrl.await().toString()
         }
         
@@ -131,25 +133,19 @@ class PostsRepository(
         db.collection("posts").add(postData).await()
     }
 
-    suspend fun updatePost(postId: String, content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
-        var uploadedImageUrl: String? = null
-        if (imageUri != null && !imageUri.toString().startsWith("http")) {
-            val fileName = "post_images/${UUID.randomUUID()}.jpg"
-            val ref = storage.reference.child(fileName)
-            ref.putFile(imageUri).await()
-            uploadedImageUrl = ref.downloadUrl.await().toString()
-        } else if (imageUri != null) {
-            uploadedImageUrl = imageUri.toString()
+    suspend fun deletePost(postId: String) = withContext(Dispatchers.IO) {
+        // First get the post to see if it has an image to delete from storage
+        val doc = db.collection("posts").document(postId).get().await()
+        val imageUrl = doc.getString("imageUrl")
+        
+        if (!imageUrl.isNullOrEmpty() && imageUrl.contains("firebasestorage")) {
+            try {
+                storage.getReferenceFromUrl(imageUrl).delete().await()
+            } catch (e: Exception) {
+                Log.e("PostsRepository", "Failed to delete storage image", e)
+            }
         }
 
-        val updates = hashMapOf<String, Any>(
-            "content" to content,
-            "imageUrl" to (uploadedImageUrl ?: "")
-        )
-        db.collection("posts").document(postId).update(updates).await()
-    }
-
-    suspend fun deletePost(postId: String) = withContext(Dispatchers.IO) {
         db.collection("posts").document(postId).delete().await()
     }
 
