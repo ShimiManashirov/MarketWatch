@@ -21,7 +21,8 @@ import java.util.*
 class CommentAdapter(
     private var comments: List<Comment>,
     private val currentUserId: String?,
-    private val onDeleteClick: (Comment) -> Unit
+    private val onDeleteClick: (Comment) -> Unit,
+    private val onEditClick: (Comment) -> Unit = {}
 ) : RecyclerView.Adapter<CommentAdapter.CommentViewHolder>() {
 
     class CommentViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -30,6 +31,7 @@ class CommentAdapter(
         val timestamp: TextView = view.findViewById(R.id.tvCommentTimestamp)
         val content: TextView = view.findViewById(R.id.tvCommentContent)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteComment)
+        val btnEdit: ImageButton = view.findViewById(R.id.btnEditComment)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CommentViewHolder {
@@ -57,11 +59,14 @@ class CommentAdapter(
             holder.userImage.setImageResource(R.drawable.ic_account_circle)
         }
 
-        // Show delete button only for user's own comments
+        // Show edit/delete buttons only for user's own comments
         if (comment.userId == currentUserId) {
+            holder.btnEdit.visibility = View.VISIBLE
             holder.btnDelete.visibility = View.VISIBLE
+            holder.btnEdit.setOnClickListener { onEditClick(comment) }
             holder.btnDelete.setOnClickListener { onDeleteClick(comment) }
         } else {
+            holder.btnEdit.visibility = View.GONE
             holder.btnDelete.visibility = View.GONE
         }
     }

@@ -63,6 +63,20 @@
             tools:text="This is a premium comment content that fits the new design language." />
 
         <ImageButton
+            android:id="@+id/btnEditComment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@null"
+            android:src="@android:drawable/ic_menu_edit"
+            android:visibility="gone"
+            app:layout_constraintEnd_toStartOf="@id/btnDeleteComment"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="?attr/colorPrimary"
+            android:layout_marginEnd="@dimen/spacing_small"
+            tools:visibility="visible" />
+
+        <ImageButton
             android:id="@+id/btnDeleteComment"
             android:layout_width="24dp"
             android:layout_height="24dp"

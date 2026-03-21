@@ -85,6 +85,12 @@ class CommentRepository(
         }
     }
 
+    suspend fun editComment(postId: String, commentId: String, newContent: String) = withContext(Dispatchers.IO) {
+        db.collection("posts").document(postId)
+            .collection("comments").document(commentId)
+            .update("content", newContent).await()
+    }
+
     /**
      * Deletes a comment from a post.
      * Decrements the post's comment count.

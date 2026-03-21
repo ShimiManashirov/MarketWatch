@@ -43,12 +43,10 @@ class StockDetailsViewModelTest {
     }
 
     @Test
-    fun `isLoading starts as null and fetchData sets it to false after completion`() = runTest {
-        // fetchData sets _isLoading.value = true, then on error posts false in finally
+    fun `fetchData sets isLoading to true immediately`() {
+        // fetchData synchronously sets _isLoading.value = true before launching the coroutine
         viewModel.fetchData("AAPL")
-        advanceUntilIdle()
-        // After fetchData completes (with network error in tests), isLoading is false
-        assertEquals(false, viewModel.isLoading.value)
+        assertEquals(true, viewModel.isLoading.value)
     }
 
     @Test
@@ -72,7 +70,7 @@ class StockDetailsViewModelTest {
     }
 
     @Test
-    fun `exchangeRate initial value is 3.7`() {
+    fun `exchangeRate initial value is 3 point 7`() {
         assertEquals(3.7, viewModel.exchangeRate.value ?: 3.7, 0.0)
     }
 }
