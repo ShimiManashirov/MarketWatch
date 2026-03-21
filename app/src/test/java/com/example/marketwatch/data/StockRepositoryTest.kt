@@ -47,7 +47,7 @@ class StockRepositoryTest {
         `when`(collectionRef.document(anyString())).thenReturn(documentRef)
         `when`(documentRef.collection(anyString())).thenReturn(collectionRef)
         
-        repository = StockRepository()
+        repository = StockRepository(auth, db)
     }
 
     @Test

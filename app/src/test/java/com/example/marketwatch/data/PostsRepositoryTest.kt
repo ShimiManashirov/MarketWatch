@@ -6,6 +6,7 @@ import com.example.marketwatch.data.local.PostDao
 import com.example.marketwatch.data.local.PostEntity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -26,6 +27,8 @@ class PostsRepositoryTest {
     private lateinit var postDao: PostDao
     @Mock
     private lateinit var auth: FirebaseAuth
+    @Mock
+    private lateinit var storage: FirebaseStorage
 
     private lateinit var repository: PostsRepository
 
@@ -33,7 +36,7 @@ class PostsRepositoryTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         `when`(localDb.postDao()).thenReturn(postDao)
-        repository = PostsRepository(db, localDb, auth)
+        repository = PostsRepository(db, localDb, auth, storage)
     }
 
     @Test

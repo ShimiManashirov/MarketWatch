@@ -96,25 +96,25 @@ object ImageManager {
             return
         }
 
-        val picassoRequest = if (source.startsWith("http")) {
+        var request = if (source.startsWith("http")) {
             Picasso.get().load(source)
         } else {
             // It's a local file path
             Picasso.get().load(File(source))
         }
 
-        picassoRequest
+        request = request
             .placeholder(placeholderId)
             .error(errorId)
-            // Use explicit resize in pixels (avoid resizeDimen which expects resource ids)
-            .resize(400, 400)
+            .resize(1080, 1080)
+            .onlyScaleDown()
             .centerCrop()
 
         if (isCircle) {
-            picassoRequest.transform(CircleTransform())
+            request = request.transform(CircleTransform())
         }
 
-        picassoRequest.into(imageView)
+        request.into(imageView)
     }
 
     /**

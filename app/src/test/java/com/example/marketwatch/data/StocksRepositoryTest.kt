@@ -1,6 +1,8 @@
 package com.example.marketwatch.data
 
 import com.example.marketwatch.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -14,6 +16,10 @@ import retrofit2.Response
 class StocksRepositoryTest {
 
     @Mock
+    private lateinit var mockAuth: FirebaseAuth
+    @Mock
+    private lateinit var mockDb: FirebaseFirestore
+    @Mock
     private lateinit var mockApiService: FinnhubApiService
     @Mock
     private lateinit var mockQuoteCall: Call<StockQuote>
@@ -22,13 +28,12 @@ class StocksRepositoryTest {
     @Mock
     private lateinit var mockNewsCall: Call<List<StockNews>>
 
-    // The correct class name is StockRepository
     private lateinit var repository: StockRepository
 
     @Before
     fun setup() {
         MockitoAnnotations.openMocks(this)
-        repository = StockRepository()
+        repository = StockRepository(mockAuth, mockDb)
     }
 
     @Test
