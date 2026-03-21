@@ -3,6 +3,7 @@ package com.example.marketwatch
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import com.example.marketwatch.data.PostsRepository
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -15,6 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
 
@@ -62,8 +64,10 @@ class FeedViewModelTest {
         // Arrange
         val content = "New Post"
         
+        val mockContext = mock(Context::class.java)
+
         // Act
-        viewModel.createPost(content, null)
+        viewModel.createPost(mockContext, content, null)
         advanceUntilIdle()
 
         // Assert
