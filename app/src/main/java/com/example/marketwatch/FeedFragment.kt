@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +27,7 @@ import com.example.marketwatch.data.PostsRepository
 import com.example.marketwatch.data.local.AppDatabase
 import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.picasso.Picasso
@@ -49,15 +51,8 @@ class FeedFragment : Fragment() {
             selectedImageUri = result.data?.data
             dialogImageView?.let { imageView ->
                 try {
-                    if (selectedImageUri == null) {
-                        Log.e("FeedFragment", "Selected URI is null")
-                        Toast.makeText(context, "Failed to get image", Toast.LENGTH_SHORT).show()
-                        return@registerForActivityResult
-                    }
+                    if (selectedImageUri == null) return@registerForActivityResult
                     
-                    Log.d("FeedFragment", "Loading image from URI: $selectedImageUri")
-                    
-                    // Get bitmap using ImageDecoder (modern API)
                     val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, selectedImageUri!!))
                     } else {
@@ -65,39 +60,14 @@ class FeedFragment : Fragment() {
                         MediaStore.Images.Media.getBitmap(requireContext().contentResolver, selectedImageUri)
                     }
                     
-                    if (bitmap == null) {
-                        Log.e("FeedFragment", "Bitmap is null")
-                        Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
-                        return@registerForActivityResult
-                    }
-                    
-                    Log.d("FeedFragment", "Bitmap loaded: ${bitmap.width}x${bitmap.height}")
-                    
-                    // Save locally
-                    val savedPath = ImageManager.saveBitmapLocally(
-                        requireContext(), 
-                        bitmap, 
-                        "post_img_${System.currentTimeMillis()}.jpg"
-                    )
-                    Log.d("FeedFragment", "Image saved to: $savedPath")
-                    
-                    // Update URI to local path
+                    val savedPath = ImageManager.saveBitmapLocally(requireContext(), bitmap)
                     selectedImageUri = Uri.fromFile(File(savedPath))
                     
-                    // Display
                     imageView.visibility = View.VISIBLE
                     ImageManager.loadImage(imageView, savedPath, isCircle = false)
-                    Log.d("FeedFragment", "Image displayed successfully")
                     
-                } catch (e: SecurityException) {
-                    Log.e("FeedFragment", "Security Exception: ${e.message}")
-                    Toast.makeText(context, "Permission denied to access image", Toast.LENGTH_SHORT).show()
-                } catch (e: OutOfMemoryError) {
-                    Log.e("FeedFragment", "OutOfMemory: ${e.message}")
-                    Toast.makeText(context, "Image too large", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
-                    Log.e("FeedFragment", "Error loading image: ${e.message}", e)
-                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error loading image", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -181,7 +151,6 @@ class FeedFragment : Fragment() {
             message?.let {
                 Toast.makeText(context, it, Toast.LENGTH_LONG).show()
                 viewModel.clearError()
-                swipeRefreshLayout.isRefreshing = false
             }
         }
     }
@@ -189,37 +158,34 @@ class FeedFragment : Fragment() {
     private fun showCreatePostDialog() {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
-        val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
+        val addImageBtn = dialogView.findViewById<ImageButton>(R.id.dialogAddImageBtn)
+        val showUrlBtn = dialogView.findViewById<ImageButton>(R.id.dialogShowUrlBtn)
+        val urlInputLayout = dialogView.findViewById<TextInputLayout>(R.id.dialogUrlInputLayout)
         val imageUrlEditText = dialogView.findViewById<EditText>(R.id.dialogImageUrlEditText)
         dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
 
         selectedImageUri = null 
 
-        addImageBtn?.setOnClickListener {
-            try {
-                val intent = Intent(Intent.ACTION_PICK).apply { 
-                    type = "image/*"
-                    putExtra(Intent.EXTRA_LOCAL_ONLY, false)
-                }
-                pickImageLauncher.launch(intent)
-            } catch (e: Exception) {
-                Log.e("FeedFragment", "Error opening gallery: ${e.message}")
-                Toast.makeText(context, "Cannot access gallery: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        addImageBtn.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+            pickImageLauncher.launch(intent)
+        }
+
+        showUrlBtn.setOnClickListener {
+            urlInputLayout.visibility = if (urlInputLayout.visibility == View.GONE) View.VISIBLE else View.GONE
         }
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Create Post")
             .setView(dialogView)
             .setPositiveButton("Post") { _, _ ->
                 val content = postEditText.text.toString().trim()
-                val manualUrl = imageUrlEditText?.text?.toString()?.trim()
+                val manualUrl = imageUrlEditText.text.toString().trim()
                 
                 if (content.isNotEmpty()) {
-                    if (!manualUrl.isNullOrEmpty()) {
-                        viewModel.createPost(content, Uri.parse(manualUrl))
+                    if (manualUrl.isNotEmpty()) {
+                        viewModel.createPost(requireContext(), content, Uri.parse(manualUrl))
                     } else {
-                        viewModel.createPost(content, selectedImageUri)
+                        viewModel.createPost(requireContext(), content, selectedImageUri)
                     }
                 }
             }
@@ -230,19 +196,31 @@ class FeedFragment : Fragment() {
     private fun showEditPostDialog(post: Post) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_create_post, null)
         val postEditText = dialogView.findViewById<EditText>(R.id.dialogPostEditText)
-        val addImageBtn = dialogView.findViewById<View>(R.id.dialogAddImageBtn)
+        val addImageBtn = dialogView.findViewById<ImageButton>(R.id.dialogAddImageBtn)
+        val showUrlBtn = dialogView.findViewById<ImageButton>(R.id.dialogShowUrlBtn)
+        val urlInputLayout = dialogView.findViewById<TextInputLayout>(R.id.dialogUrlInputLayout)
+        val imageUrlEditText = dialogView.findViewById<EditText>(R.id.dialogImageUrlEditText)
         dialogImageView = dialogView.findViewById(R.id.dialogPostImageView)
         
         postEditText.setText(post.content)
-        selectedImageUri = post.imageUrl?.let { Uri.parse(it) }
-        if (selectedImageUri != null) {
+        
+        if (!post.imageUrl.isNullOrEmpty()) {
             dialogImageView?.visibility = View.VISIBLE
-            Picasso.get().load(selectedImageUri).into(dialogImageView!!)
+            Picasso.get().load(post.imageUrl).into(dialogImageView!!)
+            
+            if (post.imageUrl.startsWith("http")) {
+                urlInputLayout.visibility = View.VISIBLE
+                imageUrlEditText.setText(post.imageUrl)
+            }
         }
 
-        addImageBtn?.setOnClickListener {
+        addImageBtn.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
             pickImageLauncher.launch(intent)
+        }
+
+        showUrlBtn.setOnClickListener {
+            urlInputLayout.visibility = if (urlInputLayout.visibility == View.GONE) View.VISIBLE else View.GONE
         }
 
         AlertDialog.Builder(requireContext())
@@ -250,8 +228,11 @@ class FeedFragment : Fragment() {
             .setView(dialogView)
             .setPositiveButton("Update") { _, _ ->
                 val newContent = postEditText.text.toString().trim()
+                val manualUrl = imageUrlEditText.text.toString().trim()
+                
                 if (newContent.isNotEmpty()) {
-                    viewModel.updatePost(post.id, newContent, selectedImageUri)
+                    val finalUri = if (manualUrl.isNotEmpty()) Uri.parse(manualUrl) else selectedImageUri
+                    viewModel.updatePost(requireContext(), post.id, newContent, finalUri)
                 }
             }
             .setNegativeButton("Cancel", null)

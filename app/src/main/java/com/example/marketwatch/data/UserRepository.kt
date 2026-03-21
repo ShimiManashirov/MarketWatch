@@ -55,23 +55,41 @@ class UserRepository(
     suspend fun updateName(newName: String) = withContext(Dispatchers.IO) {
         val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("name", newName).await()
+        updateUserInfoInPosts(userId, newName, null)
     }
 
-    suspend fun updateProfilePicture(uri: Uri) = withContext(Dispatchers.IO) {
+    suspend fun uploadProfilePicture(imageBytes: ByteArray) = withContext(Dispatchers.IO) {
         val userId = auth.currentUser?.uid ?: return@withContext
-        
-        // Upload to Firebase Storage
-        val fileName = "profile_pics/$userId/${UUID.randomUUID()}.jpg"
+        val fileName = "profile_pics/$userId/profile.jpg"
         val ref = storage.reference.child(fileName)
-        ref.putFile(uri).await()
-        val downloadUrl = ref.downloadUrl.await().toString()
+        
+        ref.putBytes(imageBytes).await()
+        
+        // Add timestamp to URL to bust cache everywhere (Feed, Profile, etc.)
+        val downloadUrl = ref.downloadUrl.await().toString() + "?v=" + System.currentTimeMillis()
         
         db.collection("users").document(userId).update("profilePictureUrl", downloadUrl).await()
+        updateUserInfoInPosts(userId, null, downloadUrl)
     }
 
     suspend fun updateProfilePictureUrl(url: String) = withContext(Dispatchers.IO) {
         val userId = auth.currentUser?.uid ?: return@withContext
         db.collection("users").document(userId).update("profilePictureUrl", url).await()
+        updateUserInfoInPosts(userId, null, url)
+    }
+
+    private suspend fun updateUserInfoInPosts(userId: String, newName: String?, newProfilePic: String?) {
+        val postsQuery = db.collection("posts").whereEqualTo("userId", userId).get().await()
+        if (postsQuery.isEmpty) return
+
+        val batch = db.batch()
+        for (doc in postsQuery.documents) {
+            val updates = mutableMapOf<String, Any>()
+            if (newName != null) updates["userName"] = newName
+            if (newProfilePic != null) updates["userProfilePicture"] = newProfilePic
+            batch.update(doc.reference, updates)
+        }
+        batch.commit().await()
     }
 
     suspend fun updateCurrency(currencyCode: String) = withContext(Dispatchers.IO) {
@@ -87,26 +105,19 @@ class UserRepository(
     suspend fun resetWalletData() = withContext(Dispatchers.IO) {
         val userId = auth.currentUser?.uid ?: return@withContext
         val userRef = db.collection("users").document(userId)
-
         userRef.update("balance", 0.0).await()
 
         val watchlist = userRef.collection("watchlist").get().await()
-        for (doc in watchlist) {
-            doc.reference.delete().await()
-        }
+        for (doc in watchlist) doc.reference.delete().await()
 
         val transactions = userRef.collection("transactions").get().await()
-        for (doc in transactions) {
-            doc.reference.delete().await()
-        }
+        for (doc in transactions) doc.reference.delete().await()
     }
 
     suspend fun deleteAccount(password: String) = withContext(Dispatchers.IO) {
         val user = auth.currentUser ?: return@withContext
         val credential = EmailAuthProvider.getCredential(user.email!!, password)
-        
         user.reauthenticate(credential).await()
-        
         val userId = user.uid
         db.collection("users").document(userId).delete().await()
         user.delete().await()
@@ -115,7 +126,6 @@ class UserRepository(
     suspend fun updatePassword(currentPwd: String, newPwd: String) = withContext(Dispatchers.IO) {
         val user = auth.currentUser ?: return@withContext
         val credential = EmailAuthProvider.getCredential(user.email!!, currentPwd)
-        
         user.reauthenticate(credential).await()
         user.updatePassword(newPwd).await()
     }

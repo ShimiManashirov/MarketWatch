@@ -5,13 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:colorBackground"
+    android:fillViewport="true"
     tools:context=".ProfileFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/spacing_medium">
+        android:paddingStart="@dimen/spacing_medium"
+        android:paddingEnd="@dimen/spacing_medium"
+        android:paddingTop="@dimen/spacing_medium"
+        android:clipToPadding="false">
 
         <!-- Profile Header Section -->
         <LinearLayout
@@ -157,7 +161,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- Currency Row -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="72dp">
@@ -194,7 +197,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="56dp" />
 
-                <!-- Timezone Row -->
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="72dp">
@@ -250,12 +252,20 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Danger Zone -->
+        <!-- Danger Zone Section -->
+        <TextView
+            style="@style/TextAppearance.MarketWatch.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_xs"
+            android:layout_marginBottom="@dimen/spacing_small"
+            android:text="DANGER ZONE"
+            android:textColor="?attr/colorError" />
+
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.MarketWatch.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="100dp"
             app:cardElevation="0dp"
             app:strokeColor="?attr/colorError"
             app:strokeWidth="1dp">
@@ -273,6 +283,11 @@
                 app:iconPadding="@dimen/spacing_medium"
                 app:iconTint="?attr/colorError" />
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- Spacer to ensure content is above Bottom Navigation -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="120dp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

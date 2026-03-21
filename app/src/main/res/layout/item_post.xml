@@ -58,11 +58,14 @@
                     tools:text="2 HOURS AGO" />
             </LinearLayout>
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/postMenuButton"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/presence_offline"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_more"
+                android:padding="8dp"
+                android:contentDescription="Post menu"
                 app:tint="?attr/colorOutline" />
         </LinearLayout>
 
