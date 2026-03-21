@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.TextView
@@ -12,10 +13,6 @@ import com.squareup.picasso.Picasso
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * Adapter for the community feed.
- * Handles display of posts including user info, content, images, and interactions.
- */
 class PostsAdapter(
     private val posts: List<Post>,
     private val currentUserId: String?,
@@ -48,46 +45,38 @@ class PostsAdapter(
         val post = posts[position]
         
         holder.userName.text = if (post.userName.isNotBlank()) post.userName else "Anonymous"
-        holder.content.text = if (post.content.isNotBlank()) post.content else "(No content)"
+        holder.content.text = post.content
         
-        val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.US)
+        val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
         holder.timestamp.text = post.timestamp?.toDate()?.let { sdf.format(it).uppercase() } ?: "JUST NOW"
 
-        holder.menuButton.setOnClickListener { view ->
-            showPopupMenu(view, post)
-        }
-
-        val profilePic = if (post.userProfilePicture.isNotBlank()) post.userProfilePicture else null
-        Picasso.get()
-            .load(profilePic)
-            .placeholder(R.drawable.ic_account_circle)
-            .error(R.drawable.ic_account_circle)
-            .transform(CircleTransform())
-            .into(holder.userImage)
+        ImageManager.loadProfileImage(holder.userImage, post.userProfilePicture)
 
         if (!post.imageUrl.isNullOrEmpty()) {
             holder.postImageCard.visibility = View.VISIBLE
-            Picasso.get().load(post.imageUrl).into(holder.postImage)
+            ImageManager.loadImage(holder.postImage, post.imageUrl, isCircle = false)
         } else {
             holder.postImageCard.visibility = View.GONE
         }
 
         val isLiked = currentUserId != null && post.likes.contains(currentUserId)
         holder.btnLike.setImageResource(if (isLiked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off)
+        holder.btnLike.setColorFilter(if (isLiked) Color.parseColor("#E91E63") else Color.parseColor("#8E8E93"))
         
-        if (isLiked) {
-            holder.btnLike.setColorFilter(Color.parseColor("#B71C1C"))
-        } else {
-            holder.btnLike.setColorFilter(Color.parseColor("#8E8E93"))
+        holder.tvLikeCount.text = post.likes.size.toString()
+        
+        holder.btnLike.setOnClickListener {
+            // Animation for Like
+            it.animate().scaleX(1.3f).scaleY(1.3f).setDuration(100).withEndAction {
+                it.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+            }.start()
+            onLikeClick(post)
         }
 
-        holder.tvLikeCount.text = "${post.likes.size} LIKES"
-        holder.btnLike.setOnClickListener { onLikeClick(post) }
-
-        // Display comment count
-        val commentText = if (post.commentsCount == 1) "1 Comment" else "${post.commentsCount} Comments"
-        holder.tvCommentCount.text = commentText
+        holder.tvCommentCount.text = post.commentsCount.toString()
         holder.btnComment.setOnClickListener { onCommentClick(post) }
+        
+        holder.menuButton.setOnClickListener { showPopupMenu(it, post) }
     }
 
     private fun showPopupMenu(view: View, post: Post) {

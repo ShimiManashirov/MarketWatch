@@ -1,16 +1,19 @@
 package com.example.marketwatch
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.marketwatch.data.ImgurRepository
 import com.example.marketwatch.data.UserRepository
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
 
+    private val imgurRepository = ImgurRepository()
     val userProfile: LiveData<User?> = repository.getUserProfile().asLiveData()
 
     private val _isLoading = MutableLiveData<Boolean>()
@@ -30,6 +33,28 @@ class ProfileViewModel(private val repository: UserRepository) : ViewModel() {
                 _successMessage.value = "Name updated successfully"
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update name"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Uploads image to Imgur (Free, no credit card required)
+     */
+    fun uploadProfilePictureToImgur(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val uploadedUrl = imgurRepository.uploadImage(context, uri)
+                if (uploadedUrl != null) {
+                    repository.updateProfilePictureUrl(uploadedUrl)
+                    _successMessage.value = "Profile picture uploaded to Imgur!"
+                } else {
+                    _errorMessage.value = "Failed to upload to Imgur"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error: ${e.message}"
             } finally {
                 _isLoading.value = false
             }

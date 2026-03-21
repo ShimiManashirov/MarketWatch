@@ -78,9 +78,6 @@ class PostsRepository(
         awaitClose { listener.remove() }
     }
 
-    /**
-     * Fetches a single post by its ID from Firestore.
-     */
     suspend fun getPostById(postId: String): Post? = withContext(Dispatchers.IO) {
         try {
             val doc = db.collection("posts").document(postId).get().await()

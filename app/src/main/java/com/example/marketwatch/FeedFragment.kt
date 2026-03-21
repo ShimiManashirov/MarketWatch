@@ -2,8 +2,12 @@ package com.example.marketwatch
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +29,7 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.squareup.picasso.Picasso
+import java.io.File
 
 class FeedFragment : Fragment() {
 
@@ -42,9 +47,58 @@ class FeedFragment : Fragment() {
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             selectedImageUri = result.data?.data
-            dialogImageView?.let {
-                it.visibility = View.VISIBLE
-                Picasso.get().load(selectedImageUri).into(it)
+            dialogImageView?.let { imageView ->
+                try {
+                    if (selectedImageUri == null) {
+                        Log.e("FeedFragment", "Selected URI is null")
+                        Toast.makeText(context, "Failed to get image", Toast.LENGTH_SHORT).show()
+                        return@registerForActivityResult
+                    }
+                    
+                    Log.d("FeedFragment", "Loading image from URI: $selectedImageUri")
+                    
+                    // Get bitmap using ImageDecoder (modern API)
+                    val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, selectedImageUri!!))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(requireContext().contentResolver, selectedImageUri)
+                    }
+                    
+                    if (bitmap == null) {
+                        Log.e("FeedFragment", "Bitmap is null")
+                        Toast.makeText(context, "Failed to load image", Toast.LENGTH_SHORT).show()
+                        return@registerForActivityResult
+                    }
+                    
+                    Log.d("FeedFragment", "Bitmap loaded: ${bitmap.width}x${bitmap.height}")
+                    
+                    // Save locally
+                    val savedPath = ImageManager.saveBitmapLocally(
+                        requireContext(), 
+                        bitmap, 
+                        "post_img_${System.currentTimeMillis()}.jpg"
+                    )
+                    Log.d("FeedFragment", "Image saved to: $savedPath")
+                    
+                    // Update URI to local path
+                    selectedImageUri = Uri.fromFile(File(savedPath))
+                    
+                    // Display
+                    imageView.visibility = View.VISIBLE
+                    ImageManager.loadImage(imageView, savedPath, isCircle = false)
+                    Log.d("FeedFragment", "Image displayed successfully")
+                    
+                } catch (e: SecurityException) {
+                    Log.e("FeedFragment", "Security Exception: ${e.message}")
+                    Toast.makeText(context, "Permission denied to access image", Toast.LENGTH_SHORT).show()
+                } catch (e: OutOfMemoryError) {
+                    Log.e("FeedFragment", "OutOfMemory: ${e.message}")
+                    Toast.makeText(context, "Image too large", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Log.e("FeedFragment", "Error loading image: ${e.message}", e)
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -142,8 +196,16 @@ class FeedFragment : Fragment() {
         selectedImageUri = null 
 
         addImageBtn?.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
-            pickImageLauncher.launch(intent)
+            try {
+                val intent = Intent(Intent.ACTION_PICK).apply { 
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_LOCAL_ONLY, false)
+                }
+                pickImageLauncher.launch(intent)
+            } catch (e: Exception) {
+                Log.e("FeedFragment", "Error opening gallery: ${e.message}")
+                Toast.makeText(context, "Cannot access gallery: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
 
         AlertDialog.Builder(requireContext())

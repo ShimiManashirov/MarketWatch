@@ -1,0 +1,35 @@
+name: Auto-merge when labeled
+
+on:
+  pull_request_target:
+    types: [labeled, unlabeled]
+
+jobs:
+  enable-automerge:
+    if: ${{ github.event.action == 'labeled' && github.event.label.name == 'automerge' }}
+    permissions:
+      pull-requests: write
+      checks: read
+      contents: read
+      issues: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable GitHub auto-merge for this PR
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          merge-method: squash
+
+  disable-automerge:
+    if: ${{ github.event.action == 'unlabeled' && github.event.label.name == 'automerge' }}
+    permissions:
+      pull-requests: write
+      checks: read
+      contents: read
+      issues: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable GitHub auto-merge for this PR
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          enable: false
+
