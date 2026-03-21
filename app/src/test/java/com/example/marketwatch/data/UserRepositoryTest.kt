@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -26,6 +27,8 @@ class UserRepositoryTest {
     private lateinit var collectionRef: CollectionReference
     @Mock
     private lateinit var documentRef: DocumentReference
+    @Mock
+    private lateinit var storage: FirebaseStorage
 
     private lateinit var repository: UserRepository
 
@@ -34,12 +37,12 @@ class UserRepositoryTest {
         MockitoAnnotations.openMocks(this)
         `when`(auth.currentUser).thenReturn(user)
         `when`(user.uid).thenReturn("test_user_id")
-        
+
         // Mocking Firestore structure
         `when`(db.collection(anyString())).thenReturn(collectionRef)
         `when`(collectionRef.document(anyString())).thenReturn(documentRef)
-        
-        repository = UserRepository(db, auth)
+
+        repository = UserRepository(db, auth, storage)
     }
 
     @Test

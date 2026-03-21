@@ -60,7 +60,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_add"
             android:contentDescription="Add image"
-            android:tint="?attr/colorOnSurface" />
+            app:tint="?attr/colorOnSurface" />
 
         <ImageView
             android:id="@+id/dialogPostImageView"

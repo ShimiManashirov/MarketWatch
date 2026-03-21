@@ -31,8 +31,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.marketwatch.data.NewsRepository
 import com.example.marketwatch.data.local.AppDatabase
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.squareup.picasso.Picasso
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
@@ -110,15 +108,7 @@ class StockDetailsFragment : Fragment() {
 
     private fun initViews(view: View) {
         val toolbar = view.findViewById<Toolbar>(R.id.stockDetailsToolbar)
-        val collapsingToolbar = view.findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbar)
-        val appBarLayout = view.findViewById<AppBarLayout>(R.id.appBarLayout)
-        
         toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
-        
-        appBarLayout.addOnOffsetChangedListener { appBar, verticalOffset ->
-            val isCollapsed = Math.abs(verticalOffset) >= appBar.totalScrollRange
-            collapsingToolbar.title = if (isCollapsed) symbol else ""
-        }
 
         shimmerLayout = view.findViewById(R.id.stockDetailsShimmer)
         contentView = view.findViewById(R.id.stockDetailsContent)
