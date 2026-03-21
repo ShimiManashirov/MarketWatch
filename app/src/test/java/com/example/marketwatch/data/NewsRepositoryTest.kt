@@ -13,6 +13,8 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.any as kAny
+import org.mockito.kotlin.verify as kVerify
 
 class NewsRepositoryTest {
 
@@ -54,7 +56,7 @@ class NewsRepositoryTest {
         
         repository.addBookmark(news)
 
-        verify(bookmarkDao).insertBookmark(any())
+        kVerify(bookmarkDao).insertBookmark(kAny())
     }
 
     @Test
@@ -63,7 +65,7 @@ class NewsRepositoryTest {
         
         repository.removeBookmark(newsId)
 
-        verify(bookmarkDao).deleteBookmark(newsId)
+        kVerify(bookmarkDao).deleteBookmark(newsId)
     }
 
     @Test

@@ -13,8 +13,9 @@ import kotlinx.coroutines.launch
  * ViewModel for the Stock Details screen.
  * Handles fetching real-time quotes, historical chart data, news, and company profiles.
  */
-class StockDetailsViewModel : ViewModel() {
-    private val repository = StockRepository()
+class StockDetailsViewModel(
+    private val repository: StockRepository = StockRepository()
+) : ViewModel() {
 
     private val _stockStatus = MutableLiveData<PortfolioItem?>()
     val stockStatus: LiveData<PortfolioItem?> = _stockStatus

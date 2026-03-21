@@ -14,6 +14,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.verify as kVerify
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
@@ -37,6 +38,8 @@ class ProfileViewModelTest {
         `when`(repository.getUserProfile()).thenReturn(flowOf(mockUser))
         
         viewModel = ProfileViewModel(repository)
+        // Start collecting LiveData from asLiveData() by registering an observer
+        viewModel.userProfile.observeForever { }
     }
 
     @After
@@ -56,7 +59,7 @@ class ProfileViewModelTest {
         val newName = "Jane Doe"
         viewModel.updateName(newName)
         advanceUntilIdle()
-        verify(repository).updateName(newName)
+        kVerify(repository).updateName(newName)
         assertEquals("Name updated successfully", viewModel.successMessage.value)
         assertEquals(false, viewModel.isLoading.value)
     }
@@ -75,7 +78,7 @@ class ProfileViewModelTest {
         val url = "https://example.com/pic.jpg"
         viewModel.updateProfilePictureUrl(url)
         advanceUntilIdle()
-        verify(repository).updateProfilePictureUrl(url)
+        kVerify(repository).updateProfilePictureUrl(url)
         assertEquals("Profile picture updated", viewModel.successMessage.value)
     }
 
@@ -93,7 +96,7 @@ class ProfileViewModelTest {
         val currency = "ILS"
         viewModel.updateCurrency(currency)
         advanceUntilIdle()
-        verify(repository).updateCurrency(currency)
+        kVerify(repository).updateCurrency(currency)
         assertEquals("Currency updated to ILS", viewModel.successMessage.value)
     }
 
@@ -110,7 +113,7 @@ class ProfileViewModelTest {
         val tz = "Asia/Jerusalem"
         viewModel.updateTimezone(tz)
         advanceUntilIdle()
-        verify(repository).updateTimezone(tz)
+        kVerify(repository).updateTimezone(tz)
         assertEquals("Timezone updated", viewModel.successMessage.value)
     }
 
@@ -126,7 +129,7 @@ class ProfileViewModelTest {
     fun `resetWalletData success updates message`() = runTest {
         viewModel.resetWalletData()
         advanceUntilIdle()
-        verify(repository).resetWalletData()
+        kVerify(repository).resetWalletData()
         assertEquals("Wallet data reset successfully", viewModel.successMessage.value)
     }
 
@@ -143,7 +146,7 @@ class ProfileViewModelTest {
         val pass = "password"
         viewModel.deleteAccount(pass)
         advanceUntilIdle()
-        verify(repository).deleteAccount(pass)
+        kVerify(repository).deleteAccount(pass)
         assertEquals("Account deleted", viewModel.successMessage.value)
     }
 
@@ -162,7 +165,7 @@ class ProfileViewModelTest {
         val new = "new"
         viewModel.updatePassword(old, new)
         advanceUntilIdle()
-        verify(repository).updatePassword(old, new)
+        kVerify(repository).updatePassword(old, new)
         assertEquals("Password updated successfully", viewModel.successMessage.value)
     }
 

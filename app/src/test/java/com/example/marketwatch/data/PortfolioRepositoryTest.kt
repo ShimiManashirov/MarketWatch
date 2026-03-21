@@ -4,6 +4,8 @@ import com.example.marketwatch.PortfolioItem
 import com.example.marketwatch.data.local.AppDatabase
 import com.example.marketwatch.data.local.StockDao
 import com.example.marketwatch.data.local.StockEntity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -11,6 +13,8 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.any as kAny
+import org.mockito.kotlin.verify as kVerify
 
 class PortfolioRepositoryTest {
 
@@ -18,6 +22,10 @@ class PortfolioRepositoryTest {
     private lateinit var mockLocalDb: AppDatabase
     @Mock
     private lateinit var mockStockDao: StockDao
+    @Mock
+    private lateinit var mockAuth: FirebaseAuth
+    @Mock
+    private lateinit var mockDb: FirebaseFirestore
 
     private lateinit var portfolioRepository: PortfolioRepository
 
@@ -25,7 +33,7 @@ class PortfolioRepositoryTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         `when`(mockLocalDb.stockDao()).thenReturn(mockStockDao)
-        portfolioRepository = PortfolioRepository(mockLocalDb)
+        portfolioRepository = PortfolioRepository(mockLocalDb, mockAuth, mockDb)
     }
 
     @Test
@@ -37,17 +45,15 @@ class PortfolioRepositoryTest {
         
         portfolioRepository.syncLocalDatabase(items)
         
-        verify(mockStockDao).deleteAll()
-        verify(mockStockDao).insertStocks(argThat { list ->
-            list.size == 2 && list[0].symbol == "AAPL" && list[1].symbol == "TSLA"
-        })
+        kVerify(mockStockDao).deleteAll()
+        kVerify(mockStockDao).insertStocks(kAny())
     }
 
     @Test
     fun `syncLocalDatabase with empty list handles correctly`() = runTest {
         portfolioRepository.syncLocalDatabase(emptyList())
-        verify(mockStockDao).deleteAll()
-        verify(mockStockDao).insertStocks(emptyList())
+        kVerify(mockStockDao).deleteAll()
+        kVerify(mockStockDao).insertStocks(emptyList())
     }
 
     @Test

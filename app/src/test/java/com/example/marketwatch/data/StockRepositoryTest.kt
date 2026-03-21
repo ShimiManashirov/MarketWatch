@@ -1,6 +1,7 @@
 package com.example.marketwatch.data
 
 import com.example.marketwatch.*
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.*
@@ -46,7 +47,9 @@ class StockRepositoryTest {
         `when`(db.collection(anyString())).thenReturn(collectionRef)
         `when`(collectionRef.document(anyString())).thenReturn(documentRef)
         `when`(documentRef.collection(anyString())).thenReturn(collectionRef)
-        
+        `when`(documentRef.set(any(Object::class.java), any(SetOptions::class.java))).thenReturn(Tasks.forResult(null))
+        `when`(documentRef.update(any(Map::class.java))).thenReturn(Tasks.forResult(null))
+
         repository = StockRepository(auth, db)
     }
 
@@ -99,7 +102,8 @@ class StockRepositoryTest {
     @Test
     fun `toggleFavorite updates Firestore logic`() = runTest {
         val symbol = "AAPL"
-        repository.toggleFavorite(symbol, "Apple", true, 0.0)
+        // currentState=false → newState=true → goes to set() branch (not get())
+        repository.toggleFavorite(symbol, "Apple", false, 0.0)
         verify(collectionRef).document(symbol)
     }
 

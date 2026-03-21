@@ -10,10 +10,11 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-class PortfolioRepository(private val localDb: AppDatabase) {
-
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+class PortfolioRepository(
+    private val localDb: AppDatabase,
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+) {
 
     fun getPortfolioUpdates(): Flow<List<PortfolioItem>> = callbackFlow {
         val userId = auth.currentUser?.uid
