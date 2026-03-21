@@ -3,6 +3,7 @@ package com.example.marketwatch.data
 import com.example.marketwatch.Comment
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.Dispatchers
@@ -75,13 +76,13 @@ class CommentRepository(
         val postRef = db.collection("posts").document(postId)
         val commentRef = postRef.collection("comments").document()
 
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(postRef)
-            val currentCount = snapshot.getLong("commentsCount") ?: 0L
-            
-            transaction.set(commentRef, commentData)
-            transaction.update(postRef, "commentsCount", currentCount + 1)
-        }.await()
+        commentRef.set(commentData).await()
+
+        try {
+            postRef.update("commentsCount", FieldValue.increment(1)).await()
+        } catch (e: Exception) {
+            // commentsCount update may be restricted by security rules for non-owners — non-critical
+        }
     }
 
     /**
@@ -92,14 +93,12 @@ class CommentRepository(
         val postRef = db.collection("posts").document(postId)
         val commentRef = postRef.collection("comments").document(commentId)
 
-        db.runTransaction { transaction ->
-            val snapshot = transaction.get(postRef)
-            val currentCount = snapshot.getLong("commentsCount") ?: 0L
-            
-            transaction.delete(commentRef)
-            if (currentCount > 0) {
-                transaction.update(postRef, "commentsCount", currentCount - 1)
-            }
-        }.await()
+        commentRef.delete().await()
+
+        try {
+            postRef.update("commentsCount", FieldValue.increment(-1)).await()
+        } catch (e: Exception) {
+            // commentsCount update may be restricted by security rules — non-critical
+        }
     }
 }
