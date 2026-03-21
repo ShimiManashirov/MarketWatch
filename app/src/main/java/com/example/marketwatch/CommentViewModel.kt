@@ -53,6 +53,16 @@ class CommentViewModel(private val repository: CommentRepository) : ViewModel() 
         }
     }
 
+    fun editComment(comment: Comment, newContent: String) {
+        viewModelScope.launch {
+            try {
+                repository.editComment(comment.postId, comment.id, newContent)
+            } catch (e: Exception) {
+                _error.value = "Failed to edit comment"
+            }
+        }
+    }
+
     /**
      * Deletes a comment.
      */

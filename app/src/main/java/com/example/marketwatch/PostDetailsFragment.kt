@@ -10,6 +10,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -78,10 +79,10 @@ class PostDetailsFragment : Fragment() {
         
         adapter = CommentAdapter(
             emptyList(),
-            FirebaseAuth.getInstance().currentUser?.uid
-        ) { comment ->
-            commentViewModel.deleteComment(comment)
-        }
+            FirebaseAuth.getInstance().currentUser?.uid,
+            onDeleteClick = { comment -> commentViewModel.deleteComment(comment) },
+            onEditClick = { comment -> showEditCommentDialog(comment) }
+        )
         rvComments?.adapter = adapter
 
         // Fix: Use generic EditText to prevent ClassCastException
@@ -110,6 +111,24 @@ class PostDetailsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showEditCommentDialog(comment: Comment) {
+        val editText = EditText(requireContext()).apply {
+            setText(comment.content)
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Comment")
+            .setView(editText)
+            .setPositiveButton("Save") { _, _ ->
+                val newContent = editText.text.toString().trim()
+                if (newContent.isNotEmpty()) {
+                    commentViewModel.editComment(comment, newContent)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun loadPostDetails(view: View) {
