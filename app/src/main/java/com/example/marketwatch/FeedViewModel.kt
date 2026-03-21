@@ -74,22 +74,19 @@ class FeedViewModel(private val repository: PostsRepository) : ViewModel() {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                
-                // Note: For simplicity, we use the same create logic. 
-                // In a real app, you might want a specific update logic in repository.
-                // For now, let's keep it consistent with the Fragment's expectations.
-                
+
                 var imageBytes: ByteArray? = null
-                // Only compress if it's a new local URI (doesn't start with http)
-                if (imageUri != null && !imageUri.toString().startsWith("http")) {
-                    imageBytes = ImageManager.uriToCompressedBytes(context, imageUri)
+                var existingImageUrl: String? = null
+
+                if (imageUri != null) {
+                    if (imageUri.toString().startsWith("http")) {
+                        existingImageUrl = imageUri.toString()
+                    } else {
+                        imageBytes = ImageManager.uriToCompressedBytes(context, imageUri)
+                    }
                 }
-                
-                // If it's a remote URL, we might need a different repository method.
-                // Let's assume for now we just want to fix the compilation error.
-                // repository.updatePost(postId, content, imageUri) // Original call
-                
-                // I will add updatePost back to Repository to be safe.
+
+                repository.updatePost(postId, content, imageBytes, existingImageUrl)
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update post"
             } finally {

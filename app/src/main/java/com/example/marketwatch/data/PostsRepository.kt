@@ -133,6 +133,23 @@ class PostsRepository(
         db.collection("posts").add(postData).await()
     }
 
+    suspend fun updatePost(postId: String, content: String, imageBytes: ByteArray?, existingImageUrl: String?) = withContext(Dispatchers.IO) {
+        var finalImageUrl: String? = existingImageUrl
+
+        if (imageBytes != null) {
+            val fileName = "post_images/${UUID.randomUUID()}.jpg"
+            val ref = storage.reference.child(fileName)
+            ref.putBytes(imageBytes).await()
+            finalImageUrl = ref.downloadUrl.await().toString()
+        }
+
+        val updates = hashMapOf<String, Any?>(
+            "content" to content,
+            "imageUrl" to finalImageUrl
+        )
+        db.collection("posts").document(postId).update(updates).await()
+    }
+
     suspend fun deletePost(postId: String) = withContext(Dispatchers.IO) {
         // First get the post to see if it has an image to delete from storage
         val doc = db.collection("posts").document(postId).get().await()

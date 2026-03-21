@@ -25,20 +25,40 @@ class AuthRepository(
         try {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = result.user?.uid ?: return@withContext Result.failure(Exception("User ID is null"))
-            
+
+            val randomAvatar = AVATAR_URLS.random()
+
             val userMap = hashMapOf(
                 "name" to name,
                 "email" to email,
-                "balance" to 10000.0, // Initial balance for new users
+                "balance" to 10000.0,
                 "currency" to "USD",
-                "timezone" to "UTC"
+                "timezone" to "UTC",
+                "profilePictureUrl" to randomAvatar
             )
-            
+
             db.collection("users").document(userId).set(userMap).await()
             Result.success(result.user)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    companion object {
+        private val AVATAR_URLS = listOf(
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Felix",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Aneka",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Boo",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Jasper",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Lucky",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Luna",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Max",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Milo",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Oliver",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Jack",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Toby",
+            "https://api.dicebear.com/7.x/avataaars/png?seed=Bella"
+        )
     }
 
     fun signOut() {
