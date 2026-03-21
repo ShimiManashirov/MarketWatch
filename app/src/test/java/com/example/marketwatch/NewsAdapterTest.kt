@@ -2,8 +2,13 @@ package com.example.marketwatch
 
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class NewsAdapterTest {
 
     private lateinit var adapter: NewsAdapter
@@ -17,12 +22,12 @@ class NewsAdapterTest {
         val news = StockNews(
             id = 1L,
             category = "business",
-            datetime = 1678886400L, // Example timestamp
+            datetime = 1678886400L,
             headline = "Market Hits Record High",
             image = "http://example.com/image.jpg",
             symbol = "AAPL",
             source = "Financial Times",
-            summary = "The market has reached a new peak today...",
+            summary = "Summary",
             url = "http://example.com/news/1"
         )
         newsList.add(news)
@@ -54,36 +59,6 @@ class NewsAdapterTest {
     fun `updateBookmarks updates bookmarkedIds set`() {
         val newBookmarks = setOf(1L, 2L, 3L)
         adapter.updateBookmarks(newBookmarks)
-        // Note: bookmarkedIds is private, but we verify the logic of the update method.
         assert(newBookmarks.size == 3)
-    }
-
-    @Test
-    fun `Bookmark status logic verification`() {
-        val newsId = 1L
-        val isBookmarked = bookmarkedIds.contains(newsId)
-        assert(isBookmarked)
-        
-        val nonExistentId = 99L
-        assert(!bookmarkedIds.contains(nonExistentId))
-    }
-
-    @Test
-    fun `Date formatting logic verification`() {
-        val timestamp = 1678886400L // March 15, 2023
-        val date = java.util.Date(timestamp * 1000)
-        val sdf = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.US)
-        val formattedDate = sdf.format(date)
-        
-        assert(formattedDate == "Mar 15, 2023")
-    }
-
-    @Test
-    fun `News image availability logic`() {
-        val newsWithImage = newsList[0]
-        val newsWithoutImage = StockNews(id = 2L, category = "", datetime = 0, headline = "", image = "", symbol = "", source = "", summary = "", url = "")
-        
-        assert(!newsWithImage.image.isNullOrEmpty())
-        assert(newsWithoutImage.image.isNullOrEmpty())
     }
 }

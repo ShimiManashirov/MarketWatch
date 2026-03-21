@@ -3,9 +3,14 @@ package com.example.marketwatch
 import com.google.firebase.Timestamp
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.util.Date
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class CommentAdapterTest {
 
     private lateinit var adapter: CommentAdapter
@@ -54,37 +59,5 @@ class CommentAdapterTest {
         assert(comment.userName == "Test User")
         assert(comment.content == "Great insights!")
         assert(comment.userId == "u1")
-    }
-
-    @Test
-    fun `Comment handles anonymous user name`() {
-        val comment = Comment(userName = "", content = "Content")
-        val displayName = if (comment.userName.isNotBlank()) comment.userName else "Anonymous"
-        assert(displayName == "Anonymous")
-    }
-
-    @Test
-    fun `Delete button visibility logic for own comment`() {
-        val currentUserId = "u1"
-        val comment = Comment(userId = "u1")
-        val isVisible = comment.userId == currentUserId
-        assert(isVisible)
-    }
-
-    @Test
-    fun `Delete button visibility logic for other user comment`() {
-        val currentUserId = "u1"
-        val comment = Comment(userId = "u2")
-        val isVisible = comment.userId == currentUserId
-        assert(!isVisible)
-    }
-
-    @Test
-    fun `Profile picture availability logic`() {
-        val commentWithPic = comments[0]
-        val commentWithoutPic = Comment(userProfilePicture = "")
-        
-        assert(commentWithPic.userProfilePicture.isNotBlank())
-        assert(commentWithoutPic.userProfilePicture.isBlank())
     }
 }

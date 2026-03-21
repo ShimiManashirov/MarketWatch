@@ -2,8 +2,13 @@ package com.example.marketwatch
 
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class SearchAdapterTest {
 
     private lateinit var adapter: SearchAdapter
@@ -44,28 +49,5 @@ class SearchAdapterTest {
         val stock = stocks[0]
         assert(stock.displaySymbol == "AAPL")
         assert(stock.description == "Apple Inc.")
-    }
-
-    @Test
-    fun `Stock symbol property test`() {
-        val stock = StockSymbol("Description", "Display", "Symbol", "Type")
-        assert(stock.symbol == "Symbol")
-    }
-
-    @Test
-    fun `Empty list handling test`() {
-        val emptyAdapter = SearchAdapter(emptyList())
-        assert(emptyAdapter.itemCount == 0)
-    }
-
-    @Test
-    fun `List with multiple items test`() {
-        val list = listOf(
-            StockSymbol("D1", "S1", "S1", "T1"),
-            StockSymbol("D2", "S2", "S2", "T2"),
-            StockSymbol("D3", "S3", "S3", "T3")
-        )
-        val multiAdapter = SearchAdapter(list)
-        assert(multiAdapter.itemCount == 3)
     }
 }

@@ -15,10 +15,10 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
-class StockRepository {
-    private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
-
+class StockRepository(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+) {
     fun getStockStatus(symbol: String): Flow<PortfolioItem?> = callbackFlow {
         val userId = auth.currentUser?.uid ?: return@callbackFlow
         val registration = db.collection("users").document(userId)
@@ -121,9 +121,6 @@ class StockRepository {
         FinnhubApiClient.apiService.getStockNews(symbol, from, to, FinnhubApiClient.API_KEY).execute()
     }
 
-    /**
-     * Fetches historical data using AlphaVantage for better chart reliability.
-     */
     suspend fun getHistoricalDataAlpha(symbol: String): List<Double> = withContext(Dispatchers.IO) {
         try {
             val response = AlphaVantageApiClient.apiService.getDailySeries(symbol = symbol, apiKey = AlphaVantageApiClient.API_KEY).execute()

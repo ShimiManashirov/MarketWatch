@@ -22,9 +22,9 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 class PostsRepository(
-    private val db: FirebaseFirestore,
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
     private val localDb: AppDatabase,
-    private val auth: FirebaseAuth,
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 ) {
 
@@ -132,14 +132,6 @@ class PostsRepository(
     }
 
     suspend fun updatePost(postId: String, content: String, imageUri: Uri?) = withContext(Dispatchers.IO) {
-        val user = auth.currentUser ?: return@withContext
-        val userId = user.uid
-        
-        // Fetch latest user info to sync with the updated post
-        val userDoc = db.collection("users").document(userId).get().await()
-        val userName = userDoc.getString("name") ?: "Unknown User"
-        val profilePic = userDoc.getString("profilePictureUrl") ?: ""
-
         var uploadedImageUrl: String? = null
         if (imageUri != null && !imageUri.toString().startsWith("http")) {
             val fileName = "post_images/${UUID.randomUUID()}.jpg"
@@ -152,9 +144,7 @@ class PostsRepository(
 
         val updates = hashMapOf<String, Any>(
             "content" to content,
-            "imageUrl" to (uploadedImageUrl ?: ""),
-            "userName" to userName,
-            "userProfilePicture" to profilePic
+            "imageUrl" to (uploadedImageUrl ?: "")
         )
         db.collection("posts").document(postId).update(updates).await()
     }
@@ -193,7 +183,7 @@ class PostsRepository(
         userProfilePicture = userProfilePicture,
         content = content,
         imageUrl = imageUrl,
-        timestamp = Timestamp(timestamp, 0),
+        timestamp = timestamp?.let { Timestamp(it, 0) },
         likes = emptyList()
     )
 }
