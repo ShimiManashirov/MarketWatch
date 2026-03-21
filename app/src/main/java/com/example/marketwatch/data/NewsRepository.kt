@@ -1,6 +1,7 @@
 package com.example.marketwatch.data
 
 import com.example.marketwatch.FinnhubApiClient
+import com.example.marketwatch.FinnhubApiService
 import com.example.marketwatch.StockNews
 import com.example.marketwatch.data.local.AppDatabase
 import com.example.marketwatch.data.local.NewsBookmarkEntity
@@ -15,9 +16,11 @@ import java.util.*
  * Repository responsible for handling news data.
  * It manages both remote data from the Finnhub API and local bookmarks in the Room database.
  */
-class NewsRepository(private val database: AppDatabase) {
+class NewsRepository(
+    private val database: AppDatabase,
+    private val api: FinnhubApiService = FinnhubApiClient.apiService
+) {
 
-    private val api = FinnhubApiClient.apiService
     private val bookmarkDao = database.newsBookmarkDao()
 
     /**
@@ -69,8 +72,6 @@ class NewsRepository(private val database: AppDatabase) {
     suspend fun removeBookmark(newsId: Long) = withContext(Dispatchers.IO) {
         bookmarkDao.deleteBookmark(newsId)
     }
-
-    // Mapper functions to convert between Data Models and Entities
 
     private fun StockNews.toEntity() = NewsBookmarkEntity(
         id = id,
